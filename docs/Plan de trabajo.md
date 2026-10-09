@@ -49,7 +49,7 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 
 ---
 
-## 3. Persona J — Historial, valoración y comentarios
+## 3. Persona J (Jhon) — Historial, valoración y comentarios
 
 > ⚠️ **Retroalimentación del profesor:** las reseñas son públicas, visibles para todos los estudiantes, no solo el organizador[cite: 6].
 
@@ -63,7 +63,7 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 
 ---
 
-## 4. Persona S — Certificación por asistencia
+## 4. Persona S (Samuel) — Certificación por asistencia
 
 * **Backend:**
   * Entidad Certificado + registro de asistencia por sesión[cite: 6].

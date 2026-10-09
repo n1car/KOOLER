@@ -1,6 +1,6 @@
 # 🤖 Protocolo Obligatorio para Agentes de Inteligencia Artificial — Proyecto Kooler
 
-Este archivo define las **reglas de oro, contratos de datos, restricciones arquitectónicas, estándar de commits y límites de entregas** para cualquier agente de IA (Antigravity, Cursor, Copilot, Claude, ChatGPT, etc.) que asista a los integrantes **N (Nico), J o S** en este repositorio.
+Este archivo define las **reglas de oro, contratos de datos, restricciones arquitectónicas, estándar de commits y límites de entregas** para cualquier agente de IA (Antigravity, Cursor, Copilot, Claude, ChatGPT, etc.) que asista a los integrantes **Nico (N), Jhon (J) o Samuel (S)** en este repositorio.
 
 Cualquier agente que modifique código DEBE leer y respetar estas reglas para evitar conflictos de merge, roturas de código o penalizaciones en la rúbrica del curso.
 
@@ -21,11 +21,11 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
   * Funcionalidad 1: Gestión de actividades (`ActivityEntity`) e inscripciones (`EnrollmentEntity`).
-* **Persona J — Rama: `feature/valoraciones`:**
+* **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Reseñas y calificaciones (`ReviewEntity`).
   * Endpoints públicos de lectura de reseñas y creación por estudiantes que hayan participado.
   * REGLA: El organizador NO puede editar ni eliminar reseñas de estudiantes.
-* **Persona S — Rama: `feature/certificados`:**
+* **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia (`AttendanceEntity`) y certificados (`CertificateEntity`).
   * Cálculo del porcentaje de asistencia y emisión de código único de certificado.
 
@@ -58,9 +58,9 @@ Para asegurar un historial de Git limpio, legible y profesional ante la revisió
 * **`chore`**: Tooling, dependencias o configuración Docker.
 
 ### Alcances (`scope`) por Integrante:
-* **Persona N:** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
-* **Persona J:** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
-* **Persona S:** `feat(certificados)`, `feat(asistencia)`
+* **Nico (N):** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
+* **Jhon (J):** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
+* **Samuel (S):** `feat(certificados)`, `feat(asistencia)`
 * **Generales:** `chore(docker)`, `docs(readme)`, `test(auth)`
 
 ---

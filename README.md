@@ -19,9 +19,9 @@ Todos los documentos de especificación inicial y diseño se encuentran organiza
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Template base de backend (Docker, Auth JWT, RolesGuard, Entidades comunes).
   * Funcionalidad 1: Gestión y participación en actividades (creación, edición, cancelación, cupos e inscripciones).
-* **Persona J — Rama: `feature/valoraciones`:**
+* **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Historial, valoraciones y comentarios públicos.
-* **Persona S — Rama: `feature/certificados`:**
+* **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia por sesión y emisión de certificados.
 
 > ⚠️ **Para agentes de IA y desarrolladores:** Leer obligatoriamente el archivo [`AGENTS.md`](./AGENTS.md) antes de escribir código.
@@ -35,9 +35,9 @@ Todo commit debe seguir el formato Conventional Commits:
 ```
 * **Tipos:** `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
 * **Alcances por integrante:**
-  * **N:** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
-  * **J:** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
-  * **S:** `feat(certificados)`, `feat(asistencia)`
+  * **Nico (N):** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
+  * **Jhon (J):** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
+  * **Samuel (S):** `feat(certificados)`, `feat(asistencia)`
   * **Común:** `chore(docker)`, `docs(readme)`, `test(auth)`
 
 ### 🔢 Límite Máximo de Commits por Persona:
@@ -85,17 +85,17 @@ Todo commit debe seguir el formato Conventional Commits:
 
 ---
 
-## 🛠️ Guía Rápida para J y S al Clonar el Repositorio
+## 🛠️ Guía Rápida para Jhon y Samuel al Clonar el Repositorio
 
 1. **Clonar y sacar tu rama de trabajo:**
    ```bash
    git clone https://github.com/n1car/KOOLER.git
    cd KOOLER
    
-   # Si eres la Persona J:
+   # Si eres Jhon (Persona J):
    git checkout -b feature/valoraciones
    
-   # Si eres la Persona S:
+   # Si eres Samuel (Persona S):
    git checkout -b feature/certificados
    ```
 
@@ -139,10 +139,10 @@ Todo commit debe seguir el formato Conventional Commits:
 | `POST` | `/api/activities/:id/enroll` | ESTUDIANTE | Inscribirse a una actividad (valida cupos, fecha y duplicados). |
 | `GET` | `/api/activities/:id/enrollments` | ORGANIZADOR (Dueño) | Ver la lista de estudiantes inscritos a su actividad. |
 
-### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Persona J)*
+### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
 *(Documentar aquí los endpoints creados por J: consultar reseñas públicas y calificar actividad finalizada).*
 
-### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Persona S)*
+### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Samuel)*
 *(Documentar aquí los endpoints creados por S: registrar asistencia y consultar/descargar certificado).*
 
 ---
