@@ -4,6 +4,17 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 
 ---
 
+## 📚 Documentación del Proyecto (`docs/`)
+Todos los documentos de especificación inicial y diseño se encuentran organizados en la carpeta [`docs/`](./docs):
+* 📋 [`Requerimientos.md`](./docs/Requerimientos.md) — Requerimientos del sistema.
+* 🗄️ [`Diseño base de datos.md`](./docs/Diseño%20base%20de%20datos.md) — Modelo relacional de 9 entidades.
+* 🏛️ [`Arquitectura inicial.md`](./docs/Arquitectura%20inicial.md) — Arquitectura y stack tecnológico.
+* 💡 [`Funcionalidades.md`](./docs/Funcionalidades.md) — Detalle de las funcionalidades principales.
+* 📅 [`Plan de trabajo.md`](./docs/Plan%20de%20trabajo.md) — Reparto de tareas y tiempos.
+* 🎯 [`Taller y rubrica del proyecto.md`](./docs/Taller%20y%20rubrica%20del%20proyecto.md) — Criterios de evaluación oficiales.
+
+---
+
 ## 👥 Reparto de Funcionalidades (Entrega D2)
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Template base de backend (Docker, Auth JWT, RolesGuard, Entidades comunes).
@@ -17,17 +28,22 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 
 ---
 
-## 📝 Estándar Oficial de Commits (Conventional Commits)
-Todo commit en este repositorio debe seguir el formato:
+## 📝 Estándar de Commits y Límites por Persona
+Todo commit debe seguir el formato Conventional Commits:
 ```
 <tipo>(<alcance>): <descripción concisa>
 ```
-* **Tipos:** `feat` (funcionalidad), `fix` (corrección), `docs` (documentación), `test` (pruebas), `refactor` (refactorización), `chore` (configuración/mantenimiento).
+* **Tipos:** `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
 * **Alcances por integrante:**
   * **N:** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
   * **J:** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
   * **S:** `feat(certificados)`, `feat(asistencia)`
   * **Común:** `chore(docker)`, `docs(readme)`, `test(auth)`
+
+### 🔢 Límite Máximo de Commits por Persona:
+* **Entrega D2:** **Máximo 20 commits por persona** (Recomendado: 10 - 18 commits atómicos).
+* **Entrega D3:** **Máximo 15 commits por persona** (Recomendado: 8 - 12 commits).
+* **Entrega Final (DF):** **Máximo 10 commits por persona** (Recomendado: 5 - 8 commits).
 
 ---
 
