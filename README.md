@@ -17,6 +17,47 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 
 ---
 
+## 📝 Estándar Oficial de Commits (Conventional Commits)
+Todo commit en este repositorio debe seguir el formato:
+```
+<tipo>(<alcance>): <descripción concisa>
+```
+* **Tipos:** `feat` (funcionalidad), `fix` (corrección), `docs` (documentación), `test` (pruebas), `refactor` (refactorización), `chore` (configuración/mantenimiento).
+* **Alcances por integrante:**
+  * **N:** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
+  * **J:** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
+  * **S:** `feat(certificados)`, `feat(asistencia)`
+  * **Común:** `chore(docker)`, `docs(readme)`, `test(auth)`
+
+---
+
+## 🎯 Límites y Entregables por Hito (Deliveries)
+
+### 📌 Entrega D2 (Actual — 10% de la Nota)
+* **Backend:**
+  * Soporte funcional completo para las 3 funcionalidades.
+  * Base de datos PostgreSQL 17 reproducida con Docker (`compose.yaml`).
+  * Autenticación JWT + Passport con contraseñas encriptadas con `bcrypt`.
+  * Autorización verificada en backend con `RolesGuard` (no solo ocultando botones).
+  * Validación estricta con DTOs y class-validator.
+  * Interceptor de logging para auditoría de peticiones HTTP y tiempos de respuesta.
+  * Pruebas automatizadas de servicio e integración.
+  * Colección de Postman exportada y ejecutable.
+  * Backend desplegado con URL pública funcional.
+* **Frontend:**
+  * Proyecto Next.js con layout base, navegación y estilos mobile-first.
+  * Pantallas de login/registro, dashboard y al menos 1 representativa por funcionalidad.
+* **Límite de D2 (Fuera de alcance):**
+  * NO incluir pagos, reservas de espacios físicos ni subida binaria a AWS S3.
+
+### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
+* Integración punta a punta de todos los flujos sin datos falsos.
+* Pruebas completas de regresión y concurrencia.
+* Frontend, Backend y BD desplegados en la nube.
+* Sustentación oral individual: cada estudiante debe dominar y poder explicar cualquier línea de código.
+
+---
+
 ## 🚀 Tecnologías del Backend
 * **Framework:** NestJS 11 con TypeORM
 * **Base de Datos:** PostgreSQL 17 (Docker) en puerto `5433`
@@ -32,8 +73,8 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 
 1. **Clonar y sacar tu rama de trabajo:**
    ```bash
-   git clone <URL_DEL_REPO>
-   cd Kooler
+   git clone https://github.com/n1car/KOOLER.git
+   cd KOOLER
    
    # Si eres la Persona J:
    git checkout -b feature/valoraciones
@@ -67,8 +108,8 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 ### 🔐 Autenticación (`/api/auth`)
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Público | Registro de usuarios (por defecto asigna rol ESTUDIANTE). |
-| `POST` | `/api/auth/login` | Público | Inicio de sesión, devuelve token JWT y datos de rol. |
+| `POST` | `/api/auth/register` | Público | Registro de usuarios (asigna rol ESTUDIANTE por defecto). |
+| `POST` | `/api/auth/login` | Público | Inicio de sesión, devuelve token JWT y rol. |
 | `GET` | `/api/auth/profile` | Autenticado | Devuelve los datos del usuario conectado según su token JWT. |
 
 ### 📅 Actividades (`/api/activities`) *(En desarrollo por Persona N)*
