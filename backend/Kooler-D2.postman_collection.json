@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "Kooler D2 - Persona N (Actividades e Inscripciones)",
+    "_postman_id": "kooler-d2-persona-n",
+    "description": "Flujo D2 de la Funcionalidad 1 (Nico). Orden sugerido: 1 Registrar org -> 2 Login org (copiar accessToken a la variable orgToken) -> 3 Crear actividad (copiar id a activityId) -> 4 Registrar estudiante -> 5 Login estudiante (copiar accessToken a studentToken) -> 6..11. Requiere `docker compose up -d` y `npm run start:dev`. Seeds demo: estudiante@icesi.edu.co / organizador@icesi.edu.co | Password123!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "orgToken", "value": "" },
+    { "key": "studentToken", "value": "" },
+    { "key": "activityId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Registrar organizador",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Organizadora\",\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ORGANIZADOR\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Login organizador",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "3. Crear actividad (ORGANIZADOR)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{orgToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Torneo relámpago de fútbol 5\",\n  \"description\": \"Torneo universitario de bienestar\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 16,\n  \"registrationDeadline\": \"2026-11-19T23:59:59.000Z\"\n}"
+        }
+      }
+    },
+    {
+      "name": "4. Registrar estudiante",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Estudiante\",\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ESTUDIANTE\"\n}"
+        }
+      }
+    },
+    {
+      "name": "5. Login estudiante",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "6. Listar actividades (público)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities"
+      }
+    },
+    {
+      "name": "7. Detalle de actividad (público)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}"
+      }
+    },
+    {
+      "name": "8. Inscribirse (ESTUDIANTE)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enroll",
+        "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+      }
+    },
+    {
+      "name": "9. Inscribirse duplicado (espera 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enroll",
+        "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+      }
+    },
+    {
+      "name": "10. Mis inscripciones (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/my-enrollments",
+        "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+      }
+    },
+    {
+      "name": "11. Inscritos de la actividad (ORGANIZADOR dueño)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enrollments",
+        "header": [{ "key": "Authorization", "value": "Bearer {{orgToken}}" }]
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { UserEntity } from '../users/entities/user.entity';
@@ -21,7 +21,18 @@ export class ActivitiesService {
 
     @InjectRepository(EnrollmentEntity)
     private readonly enrollmentRepo: Repository<EnrollmentEntity>,
+
+    private readonly dataSource: DataSource,
   ) {}
+
+  // RF09: una actividad pasa a FINISHED cuando ya pasó su horario.
+  // Se evalúa por fecha+hora de fin para no depender de un cron en D2.
+  private isPastEnd(activity: ActivityEntity, now: Date = new Date()): boolean {
+    if (!activity.date || !activity.endTime) return false;
+    const end = new Date(`${activity.date}T${activity.endTime}`);
+    if (Number.isNaN(end.getTime())) return false;
+    return now >= end;
+  }
 
   // 1. Crear actividad (Solo Organizador)
   async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
@@ -56,10 +67,13 @@ export class ActivitiesService {
     return activities.map((act) => {
       const enrolledCount = act.enrollments ? act.enrollments.length : 0;
       const availableSpots = Math.max(0, act.capacity - enrolledCount);
-      const { enrollments, ...data } = act;
+      // RF09: reflejar FINISHED aunque el cron aún no haya persistido el cambio.
+      const status = act.status === 'ACTIVE' && this.isPastEnd(act) ? 'FINISHED' : act.status;
+      const { enrollments: _ignored, ...data } = act;
 
       return {
         ...data,
+        status,
         enrolledCount,
         availableSpots,
       };
@@ -79,10 +93,16 @@ export class ActivitiesService {
 
     const enrolledCount = activity.enrollments ? activity.enrollments.length : 0;
     const availableSpots = Math.max(0, activity.capacity - enrolledCount);
-    const { enrollments, ...data } = activity;
+    // RF09: persistir la transición ACTIVE -> FINISHED al consultar el detalle.
+    if (activity.status === 'ACTIVE' && this.isPastEnd(activity)) {
+      activity.status = 'FINISHED';
+      await this.activityRepo.save(activity);
+    }
+    const { enrollments: _ignored, ...data } = activity;
 
     return {
       ...data,
+      status: activity.status,
       enrolledCount,
       availableSpots,
     };
@@ -102,6 +122,18 @@ export class ActivitiesService {
     // Regla de negocio: Solo el organizador dueño puede modificar
     if (activity.organizer.id !== user.id) {
       throw new ForbiddenException('Solo el organizador responsable puede modificar esta actividad');
+    }
+
+    // Regla de negocio: no reducir el cupo por debajo de los ya inscritos.
+    if (updateDto.capacity !== undefined) {
+      const enrolledCount = await this.enrollmentRepo.count({
+        where: { activity: { id } },
+      });
+      if (updateDto.capacity < enrolledCount) {
+        throw new BadRequestException(
+          `No se puede reducir el cupo a ${updateDto.capacity}: ya hay ${enrolledCount} inscritos`,
+        );
+      }
     }
 
     if (updateDto.registrationDeadline) {
@@ -140,63 +172,79 @@ export class ActivitiesService {
   }
 
   // 6. Inscribir estudiante a actividad (Reglas estrictas de negocio)
+  // RNF07: todo el chequeo+inserción corre dentro de una transacción con
+  // bloqueo pesimista de la fila de actividad para evitar sobrecupo concurrente.
   async enroll(activityId: number, student: UserEntity) {
-    const activity = await this.activityRepo.findOne({
-      where: { id: activityId },
-      relations: { enrollments: true },
+    return this.dataSource.transaction(async (manager) => {
+      const activityRepo = manager.getRepository(ActivityEntity);
+      const enrollmentRepo = manager.getRepository(EnrollmentEntity);
+
+      // Postgres no permite FOR UPDATE con LEFT JOIN: se bloquea solo la
+      // fila de la actividad (sin relations) y el conteo va por query aparte.
+      const activity = await activityRepo.findOne({
+        where: { id: activityId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!activity) {
+        throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+      }
+
+      // RF09: si ya pasó el horario, tratarla como finalizada aunque el
+      // estado persistido siga en ACTIVE.
+      if (activity.status === 'ACTIVE' && this.isPastEnd(activity)) {
+        activity.status = 'FINISHED';
+        await activityRepo.save(activity);
+      }
+
+      // Regla 1: Solo actividades en estado ACTIVE permiten inscripción
+      if (activity.status !== 'ACTIVE') {
+        throw new BadRequestException('No es posible inscribirse: la actividad no está activa');
+      }
+
+      // Regla 2: No se permite inscripción después de registration_deadline
+      const now = new Date();
+      if (now > new Date(activity.registrationDeadline)) {
+        throw new BadRequestException('El plazo de inscripción para esta actividad ya finalizó');
+      }
+
+      // Regla 3: Un estudiante no puede inscribirse dos veces en la misma actividad
+      const alreadyEnrolled = await enrollmentRepo.findOne({
+        where: {
+          activity: { id: activityId },
+          user: { id: student.id },
+        },
+      });
+
+      if (alreadyEnrolled) {
+        throw new BadRequestException('Ya te encuentras inscrito en esta actividad');
+      }
+
+      // Regla 4: Inscritos no pueden superar capacity
+      const currentEnrolledCount = await enrollmentRepo.count({
+        where: { activity: { id: activityId } },
+      });
+
+      if (currentEnrolledCount >= activity.capacity) {
+        throw new BadRequestException('No hay cupos disponibles para esta actividad');
+      }
+
+      // Crear y guardar la inscripción
+      const enrollment = enrollmentRepo.create({
+        activity,
+        user: student,
+      });
+
+      const saved = await enrollmentRepo.save(enrollment);
+
+      return {
+        message: 'Inscripción realizada exitosamente',
+        enrollmentId: saved.id,
+        activityId: activity.id,
+        activityName: activity.name,
+        enrollmentDate: saved.enrollmentDate,
+      };
     });
-
-    if (!activity) {
-      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
-    }
-
-    // Regla 1: Solo actividades en estado ACTIVE permiten inscripción
-    if (activity.status !== 'ACTIVE') {
-      throw new BadRequestException('No es posible inscribirse: la actividad no está activa');
-    }
-
-    // Regla 2: No se permite inscripción después de registration_deadline
-    const now = new Date();
-    if (now > new Date(activity.registrationDeadline)) {
-      throw new BadRequestException('El plazo de inscripción para esta actividad ya finalizó');
-    }
-
-    // Regla 3: Un estudiante no puede inscribirse dos veces en la misma actividad
-    const alreadyEnrolled = await this.enrollmentRepo.findOne({
-      where: {
-        activity: { id: activityId },
-        user: { id: student.id },
-      },
-    });
-
-    if (alreadyEnrolled) {
-      throw new BadRequestException('Ya te encuentras inscrito en esta actividad');
-    }
-
-    // Regla 4: Inscritos no pueden superar capacity
-    const currentEnrolledCount = await this.enrollmentRepo.count({
-      where: { activity: { id: activityId } },
-    });
-
-    if (currentEnrolledCount >= activity.capacity) {
-      throw new BadRequestException('No hay cupos disponibles para esta actividad');
-    }
-
-    // Crear y guardar la inscripción
-    const enrollment = this.enrollmentRepo.create({
-      activity,
-      user: student,
-    });
-
-    const saved = await this.enrollmentRepo.save(enrollment);
-
-    return {
-      message: 'Inscripción realizada exitosamente',
-      enrollmentId: saved.id,
-      activityId: activity.id,
-      activityName: activity.name,
-      enrollmentDate: saved.enrollmentDate,
-    };
   }
 
   // 7. Consultar estudiantes inscritos (Solo Organizador Dueño)

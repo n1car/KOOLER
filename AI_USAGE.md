@@ -43,6 +43,25 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Cambios realizados por el equipo:**
   - Ajuste de relaciones foráneas en cascada y formato de fecha límite (`registrationDeadline`).
   - Revisión del cálculo de cupos para evitar números negativos (`Math.max(0, capacity - count)`).
+---
+
+## Registro de uso de IA — Entrega D2 (Endurecimiento Persona N: seguridad y reglas)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** OpenCode / Muse Spark
+- **Tarea:** Auditoría de la parte N contra la rúbrica D2 y corrección de gaps: registro con rol libre, filtros sin enum, `update()` sin tope de cupo, RF09 sin implementar, `enroll()` sin transacción, interceptor sin log de errores, script `test:e2e` roto, e2e de plantilla y `my-enrollments` sin documentar.
+- **Propósito:** Dejar el backend de N al 100% defendible en sustentación (RNF07 concurrencia, RF09 finalización automática, autorización real en backend).
+- **Descripción de la consulta o prompt:** "Revisa solo mi parte N del backend contra la rúbrica D2 y ajusta lo que falte para que quede lo mejor posible".
+- **Resultado utilizado:**
+  - `RegisterDto.roleName` con `@IsEnum(['ESTUDIANTE','ORGANIZADOR'])`; `FilterActivitiesDto.status` con `@IsEnum`.
+  - `ActivitiesService.update()` bloquea bajar `capacity` por debajo de inscritos; helper `isPastEnd()` + transición `ACTIVE→FINISHED` (RF09) en `findAll`/`findOne`/`enroll`.
+  - `enroll()` dentro de `dataSource.transaction()` con `pessimistic_write` sobre la actividad (RNF07).
+  - `LoggingInterceptor` con `catchError` (loggea fallos con status y duración).
+  - `main.ts`: se quitó `RolesGuard` global (corría antes que `JwtAuthGuard`, dejaba `request.user` vacío y toda ruta protegida devolvía 403; los controllers ya declaran `@UseGuards(JwtAuthGuard, RolesGuard)`).
+  - `enroll()` transaccional sin `relations` en el `findOne` con lock (Postgres rechaza `FOR UPDATE` con `LEFT JOIN`: `FOR UPDATE cannot be applied to the nullable side of an outer join`, daba 500).
+  - Nuevo `activities.integration.spec.ts` (flujo crear→inscribir→duplicado 400→cupo 400→cupos en 0) + `test/app.e2e-spec.ts` real con prefijo `/api`; fix `test:e2e` a `vitest.config.e2e.mts`; `*.tsbuildinfo` a `.gitignore`; fila `my-enrollments` en `README.md`.
+  - Nueva colección `backend/Kooler-D2.postman_collection.json` (11 requests del flujo Persona N).
+- **Cambios realizados por el equipo:**
+  - Revisión de cada regla contra `docs/Diseño base de datos.md` y `docs/Funcionalidades.md`; se mantuvo el modelo sin `LOCATION`/`ACTIVITY_TYPE` como deuda documentada para no bloquear a J/S.
 - **Forma de verificación:**
-  - Ejecución de `npm run build` (compilación TypeScript limpia con 0 errores).
-  - Ejecución de `npm test` pasando el 100% de las 9 pruebas unitarias automatizadas.
+  - `npm run build` (0 errores), `npm test` (12/12 verde: 8 activities unit + 1 integración + 2 auth + 1 app), `npm run lint` (0 warnings).
+  - `npm run test:e2e` (2/2 verde contra Postgres real) + smoke HTTP en vivo: login org/estudiante, crear 201, inscribir 200, duplicado 400, estudiante-creando 403.

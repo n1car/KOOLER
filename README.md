@@ -150,6 +150,7 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `PATCH` | `/api/activities/:id` | ORGANIZADOR (Dueño) | Modificar datos de una actividad existente. |
 | `DELETE` | `/api/activities/:id` | ORGANIZADOR (Dueño) | Cancelar una actividad (cambia su estado a CANCELLED). |
 | `POST` | `/api/activities/:id/enroll` | ESTUDIANTE | Inscribirse a una actividad (valida cupos, fecha y duplicados). |
+| `GET` | `/api/activities/my-enrollments` | ESTUDIANTE | Ver las inscripciones del estudiante conectado. |
 | `GET` | `/api/activities/:id/enrollments` | ORGANIZADOR (Dueño) | Ver la lista de estudiantes inscritos a su actividad. |
 
 ### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*

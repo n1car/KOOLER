@@ -4,26 +4,33 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module.js';
 
-describe('AppController (e2e)', () => {
+// Requiere Docker levantado: `docker compose up -d` (Postgres 17 en 5433).
+// Cubre el arranque real con prefijo global /api y seed de demo.
+describe('App (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  it('/api (GET) responde sin tumbar el bootstrap', () => {
+    return request(app.getHttpServer()).get('/api').expect(404);
   });
 
-  afterEach(async () => {
+  it('/api/auth/login responde 401 con credenciales falsas', () => {
+    return request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'nadie@icesi.edu.co', password: 'wrong' })
+      .expect(401);
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 });

@@ -1,16 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { UserEntity } from '../users/entities/user.entity';
+import { DataSource } from 'typeorm';
 
 describe('ActivitiesService (Persona N)', () => {
   let service: ActivitiesService;
   let activityRepo: any;
   let enrollmentRepo: any;
+  let dataSource: any;
 
   const mockOrganizer = { id: 1, email: 'organizador@icesi.edu.co' } as UserEntity;
   const mockOtherUser = { id: 99, email: 'otro@icesi.edu.co' } as UserEntity;
@@ -42,11 +44,23 @@ describe('ActivitiesService (Persona N)', () => {
       count: vi.fn(),
     };
 
+    // La inscripción corre en transacción: el manager entrega los mismos
+    // repositorios mockeados para mantener los tests sin BD real.
+    dataSource = {
+      transaction: vi.fn().mockImplementation(async (cb: any) =>
+        cb({
+          getRepository: (entity: any) =>
+            entity === ActivityEntity ? activityRepo : enrollmentRepo,
+        }),
+      ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ActivitiesService,
         { provide: getRepositoryToken(ActivityEntity), useValue: activityRepo },
         { provide: getRepositoryToken(EnrollmentEntity), useValue: enrollmentRepo },
+        { provide: DataSource, useValue: dataSource },
       ],
     }).compile();
 
@@ -105,5 +119,27 @@ describe('ActivitiesService (Persona N)', () => {
     enrollmentRepo.findOne.mockResolvedValue({ id: 50 }); // Ya existe
 
     await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
+  });
+
+  it('debe impedir reducir el cupo por debajo de los inscritos actuales', async () => {
+    activityRepo.findOne.mockResolvedValue(mockActivity);
+    enrollmentRepo.count.mockResolvedValue(5);
+
+    await expect(service.update(10, { capacity: 3 }, mockOrganizer)).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('debe tratar como finalizada (RF09) una actividad con horario ya pasado', async () => {
+    const pastActivity = {
+      ...mockActivity,
+      date: '2020-01-01',
+      startTime: '10:00',
+      endTime: '12:00',
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(pastActivity);
+
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
+    expect(pastActivity.status).toBe('FINISHED');
   });
 });

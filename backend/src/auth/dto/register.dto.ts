@@ -1,5 +1,6 @@
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -23,7 +24,9 @@ export class RegisterDto {
   @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
   password!: string;
 
-  @IsString()
+  @IsEnum(['ESTUDIANTE', 'ORGANIZADOR'], {
+    message: 'El rol debe ser ESTUDIANTE u ORGANIZADOR',
+  })
   @IsOptional()
   roleName?: string; // Opcional, por defecto ESTUDIANTE
 }

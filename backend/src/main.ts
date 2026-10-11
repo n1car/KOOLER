@@ -1,8 +1,7 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { RolesGuard } from './common/guards/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,9 +24,9 @@ async function bootstrap() {
   // Interceptor de logging (requisito D2 justificado para auditoría y métricas)
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  // RolesGuard global con Reflector
-  const reflector = app.get(Reflector);
-  app.useGlobalGuards(new RolesGuard(reflector));
+  // NOTA: RolesGuard NO va global. Cada ruta protegida ya declara
+  // @UseGuards(JwtAuthGuard, RolesGuard): el global corría antes que
+  // JwtAuthGuard, veía request.user vacío y devolvía 403 siempre.
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

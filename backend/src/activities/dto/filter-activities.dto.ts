@@ -1,7 +1,9 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class FilterActivitiesDto {
-  @IsString()
+  @IsEnum(['ACTIVE', 'CANCELLED', 'FINISHED'], {
+    message: 'El estado debe ser ACTIVE, CANCELLED o FINISHED',
+  })
   @IsOptional()
   status?: string;
 
