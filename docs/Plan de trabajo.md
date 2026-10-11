@@ -160,3 +160,38 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 3. **Mi historial (vista estudiante):** agregar modal "Calificar actividad" (estrellas 1-5 + comentario + enviar). No existe todavía[cite: 6].
 
 **Responsable:** Persona J (Historial, valoración y comentarios)[cite: 6].
+
+---
+
+## 10. Cronograma fechado acordado (8 al 26 de octubre)
+
+> Fuente: plan del equipo transcrito el 2026-10-11. Los merges de `feature/*` van hacia `dev` y de `dev` a `main` (ver `AGENTS.md`); donde el plan dice "a main" léase "a `dev` y, verificado, a `main`".
+
+### 👾 Bloque 1: Sprint de Desarrollo (8 al 19 de octubre — 11 días)
+
+**Etapa 1: Backend en paralelo (8 al 12 de octubre — 4 días)**
+* Nico: Actividades, cupos en tiempo real, inscripciones de estudiantes y lista de inscritos.
+* Jhon: Endpoints de valoraciones, consulta pública de reseñas y cálculo de promedio.
+* Samuel: Registro de asistencia por sesión, cálculo de porcentaje y certificados.
+* 🚩 Domingo 12 de octubre: Merge de las 3 ramas. El backend queda cerrado.
+
+**Etapa 2: Frontend Next.js + Postman (13 al 16 de octubre — 4 días)**
+* Layout base y pantallas de autenticación (Login/Registro).
+* Pantalla de actividades e inscripción (Nico).
+* Pantalla de reseñas y modal de calificar (Jhon).
+* Pantalla de control de asistencia y certificados (Samuel).
+* Colección de Postman armada y probada de punta a punta.
+* 🚩 Jueves 16 de octubre: Merge del frontend.
+
+**Etapa 3: Despliegue en la nube y Docker (17 al 19 de octubre — 3 días)**
+* Desplegar backend y PostgreSQL en la nube (Render o Railway) con URL pública verificada.
+* Probar que `docker compose up` funcione en una máquina limpia.
+* Correr la suite de pruebas unitarias (`npm test`).
+* 🚩 Domingo 19 de octubre (META CUMPLIDA): Código congelado. La aplicación ya funciona en internet, no se añade nada más y no hay riesgo de bugs de última hora.
+
+### 🛡️ Bloque 2: La "Semana de Oro" para dominar el código (20 al 25 de octubre — 6 días)
+
+* **Día 20 y 21 (Estudio individual):** cada uno recorre su código y anota qué hace cada función, decorador (`@UseGuards`, `@InjectRepository`) y consulta SQL. Preguntas tipo: "¿Por qué TypeORM y no Prisma?", "¿Cómo funciona el JWT?", "¿Dónde se valida que no se superen los cupos?".
+* **Día 22 y 23 (Recorrido cruzado):** seguir un dato juntos desde el clic en Next.js ➔ petición HTTP ➔ interceptor de logging ➔ controller ➔ service ➔ base de datos en Docker. Cada uno aprende el módulo de los otros dos.
+* **Día 24 y 25 (Simulacro y docs):** llenar `AI_USAGE.md` con calma y ensayar preguntas trampa entre los 3.
+* **Lunes 26 de octubre:** entrega y sustentación, cero estrés.

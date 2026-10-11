@@ -58,13 +58,26 @@ Todo commit debe seguir el formato Conventional Commits:
   * Validación estricta con DTOs y class-validator.
   * Interceptor de logging para auditoría de peticiones HTTP y tiempos de respuesta.
   * Pruebas automatizadas de servicio e integración.
-  * Colección de Postman exportada y ejecutable.
+  * Colección de Postman exportada y ejecutable (`backend/Kooler-D2.postman_collection.json`).
   * Backend desplegado con URL pública funcional.
 * **Frontend:**
   * Proyecto Next.js con layout base, navegación y estilos mobile-first.
   * Pantallas de login/registro, dashboard y al menos 1 representativa por funcionalidad.
+  * En D2 las pantallas pueden usar datos temporales (mock) si la integración no está terminada.
 * **Límite de D2 (Fuera de alcance):**
   * NO incluir pagos, reservas de espacios físicos ni subida binaria a AWS S3.
+
+#### ✅ Estado de avance D2 — Persona N (verificado 2026-10-11, rama `dev`)
+* **Backend N terminado y probado en vivo:**
+  * `npm run build` 0 errores · `npm test` 12/12 · `npm run lint` 0 warnings · `npm run test:e2e` 2/2 (requiere `docker compose up -d`).
+  * Smoke HTTP real: login org/estudiante, crear actividad `201`, inscribirse `200`, duplicado `400`, estudiante-creando `403`, cupo agotado `400`.
+  * Reglas cubiertas: cupo máximo, no duplicados (`@Unique`), solo `ACTIVE`, `registration_deadline`, solo dueño edita/cancela, cupo no reducible bajo inscritos, `ACTIVE→FINISHED` automático (RF09), inscripción transaccional con lock pesimista (RNF07).
+* **Pendiente grupal D2 (no es de N):** módulos de Jhon (`Review`) y Samuel (`Attendance`/`Certificate`), URL pública del deploy.
+* **Pendiente frontend D2 — alcance de N (Funcionalidad 1, con mocks):**
+  * Scaffold Next.js (App Router) + layout + navegación + estilos mobile-first.
+  * Rutas: `/login`, `/register`, `/activities`, `/activities/[id]`, `/my-enrollments`, `/organizer/activities`, `/organizer/activities/new`.
+  * Pantallas: listado con filtros (estado/búsqueda), detalle con cupos e inscripción + confirmación, formulario crear/editar (organizador), mis inscripciones.
+  * Capa `lib/mock-data.ts` con el mismo contrato del backend para conectar la API real en D3 sin reescribir pantallas.
 
 ### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
 * Integración punta a punta de todos los flujos sin datos falsos.

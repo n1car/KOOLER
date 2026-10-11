@@ -65,3 +65,20 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Forma de verificación:**
   - `npm run build` (0 errores), `npm test` (12/12 verde: 8 activities unit + 1 integración + 2 auth + 1 app), `npm run lint` (0 warnings).
   - `npm run test:e2e` (2/2 verde contra Postgres real) + smoke HTTP en vivo: login org/estudiante, crear 201, inscribir 200, duplicado 400, estudiante-creando 403.
+
+---
+
+## Registro de uso de IA — Entrega D2 (Sincronía de ramas + verificación Postman + alcance frontend N)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** OpenCode / Muse Spark
+- **Tarea:** Igualar `feature/actividades` con `dev` (fast-forward + push, sin trabajar en `dev`), validar la colección Postman (JSON + 11 requests en vivo) y analizar la rúbrica D2 para definir el avance frontend de N.
+- **Propósito:** Cerrar la parte N con evidencia verificable y dejar el alcance frontend acotado a lo que D2 exige (con mocks permitidos).
+- **Descripción de la consulta o prompt:** "Iguala las ramas sin trabajar en dev, dime qué sigue de mi parte y si probaste lo de Postman; analiza la rúbrica para el frontend y documenta en los .md".
+- **Resultado utilizado:**
+  - `git checkout feature/actividades` + merge fast-forward desde `dev` (0 commits extra) + push; `rev-list dev...feature/actividades` = `0 0`.
+  - Colección validada: JSON con 11 items en orden y ejecución en vivo 11/11 (crear ID=3, inscribir 200, duplicado 400, inscritos 1/10).
+  - `README.md`: nueva subsección de estado D2 (backend N verificado + pendientes grupales + alcance frontend N con rutas y `lib/mock-data.ts`).
+- **Cambios realizados por el equipo:**
+  - Se resolvió conflicto de puerto `5433` con otro proyecto local (`coffee-orders-db` detenido; documentado que ambos no pueden correr a la vez).
+- **Forma de verificación:**
+  - `git log` y `rev-list` confirman ramas iguales; `node -e` valida el JSON; smoke HTTP de los 11 requests en verde.
