@@ -141,7 +141,7 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `POST` | `/api/auth/login` | Público | Inicio de sesión, devuelve token JWT y rol. |
 | `GET` | `/api/auth/profile` | Autenticado | Devuelve los datos del usuario conectado según su token JWT. |
 
-### 📅 Actividades (`/api/activities`) *(En desarrollo por Persona N)*
+### 📅 Actividades e Inscripciones (`/api/activities`) ✅ *(Completado por Persona N)*
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/activities` | Público / Autenticado | Listado de actividades con filtros (estado, categoría). |

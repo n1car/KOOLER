@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
+import { EnrollmentEntity } from './enrollment.entity';
 
 @Entity('activities')
 export class ActivityEntity {
@@ -49,6 +51,9 @@ export class ActivityEntity {
   @ManyToOne(() => UserEntity, { eager: true, nullable: false })
   @JoinColumn({ name: 'id_organizer' })
   organizer!: UserEntity;
+
+  @OneToMany(() => EnrollmentEntity, (enrollment) => enrollment.activity)
+  enrollments!: EnrollmentEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

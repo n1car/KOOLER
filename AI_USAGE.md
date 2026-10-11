@@ -25,3 +25,24 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
   - Ejecución de `npm run build` (compilación exitosa en TypeScript sin errores).
   - Ejecución de pruebas unitarias automatizadas (`npm test`) pasando al 100%.
   - Verificación de consistencia del modelo de datos frente al documento aprobado de base de datos.
+
+---
+
+## Registro de uso de IA — Entrega D2 (Funcionalidad 1: Actividades e Inscripciones)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** Google Antigravity / Gemini 3.8
+- **Tarea:** Desarrollo del módulo completo de actividades e inscripciones (`EnrollmentEntity`, CRUD de actividades, control de concurrencia y cupos, pruebas unitarias).
+- **Propósito:** Implementar la Funcionalidad 1 de punta a punta en el backend cumpliendo con las 4 reglas de negocio de la base de datos (capacidad, duplicados, fecha límite y propiedad del organizador).
+- **Descripción de la consulta o prompt:** "Desarrollar la funcionalidad de la Persona N: actividades e inscripciones con validación de cupos, cancelaciones y lista de inscritos para el organizador...".
+- **Resultado utilizado:**
+  - Entidad `EnrollmentEntity` con restricción única compuesta (`@Unique(['user', 'activity'])`).
+  - DTOs (`CreateActivityDto`, `UpdateActivityDto`, `FilterActivitiesDto`) con validadores estrictos.
+  - `ActivitiesService` con lógica de cálculo dinámico de `availableSpots` y validaciones de seguridad.
+  - `ActivitiesController` con protección por `RolesGuard` y decoradores `@Roles('ORGANIZADOR')` y `@Roles('ESTUDIANTE')`.
+  - Suite de 6 pruebas unitarias automáticas en Vitest cubriendo todos los casos límite y excepciones.
+- **Cambios realizados por el equipo:**
+  - Ajuste de relaciones foráneas en cascada y formato de fecha límite (`registrationDeadline`).
+  - Revisión del cálculo de cupos para evitar números negativos (`Math.max(0, capacity - count)`).
+- **Forma de verificación:**
+  - Ejecución de `npm run build` (compilación TypeScript limpia con 0 errores).
+  - Ejecución de `npm test` pasando el 100% de las 9 pruebas unitarias automatizadas.
