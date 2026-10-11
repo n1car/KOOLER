@@ -21,6 +21,7 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * **`main`**: Rama protegida para entrega final.
 * **`dev`**: Rama base común e integración continua. Todas las ramas `feature/*` deben crearse a partir de `dev` y hacer merge hacia `dev`.
 * **Prohibido:** Hacer merge directo de una rama `feature/*` a `main`.
+* **Avisar antes de subir a `dev`:** nadie hace push/merge a `dev` sin anunciarlo antes en el chat del equipo (qué rama, qué cambia, qué archivos toca). Así se evita que dos integrantes suban a la vez y choquen en `app.module.ts` u otros archivos compartidos.
 
 ---
 
