@@ -85,12 +85,24 @@ Todo commit debe seguir el formato Conventional Commits:
 
 ---
 
-## 🛠️ Guía Rápida para Jhon y Samuel al Clonar el Repositorio
+## 🌿 Estrategia de Ramas en Git (Git Flow del Equipo)
+El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del proyecto:
+1. **`main` (Producción / Entrega Oficial):** Rama 100% estable. Solo recibe merges desde `dev` una vez verificado que todo compila y pasa pruebas.
+2. **`dev` (Integración y Pruebas Conjuntas):** Rama de integración del equipo. Aquí se unen los avances de las 3 ramas para probar que todo funcione junto y corregir detalles sin romper `main`.
+3. **Ramas de Funcionalidad (`feature/*`):** Cada integrante trabaja de forma aislada en su propia rama creada a partir de `dev`:
+   * Nico: `feature/actividades`
+   * Jhon: `feature/valoraciones`
+   * Samuel: `feature/certificados`
 
-1. **Clonar y sacar tu rama de trabajo:**
+### 🛠️ Guía Rápida para Jhon y Samuel al Clonar el Repositorio
+
+1. **Clonar, cambiarse a `dev` y sacar su rama de trabajo:**
    ```bash
    git clone https://github.com/n1car/KOOLER.git
    cd KOOLER
+   
+   # Cambiarse a la rama dev (base común)
+   git checkout dev
    
    # Si eres Jhon (Persona J):
    git checkout -b feature/valoraciones
@@ -98,6 +110,7 @@ Todo commit debe seguir el formato Conventional Commits:
    # Si eres Samuel (Persona S):
    git checkout -b feature/certificados
    ```
+   *(Al terminar avances, cada integrante hace merge o PR hacia `dev`, NUNCA directo a `main`)*.
 
 2. **Levantar la base de datos (Docker Desktop debe estar abierto):**
    ```bash

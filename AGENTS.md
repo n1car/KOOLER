@@ -17,6 +17,13 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 
 ---
 
+## 🌿 Estrategia de Ramas (`main` y `dev`)
+* **`main`**: Rama protegida para entrega final.
+* **`dev`**: Rama base común e integración continua. Todas las ramas `feature/*` deben crearse a partir de `dev` y hacer merge hacia `dev`.
+* **Prohibido:** Hacer merge directo de una rama `feature/*` a `main`.
+
+---
+
 ## 📌 2. Reparto Estricto de Responsabilidades
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
