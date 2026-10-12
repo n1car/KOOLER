@@ -30,5 +30,5 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Integrante:** Samuel (Persona S)
 - **Herramienta:** GitHub Copilot
 - **Orientación de GitHub Copilot:** Análisis de la estructura del módulo, convenciones existentes, validaciones disponibles y estrategia de pruebas para asistencia.
-- **Ayuda en la implementación:** Creación de `AttendanceModule`, `AttendanceService` y sus pruebas unitarias; integración del módulo en `AppModule`. No se implementaron endpoints, autorización mediante guards ni validación de inscripciones.
-- **Verificación:** `npm run build` compiló correctamente; `npm test -- src/attendance/attendance.service.spec.ts` pasó con 7 pruebas y `npm test` pasó con 10 pruebas en 3 archivos. Posteriormente, tras agregar cobertura para usuario inexistente, la suite focalizada pasó con 8 pruebas.
+- **Ayuda de GitHub Copilot en la implementación:** Apoyo para crear `AttendanceModule`, `AttendanceService` y sus pruebas unitarias, e integrar el módulo en `AppModule`. No se implementaron endpoints, guards de autorización ni validación de inscripciones.
+- **Verificación:** `npm run build` compiló correctamente; las pruebas focalizadas de asistencia pasaron con 8 pruebas y `npm test` pasó con 11 pruebas en 3 archivos. `git diff --check` no reportó errores.

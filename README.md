@@ -85,7 +85,8 @@ Todo commit debe seguir el formato Conventional Commits:
 
 ## 🗄️ Entidad de asistencia definida
 * **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_activity` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). Cada estudiante puede tener como máximo un registro de asistencia por actividad.
-* **Servicio inicial:** `AttendanceService` registra el estado explícito de asistencia de un estudiante para una actividad finalizada y rechaza duplicados por la restricción única. Aún no valida inscripciones y no expone endpoints.
+* **Módulo y servicio iniciales:** `AttendanceModule` registra `AttendanceEntity` y proporciona `AttendanceService`. El servicio acepta los estados `PRESENT` o `ABSENT`, exige que el usuario exista y tenga rol de estudiante, y que la actividad exista y esté finalizada. Las asistencias duplicadas para el mismo estudiante y actividad se rechazan.
+* **Alcance pendiente:** Todavía no existen endpoints de asistencia. El servicio no valida inscripciones porque aún no está disponible el contrato correspondiente. No se documentan reglas de certificados como implementadas.
 
 ---
 
