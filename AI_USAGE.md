@@ -25,3 +25,10 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
   - Ejecución de `npm run build` (compilación exitosa en TypeScript sin errores).
   - Ejecución de pruebas unitarias automatizadas (`npm test`) pasando al 100%.
   - Verificación de consistencia del modelo de datos frente al documento aprobado de base de datos.
+
+## Registro de uso de IA — Revisión de asistencia
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Tarea:** Orientación técnica y revisión de requisitos y convenciones existentes para `AttendanceEntity`.
+- **Propósito:** Revisar el modelo de datos, las relaciones con `UserEntity` y `ActivityEntity`, los estados de asistencia y la unicidad por estudiante y actividad. No se implementó un flujo funcional de asistencia.
+- **Forma de verificación:** La compilación quedó pendiente en el primer intento por dependencias locales faltantes. Luego se instalaron sin modificar `package-lock.json`; no se ha ejecutado un nuevo build.

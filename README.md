@@ -83,6 +83,9 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Auditoría:** `LoggingInterceptor` global (registra método, URL, código de estado y tiempo de respuesta en ms)
 * **Pruebas:** Vitest (ejecución rápida con `npm test`)
 
+## 🗄️ Entidad de asistencia definida
+* **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_activity` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). Cada estudiante puede tener como máximo un registro de asistencia por actividad.
+
 ---
 
 ## 🌿 Estrategia de Ramas en Git (Git Flow del Equipo)
