@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { AttendanceModule } from './attendance/attendance.module';
 import { SeedModule } from './database/seed.module';
 
 @Module({
@@ -28,6 +29,7 @@ import { SeedModule } from './database/seed.module';
     UsersModule,
     AuthModule,
     ActivitiesModule,
+    AttendanceModule,
     SeedModule,
   ],
 })

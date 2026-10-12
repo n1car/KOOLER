@@ -29,6 +29,6 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 ## Registro de uso de IA — Revisión de asistencia
 - **Integrante:** Samuel (Persona S)
 - **Herramienta:** GitHub Copilot
-- **Tarea:** Orientación técnica y revisión de requisitos y convenciones existentes para `AttendanceEntity`.
-- **Propósito:** Revisar el modelo de datos, las relaciones con `UserEntity` y `ActivityEntity`, los estados de asistencia y la unicidad por estudiante y actividad. No se implementó un flujo funcional de asistencia.
-- **Forma de verificación:** La compilación quedó pendiente en el primer intento por dependencias locales faltantes. Luego se instalaron sin modificar `package-lock.json`; no se ha ejecutado un nuevo build.
+- **Orientación de GitHub Copilot:** Análisis de la estructura del módulo, convenciones existentes, validaciones disponibles y estrategia de pruebas para asistencia.
+- **Ayuda en la implementación:** Creación de `AttendanceModule`, `AttendanceService` y sus pruebas unitarias; integración del módulo en `AppModule`. No se implementaron endpoints, autorización mediante guards ni validación de inscripciones.
+- **Verificación:** `npm run build` compiló correctamente; `npm test -- src/attendance/attendance.service.spec.ts` pasó con 7 pruebas y `npm test` pasó con 10 pruebas en 3 archivos. Posteriormente, tras agregar cobertura para usuario inexistente, la suite focalizada pasó con 8 pruebas.
