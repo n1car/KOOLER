@@ -8,6 +8,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
+import { ActivityEntity } from '../src/activities/entities/activity.entity';
+import { EnrollmentEntity } from '../src/activities/entities/enrollment.entity';
+import { SessionEntity } from '../src/activities/entities/session.entity';
+import { AttendanceEntity } from '../src/attendance/entities/attendance.entity';
 import { RolesGuard } from '../src/common/guards/roles.guard';
 import { RolesJwtAuthGuard } from '../src/common/guards/roles-jwt-auth.guard';
 import { CertificatesController } from '../src/certificates/certificates.controller';
@@ -47,6 +51,13 @@ describe('Certificates endpoint (e2e)', () => {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
   };
+  let activityRepository: { findOneBy: ReturnType<typeof vi.fn> };
+  let sessionRepository: { find: ReturnType<typeof vi.fn> };
+  let attendanceRepository: { find: ReturnType<typeof vi.fn> };
+  let enrollmentRepository: {
+    find: ReturnType<typeof vi.fn>;
+    findOne: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     const student = createUser(10, 'ESTUDIANTE');
@@ -79,6 +90,35 @@ describe('Certificates endpoint (e2e)', () => {
       create: vi.fn((data) => data),
       save: vi.fn(async (data) => data),
     };
+    activityRepository = {
+      findOneBy: vi.fn(async (where: { id: number }) => ({
+        id: where.id,
+        status: 'FINISHED',
+        isCertifiable: true,
+        minAttendancePercentage: 80,
+      })),
+    };
+    sessionRepository = {
+      find: vi.fn(async () => [
+        { id: 1, activity: { id: 30 } },
+        { id: 2, activity: { id: 30 } },
+        { id: 3, activity: { id: 30 } },
+        { id: 4, activity: { id: 30 } },
+        { id: 5, activity: { id: 30 } },
+      ]),
+    };
+    attendanceRepository = {
+      find: vi.fn(async () => [
+        { user: { id: 10 }, session: { id: 1 }, status: 'PRESENT' },
+        { user: { id: 10 }, session: { id: 2 }, status: 'PRESENT' },
+        { user: { id: 10 }, session: { id: 3 }, status: 'PRESENT' },
+        { user: { id: 10 }, session: { id: 4 }, status: 'PRESENT' },
+      ]),
+    };
+    enrollmentRepository = {
+      find: vi.fn(),
+      findOne: vi.fn(async () => ({ user: { id: 10 }, activity: { id: 30 } })),
+    };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -96,6 +136,22 @@ describe('Certificates endpoint (e2e)', () => {
         {
           provide: getRepositoryToken(CertificateEntity),
           useValue: certificateRepository,
+        },
+        {
+          provide: getRepositoryToken(ActivityEntity),
+          useValue: activityRepository,
+        },
+        {
+          provide: getRepositoryToken(SessionEntity),
+          useValue: sessionRepository,
+        },
+        {
+          provide: getRepositoryToken(AttendanceEntity),
+          useValue: attendanceRepository,
+        },
+        {
+          provide: getRepositoryToken(EnrollmentEntity),
+          useValue: enrollmentRepository,
         },
         {
           provide: ConfigService,
@@ -151,6 +207,80 @@ describe('Certificates endpoint (e2e)', () => {
         issueDate: '2026-10-02T12:00:00.000Z',
       },
     ]);
+    expect(JSON.stringify(response.body)).not.toContain('passwordHash');
+  });
+
+  it('returns eligibility only for the authenticated and enrolled student', async () => {
+    const token = tokenFor(usersById.get(10)!);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/certificates/activities/30/eligibility')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body).toEqual({
+      activityId: 30,
+      sessionsTotal: 5,
+      sessionsPresent: 4,
+      attendancePercentage: 80,
+      minimumAttendancePercentage: 80,
+      eligible: true,
+    });
+    expect(enrollmentRepository.findOne).toHaveBeenCalledWith({
+      where: { activity: { id: 30 }, user: { id: 10 } },
+    });
+    expect(JSON.stringify(response.body)).not.toContain('passwordHash');
+  });
+
+  it('does not disclose eligibility to a different role or a non-enrolled student', async () => {
+    const organizerToken = tokenFor(usersById.get(20)!);
+    await request(app.getHttpServer())
+      .get('/api/certificates/activities/30/eligibility')
+      .set('Authorization', `Bearer ${organizerToken}`)
+      .expect(403);
+
+    const studentToken = tokenFor(usersById.get(10)!);
+    enrollmentRepository.findOne.mockResolvedValue(null);
+    await request(app.getHttpServer())
+      .get('/api/certificates/activities/30/eligibility')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .expect(403);
+  });
+
+  it('reports an active activity and an activity without sessions as ineligible', async () => {
+    const token = tokenFor(usersById.get(10)!);
+    activityRepository.findOneBy.mockResolvedValue({
+      id: 30,
+      status: 'ACTIVE',
+      isCertifiable: true,
+    });
+
+    const activeResponse = await request(app.getHttpServer())
+      .get('/api/certificates/activities/30/eligibility')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(activeResponse.body).toMatchObject({
+      eligible: false,
+      reason: 'ACTIVITY_NOT_FINISHED',
+    });
+
+    activityRepository.findOneBy.mockResolvedValue({
+      id: 30,
+      status: 'FINISHED',
+      isCertifiable: true,
+    });
+    sessionRepository.find.mockResolvedValue([]);
+
+    const noSessionsResponse = await request(app.getHttpServer())
+      .get('/api/certificates/activities/30/eligibility')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(noSessionsResponse.body).toMatchObject({
+      sessionsTotal: 0,
+      attendancePercentage: 0,
+      eligible: false,
+      reason: 'NO_SESSIONS',
+    });
   });
 
   it('returns 404 when the student has no certificates', async () => {

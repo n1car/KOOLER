@@ -58,5 +58,12 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Integrante:** Samuel (Persona S)
 - **Herramienta:** GitHub Copilot
 - **Orientación de GitHub Copilot:** Revisión de la estructura del backend, del diseño de base de datos para `CERTIFICATE`, de la identidad del usuario autenticado y del patrón `@CurrentUser()` para consultas del estudiante autenticado.
-- **Ayuda de GitHub Copilot en la implementación:** Creación de `CertificateEntity`, `CertificatesModule`, `CertificatesService`, `CertificatesController`, restricción única por estudiante y actividad, código único y endpoint seguro `GET /api/certificates` para consultar los propios certificados sin aceptar IDs arbitrarios del cliente. Se dejó explícito que la emisión automática de certificados y el porcentaje de elegibilidad siguen pendientes de decisión de negocio.
+- **Ayuda de GitHub Copilot en la implementación:** Orientación para construcción de `CertificateEntity`, `CertificatesModule`, `CertificatesService`, `CertificatesController`, restricción única por estudiante y actividad, código único y endpoint seguro `GET /api/certificates` para consultar los propios certificados sin aceptar IDs arbitrarios del cliente. Se dejó explícito que la emisión automática de certificados y el porcentaje de elegibilidad siguen pendientes de decisión de negocio.
 - **Verificación:** Se ejecutarán `npm test`, `npm run build`, `npx vitest run --config ./vitest.config.e2e.ts` y `git diff --check` para confirmar la infraestructura introducida y conservar intactos los cambios de asistencia por sesión.
+
+## Registro de uso de IA — Elegibilidad y emisión de certificados
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Ayuda en la implementación:** Cálculo de elegibilidad con umbral confirmado de 80 %, sesiones sin registro como ausencias, filtro por sesiones de la actividad, emisión idempotente y consulta privada de elegibilidad por el estudiante inscrito. El servicio de emisión se dejó listo para invocarse tras una finalización confiable.
+- **Límites identificados:** No existe actualmente un flujo de backend que marque actividades como `FINISHED` ni un scheduler para RF09. Por eso no se añadió un cron ni una transición de estado artificial y la emisión aún requiere invocación desde un futuro flujo de finalización/reintento. No se implementó descarga PDF.
+- **Verificación:** `npm test` pasó con 38 pruebas en 6 archivos; `npm run test:e2e` pasó con 25 pruebas en 4 archivos; `npm run build` compiló correctamente. Las pruebas HTTP usan JWT/guards reales y repositorios mockeados, sin conexión a PostgreSQL.

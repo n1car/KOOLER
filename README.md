@@ -84,13 +84,16 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Pruebas:** Vitest (ejecución rápida con `npm test`)
 
 ## 🗄️ Entidades de asistencia y certificación definidas
-* **Sesión (`SESSION`):** `id_session` (PK), `id_activity` (FK), `session_date`, `start_time`, `end_time` y `created_at`. Representa una sesión concreta dentro de una actividad. Aún no está conectada con cálculo de porcentaje ni emisión de certificados.
+* **Sesión (`SESSION`):** `id_session` (PK), `id_activity` (FK), `session_date`, `start_time`, `end_time` y `created_at`. Representa una sesión concreta dentro de una actividad. Para el cálculo vigente, todas las sesiones asociadas a la actividad cuentan como sesiones válidas.
 * **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_session` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). La unicidad se aplica por estudiante y sesión para permitir varias asistencias dentro de la misma actividad en sesiones distintas.
 * **Inscripción (`ENROLLMENT`):** `id_enrollment` (PK), `id_user` (FK), `id_activity` (FK) y `enrollment_date`. Se permite una inscripción por estudiante y actividad; todavía no existen estados de inscripción.
-* **Certificado (`CERTIFICATE`):** `id_certificate` (PK), `id_user` (FK), `id_activity` (FK), `issue_date` y `certificate_code` único. La restricción de unicidad evita más de un certificado por estudiante y actividad. La lógica de emisión y elegibilidad todavía no está automatizada ni vinculada al cálculo de porcentaje.
+* **Certificado (`CERTIFICATE`):** `id_certificate` (PK), `id_user` (FK), `id_activity` (FK), `issue_date` y `certificate_code` único. La restricción de unicidad evita más de un certificado por estudiante y actividad. La emisión del servicio es idempotente y genera códigos aleatorios únicos, respetando también la restricción de base de datos.
 * **Registro de asistencia:** `AttendanceModule` expone `POST /api/activities/:activityId/sessions/:sessionId/attendance` para el rol `ORGANIZADOR`. El servicio exige que el organizador autenticado sea propietario de la actividad, que la sesión pertenezca a su actividad indicada, que el estudiante exista y tenga rol de estudiante, que esté inscrito y que la actividad esté finalizada. Solo acepta `PRESENT` o `ABSENT`; los duplicados en la misma sesión se rechazan.
 * **Consulta de certificados:** `CertificatesModule` expone `GET /api/certificates` para el rol `ESTUDIANTE`, devolviendo los certificados del estudiante autenticado. El cliente no recibe un identificador configurable para consultar certificados ajenos; el endpoint usa `@CurrentUser()` para filtrar por la identidad real del usuario.
-* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha y código). No exponen entidades relacionadas ni `passwordHash`. La fórmula de porcentaje, la elegibilidad y la emisión automática de certificados siguen pendientes de decisión de negocio y no están implementadas como reglas ejecutables.
+* **Elegibilidad:** Se calcula sobre las sesiones asociadas a la actividad: `sesiones PRESENT / total de sesiones * 100`. Una sesión sin registro cuenta en el denominador, `ABSENT` no suma al numerador, las sesiones se cuentan una sola vez y se exige al menos 80 %. Actividades sin sesiones no otorgan certificado; la actividad debe estar `FINISHED` y ser certificable.
+* **Consulta de elegibilidad:** `GET /api/certificates/activities/:activityId/eligibility` requiere rol `ESTUDIANTE` e inscripción a esa actividad. La respuesta contiene solo el resumen de asistencia del estudiante autenticado.
+* **Emisión:** `CertificatesService.issueEligibleCertificates(activityId)` procesa todos los inscritos de una actividad finalizada y certificable. Es repetible sin duplicar certificados; debe volver a invocarse tras registrar asistencias pendientes para emitir certificados de estudiantes que alcancen el umbral. El repositorio actual no tiene un flujo que cambie actividades a `FINISHED`; por ello este método todavía no se invoca automáticamente al finalizar. Tampoco hay scheduler para completar RF09.
+* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha, código y resumen de elegibilidad). No exponen entidades relacionadas ni `passwordHash`. La descarga de archivos PDF no está implementada porque no existe infraestructura de generación/almacenamiento de documentos.
 
 ---
 
@@ -171,8 +174,9 @@ Las rutas que declaran `@Roles(...)` se autentican primero mediante Passport/JWT
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito en una sesión concreta de la actividad, únicamente cuando la actividad haya finalizado. |
 | `GET` | `/api/certificates` | ESTUDIANTE | Consulta los certificados emitidos para el usuario autenticado. El endpoint usa la identidad real del estudiante y no acepta un identificador del cliente para consultar certificados ajenos. |
+| `GET` | `/api/certificates/activities/:activityId/eligibility` | ESTUDIANTE inscrito | Consulta el porcentaje y la elegibilidad del estudiante autenticado para una actividad. |
 
-La emisión automática de certificados y la elegibilidad por porcentaje aún no están implementadas; este bloque aporta la infraestructura y la consulta segura del propio certificado.
+La emisión idempotente está disponible en `CertificatesService.issueEligibleCertificates(activityId)` para integrarse desde un flujo confiable de finalización/reintento. Aún no existe en el backend un flujo que marque una actividad como `FINISHED` ni el scheduler requerido por RF09, así que la invocación automática queda pendiente.
 
 ---
 
