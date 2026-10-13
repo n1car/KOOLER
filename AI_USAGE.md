@@ -32,3 +32,10 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Orientación de GitHub Copilot:** Análisis de la estructura del módulo, convenciones existentes, validaciones disponibles y estrategia de pruebas para asistencia.
 - **Ayuda de GitHub Copilot en la implementación:** Apoyo para crear `AttendanceModule`, `AttendanceService` y sus pruebas unitarias, e integrar el módulo en `AppModule`. No se implementaron endpoints, guards de autorización ni validación de inscripciones.
 - **Verificación:** `npm run build` compiló correctamente; las pruebas focalizadas de asistencia pasaron con 8 pruebas y `npm test` pasó con 11 pruebas en 3 archivos. `git diff --check` no reportó errores.
+
+## Registro de uso de IA — Autenticación condicional por roles
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Orientación de GitHub Copilot:** Análisis del orden de guards de NestJS 12.1.2 y del uso existente de Passport, `JwtStrategy`, metadata `@Roles` y `RolesGuard`.
+- **Ayuda de GitHub Copilot en la implementación:** Apoyo para crear `RolesJwtAuthGuard`, registrarlo con `APP_GUARD` en `AppModule` y añadir pruebas HTTP con la estrategia JWT real. No se añadieron endpoints funcionales de asistencia ni se modificó `main.ts`.
+- **Verificación:** `npm run build` compiló correctamente; `npm test` pasó con 11 pruebas en 3 archivos; `npx vitest run --config ./vitest.config.e2e.mts test/auth-authorization.e2e-spec.ts` pasó con 5 pruebas.

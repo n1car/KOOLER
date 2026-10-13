@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RolesJwtAuthGuard } from './common/guards/roles-jwt-auth.guard';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
@@ -32,5 +34,6 @@ import { SeedModule } from './database/seed.module';
     AttendanceModule,
     SeedModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: RolesJwtAuthGuard }],
 })
 export class AppModule {}

@@ -146,6 +146,8 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `POST` | `/api/auth/login` | Público | Inicio de sesión, devuelve token JWT y rol. |
 | `GET` | `/api/auth/profile` | Autenticado | Devuelve los datos del usuario conectado según su token JWT. |
 
+Las rutas que declaran `@Roles(...)` se autentican primero mediante Passport/JWT y la estrategia existente, y luego el `RolesGuard` global verifica el rol requerido. Las rutas sin metadata de roles no reciben autenticación por este guard; `/api/auth/profile` conserva su guard JWT local y registro/login siguen siendo públicos.
+
 ### 📅 Actividades (`/api/activities`) *(En desarrollo por Persona N)*
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
