@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
+import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
@@ -17,6 +18,7 @@ type AttendanceStatus = AttendanceEntity['status'];
 export class AttendanceService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly activitiesService: ActivitiesService,
     @InjectRepository(ActivityEntity)
     private readonly activitiesRepository: Repository<ActivityEntity>,
     @InjectRepository(AttendanceEntity)
@@ -50,6 +52,16 @@ export class AttendanceService {
     if (activity.status !== 'FINISHED') {
       throw new BadRequestException(
         'Solo se puede registrar asistencia en actividades finalizadas',
+      );
+    }
+
+    const isEnrolled = await this.activitiesService.isStudentEnrolled(
+      activityId,
+      userId,
+    );
+    if (!isEnrolled) {
+      throw new ForbiddenException(
+        'El estudiante no está inscrito en esta actividad',
       );
     }
 

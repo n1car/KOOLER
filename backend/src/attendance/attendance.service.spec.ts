@@ -8,6 +8,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueryFailedError } from 'typeorm';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
@@ -43,6 +44,7 @@ const createActivity = (status: ActivityEntity['status'] = 'FINISHED') => ({
 describe('AttendanceService', () => {
   let service: AttendanceService;
   let usersService: { findById: ReturnType<typeof vi.fn> };
+  let activitiesService: { isStudentEnrolled: ReturnType<typeof vi.fn> };
   let activitiesRepository: { findOneBy: ReturnType<typeof vi.fn> };
   let attendanceRepository: {
     create: ReturnType<typeof vi.fn>;
@@ -51,7 +53,9 @@ describe('AttendanceService', () => {
 
   beforeEach(async () => {
     usersService = { findById: vi.fn() };
+    activitiesService = { isStudentEnrolled: vi.fn() };
     activitiesRepository = { findOneBy: vi.fn() };
+    activitiesService.isStudentEnrolled.mockResolvedValue(true);
     attendanceRepository = {
       create: vi.fn(),
       save: vi.fn(),
@@ -61,6 +65,7 @@ describe('AttendanceService', () => {
       providers: [
         AttendanceService,
         { provide: UsersService, useValue: usersService },
+        { provide: ActivitiesService, useValue: activitiesService },
         {
           provide: getRepositoryToken(ActivityEntity),
           useValue: activitiesRepository,
@@ -93,12 +98,38 @@ describe('AttendanceService', () => {
     await expect(service.recordAttendance(1, 10, 'PRESENT')).resolves.toBe(
       attendance,
     );
+    expect(activitiesService.isStudentEnrolled).toHaveBeenCalledWith(10, 1);
     expect(attendanceRepository.create).toHaveBeenCalledWith({
       user,
       activity,
       status: 'PRESENT',
     });
     expect(attendanceRepository.save).toHaveBeenCalledWith(attendance);
+  });
+
+  it('rechaza asistencia cuando el estudiante no está inscrito', async () => {
+    usersService.findById.mockResolvedValue(createUser());
+    activitiesRepository.findOneBy.mockResolvedValue(createActivity());
+    activitiesService.isStudentEnrolled.mockResolvedValue(false);
+
+    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(attendanceRepository.create).not.toHaveBeenCalled();
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('propaga errores al consultar la inscripción', async () => {
+    const enrollmentError = new Error('Database unavailable');
+    usersService.findById.mockResolvedValue(createUser());
+    activitiesRepository.findOneBy.mockResolvedValue(createActivity());
+    activitiesService.isStudentEnrolled.mockRejectedValue(enrollmentError);
+
+    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toBe(
+      enrollmentError,
+    );
+    expect(attendanceRepository.create).not.toHaveBeenCalled();
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
   it('rechaza un estado de asistencia no soportado', async () => {
