@@ -26,19 +26,13 @@ export class AttendanceService {
   ) {}
 
   async recordAttendance(
-    userId: number,
+    organizerId: number,
+    studentId: number,
     activityId: number,
     status: string,
   ): Promise<AttendanceEntity> {
     if (!this.isAttendanceStatus(status)) {
       throw new BadRequestException('Estado de asistencia inválido');
-    }
-
-    const user = await this.usersService.findById(userId);
-    if (user.role.name !== 'ESTUDIANTE') {
-      throw new ForbiddenException(
-        'Solo se puede registrar asistencia para estudiantes',
-      );
     }
 
     const activity = await this.activitiesRepository.findOneBy({
@@ -49,19 +43,31 @@ export class AttendanceService {
         `Actividad con id ${activityId} no encontrada`,
       );
     }
-    if (activity.status !== 'FINISHED') {
-      throw new BadRequestException(
-        'Solo se puede registrar asistencia en actividades finalizadas',
+    if (activity.organizer.id !== organizerId) {
+      throw new ForbiddenException(
+        'Solo el organizador propietario puede registrar asistencia',
+      );
+    }
+
+    const user = await this.usersService.findById(studentId);
+    if (user.role.name !== 'ESTUDIANTE') {
+      throw new ForbiddenException(
+        'Solo se puede registrar asistencia para estudiantes',
       );
     }
 
     const isEnrolled = await this.activitiesService.isStudentEnrolled(
       activityId,
-      userId,
+      studentId,
     );
     if (!isEnrolled) {
       throw new ForbiddenException(
         'El estudiante no está inscrito en esta actividad',
+      );
+    }
+    if (activity.status !== 'FINISHED') {
+      throw new BadRequestException(
+        'Solo se puede registrar asistencia en actividades finalizadas',
       );
     }
 

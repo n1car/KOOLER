@@ -85,8 +85,9 @@ Todo commit debe seguir el formato Conventional Commits:
 
 ## 🗄️ Entidad de asistencia definida
 * **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_activity` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). Cada estudiante puede tener como máximo un registro de asistencia por actividad.
-* **Módulo y servicio iniciales:** `AttendanceModule` registra `AttendanceEntity` y proporciona `AttendanceService`. El servicio acepta los estados `PRESENT` o `ABSENT`, exige que el usuario exista y tenga rol de estudiante, y que la actividad exista y esté finalizada. Las asistencias duplicadas para el mismo estudiante y actividad se rechazan.
-* **Alcance pendiente:** Todavía no existen endpoints de asistencia. El servicio no valida inscripciones porque aún no está disponible el contrato correspondiente. No se documentan reglas de certificados como implementadas.
+* **Inscripción (`ENROLLMENT`):** `id_enrollment` (PK), `id_user` (FK), `id_activity` (FK) y `enrollment_date`. Se permite una inscripción por estudiante y actividad; todavía no existen estados de inscripción.
+* **Registro de asistencia:** `AttendanceModule` expone `POST /api/activities/:activityId/attendance` para el rol `ORGANIZADOR`. El servicio exige que el organizador autenticado sea propietario de la actividad, que el estudiante exista y tenga rol de estudiante, que esté inscrito y que la actividad esté finalizada. Solo acepta `PRESENT` o `ABSENT`; los duplicados se rechazan.
+* **Respuesta y límites:** El endpoint devuelve únicamente ID de asistencia, ID del estudiante, ID de actividad, estado y fecha de registro. No expone entidades relacionadas ni `passwordHash`. No se documentan reglas de sesiones, porcentajes ni certificados como implementadas.
 
 ---
 
@@ -162,8 +163,12 @@ Las rutas que declaran `@Roles(...)` se autentican primero mediante Passport/JWT
 ### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
 *(Documentar aquí los endpoints creados por J: consultar reseñas públicas y calificar actividad finalizada).*
 
-### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Samuel)*
-*(Documentar aquí los endpoints creados por S: registrar asistencia y consultar/descargar certificado).*
+### 📜 Certificados y Asistencia *(Responsable: Samuel)*
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/activities/:activityId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito, únicamente cuando la actividad haya finalizado. |
+
+No hay endpoints de certificados implementados todavía.
 
 ---
 

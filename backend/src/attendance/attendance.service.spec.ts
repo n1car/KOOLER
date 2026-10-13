@@ -7,15 +7,15 @@ import {
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueryFailedError } from 'typeorm';
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceService } from './attendance.service';
 
-const createUser = (roleName = 'ESTUDIANTE') => ({
-  id: 1,
+const createUser = (roleName = 'ESTUDIANTE', id = 1) => ({
+  id,
   firstName: 'Ana',
   lastName: 'Estudiante',
   email: 'ana@example.com',
@@ -37,7 +37,7 @@ const createActivity = (status: ActivityEntity['status'] = 'FINISHED') => ({
   registrationDeadline: new Date('2026-09-30T23:59:59Z'),
   isCertifiable: true,
   minAttendancePercentage: 80,
-  organizer: createUser('ORGANIZADOR'),
+  organizer: createUser('ORGANIZADOR', 20),
   createdAt: new Date(),
 });
 
@@ -53,9 +53,10 @@ describe('AttendanceService', () => {
 
   beforeEach(async () => {
     usersService = { findById: vi.fn() };
-    activitiesService = { isStudentEnrolled: vi.fn() };
+    activitiesService = {
+      isStudentEnrolled: vi.fn().mockResolvedValue(true),
+    };
     activitiesRepository = { findOneBy: vi.fn() };
-    activitiesService.isStudentEnrolled.mockResolvedValue(true);
     attendanceRepository = {
       create: vi.fn(),
       save: vi.fn(),
@@ -80,7 +81,7 @@ describe('AttendanceService', () => {
     service = module.get(AttendanceService);
   });
 
-  it('registra asistencia para un estudiante en una actividad finalizada', async () => {
+  it('registra asistencia para estudiante inscrito y propietario autenticado', async () => {
     const user = createUser();
     const activity = createActivity();
     const attendance = {
@@ -95,7 +96,7 @@ describe('AttendanceService', () => {
     attendanceRepository.create.mockReturnValue(attendance);
     attendanceRepository.save.mockResolvedValue(attendance);
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).resolves.toBe(
+    await expect(service.recordAttendance(20, 1, 10, 'PRESENT')).resolves.toBe(
       attendance,
     );
     expect(activitiesService.isStudentEnrolled).toHaveBeenCalledWith(10, 1);
@@ -107,14 +108,25 @@ describe('AttendanceService', () => {
     expect(attendanceRepository.save).toHaveBeenCalledWith(attendance);
   });
 
+  it('rechaza un organizador que no es propietario de la actividad', async () => {
+    activitiesRepository.findOneBy.mockResolvedValue(createActivity());
+
+    await expect(
+      service.recordAttendance(21, 1, 10, 'PRESENT'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(usersService.findById).not.toHaveBeenCalled();
+    expect(attendanceRepository.create).not.toHaveBeenCalled();
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
+  });
+
   it('rechaza asistencia cuando el estudiante no está inscrito', async () => {
     usersService.findById.mockResolvedValue(createUser());
     activitiesRepository.findOneBy.mockResolvedValue(createActivity());
     activitiesService.isStudentEnrolled.mockResolvedValue(false);
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
-      ForbiddenException,
-    );
+    await expect(
+      service.recordAttendance(20, 1, 10, 'PRESENT'),
+    ).rejects.toThrow(ForbiddenException);
     expect(attendanceRepository.create).not.toHaveBeenCalled();
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
@@ -125,7 +137,7 @@ describe('AttendanceService', () => {
     activitiesRepository.findOneBy.mockResolvedValue(createActivity());
     activitiesService.isStudentEnrolled.mockRejectedValue(enrollmentError);
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toBe(
+    await expect(service.recordAttendance(20, 1, 10, 'PRESENT')).rejects.toBe(
       enrollmentError,
     );
     expect(attendanceRepository.create).not.toHaveBeenCalled();
@@ -133,38 +145,43 @@ describe('AttendanceService', () => {
   });
 
   it('rechaza un estado de asistencia no soportado', async () => {
-    await expect(service.recordAttendance(1, 10, 'UNKNOWN')).rejects.toThrow(
-      BadRequestException,
-    );
-    expect(usersService.findById).not.toHaveBeenCalled();
+    await expect(
+      service.recordAttendance(20, 1, 10, 'UNKNOWN'),
+    ).rejects.toThrow(BadRequestException);
+    expect(activitiesRepository.findOneBy).not.toHaveBeenCalled();
   });
 
   it('rechaza un usuario que no sea estudiante', async () => {
     usersService.findById.mockResolvedValue(createUser('ORGANIZADOR'));
+    activitiesRepository.findOneBy.mockResolvedValue(createActivity());
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
-      ForbiddenException,
-    );
-    expect(activitiesRepository.findOneBy).not.toHaveBeenCalled();
+    await expect(
+      service.recordAttendance(20, 1, 10, 'PRESENT'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(activitiesService.isStudentEnrolled).not.toHaveBeenCalled();
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
   it('propaga el error cuando el usuario solicitado no existe', async () => {
-    const notFoundError = new NotFoundException('Usuario con id 1 no encontrado');
+    const notFoundError = new NotFoundException(
+      'Usuario con id 1 no encontrado',
+    );
     usersService.findById.mockRejectedValue(notFoundError);
+    activitiesRepository.findOneBy.mockResolvedValue(createActivity());
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toBe(
+    await expect(service.recordAttendance(20, 1, 10, 'PRESENT')).rejects.toBe(
       notFoundError,
     );
-    expect(activitiesRepository.findOneBy).not.toHaveBeenCalled();
+    expect(activitiesService.isStudentEnrolled).not.toHaveBeenCalled();
   });
 
   it('rechaza una actividad inexistente', async () => {
-    usersService.findById.mockResolvedValue(createUser());
     activitiesRepository.findOneBy.mockResolvedValue(null);
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
-      'Actividad con id 10 no encontrada',
-    );
+    await expect(
+      service.recordAttendance(20, 1, 10, 'PRESENT'),
+    ).rejects.toThrow('Actividad con id 10 no encontrada');
+    expect(usersService.findById).not.toHaveBeenCalled();
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
@@ -172,9 +189,9 @@ describe('AttendanceService', () => {
     usersService.findById.mockResolvedValue(createUser());
     activitiesRepository.findOneBy.mockResolvedValue(createActivity('ACTIVE'));
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      service.recordAttendance(20, 1, 10, 'PRESENT'),
+    ).rejects.toThrow(BadRequestException);
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
@@ -191,9 +208,9 @@ describe('AttendanceService', () => {
       }),
     );
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(
+      service.recordAttendance(20, 1, 10, 'PRESENT'),
+    ).rejects.toThrow(ConflictException);
   });
 
   it('vuelve a propagar errores de persistencia no relacionados con duplicados', async () => {
@@ -205,7 +222,7 @@ describe('AttendanceService', () => {
     attendanceRepository.create.mockReturnValue({});
     attendanceRepository.save.mockRejectedValue(persistenceError);
 
-    await expect(service.recordAttendance(1, 10, 'PRESENT')).rejects.toBe(
+    await expect(service.recordAttendance(20, 1, 10, 'PRESENT')).rejects.toBe(
       persistenceError,
     );
   });
