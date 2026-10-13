@@ -1,12 +1,15 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
+import PDFDocument from 'pdfkit';
 import { In, QueryFailedError, Repository } from 'typeorm';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { EnrollmentEntity } from '../activities/entities/enrollment.entity';
@@ -16,6 +19,12 @@ import { CertificateEntity } from './entities/certificate.entity';
 
 const MINIMUM_ATTENDANCE_PERCENTAGE = 80;
 const CERTIFICATE_CODE_ATTEMPTS = 3;
+export const CERTIFICATE_PDF_DOCUMENT_FACTORY = Symbol(
+  'CERTIFICATE_PDF_DOCUMENT_FACTORY',
+);
+type CertificatePdfDocumentFactory = (
+  options: ConstructorParameters<typeof PDFDocument>[0],
+) => InstanceType<typeof PDFDocument>;
 
 export type EligibilityReason =
   | 'ACTIVITY_NOT_FINISHED'
@@ -38,10 +47,13 @@ export interface CertificateIssuanceSummary {
   eligibleStudents: number;
   issuedCertificates: number;
   existingCertificates: number;
+  failedStudents: number;
 }
 
 @Injectable()
 export class CertificatesService {
+  private readonly logger = new Logger(CertificatesService.name);
+
   constructor(
     @InjectRepository(CertificateEntity)
     private readonly certificateRepository: Repository<CertificateEntity>,
@@ -53,6 +65,8 @@ export class CertificatesService {
     private readonly attendanceRepository: Repository<AttendanceEntity>,
     @InjectRepository(EnrollmentEntity)
     private readonly enrollmentRepository: Repository<EnrollmentEntity>,
+    @Inject(CERTIFICATE_PDF_DOCUMENT_FACTORY)
+    private readonly createPdfDocument: CertificatePdfDocumentFactory,
   ) {}
 
   async findByStudentId(studentId: number): Promise<CertificateEntity[]> {
@@ -61,6 +75,41 @@ export class CertificatesService {
       relations: { activity: true, user: true },
       order: { issueDate: 'DESC' },
     });
+  }
+
+  async downloadCertificatePdf(
+    studentId: number,
+    certificateId: number,
+  ): Promise<{ content: Buffer; fileName: string }> {
+    const certificate = await this.certificateRepository.findOne({
+      where: { id: certificateId, user: { id: studentId } },
+      relations: { activity: true, user: true },
+    });
+    if (!certificate) {
+      throw new NotFoundException('Certificado no encontrado');
+    }
+
+    const studentName =
+      `${certificate.user.firstName} ${certificate.user.lastName}`.trim();
+    try {
+      return {
+        content: await this.renderCertificatePdf({
+          studentName,
+          activityName: certificate.activity.name,
+          certificateCode: certificate.certificateCode,
+          issueDate: certificate.issueDate,
+        }),
+        fileName: `certificate-${certificate.certificateCode}.pdf`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `No se pudo generar el PDF del certificado ${certificate.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new InternalServerErrorException(
+        'No se pudo generar el PDF del certificado',
+      );
+    }
   }
 
   async getEligibilityForStudent(
@@ -104,6 +153,7 @@ export class CertificatesService {
         eligibleStudents: 0,
         issuedCertificates: 0,
         existingCertificates: 0,
+        failedStudents: 0,
       };
     }
 
@@ -114,6 +164,7 @@ export class CertificatesService {
         eligibleStudents: 0,
         issuedCertificates: 0,
         existingCertificates: 0,
+        failedStudents: 0,
       };
     }
 
@@ -129,6 +180,7 @@ export class CertificatesService {
     let eligibleStudents = 0;
     let issuedCertificates = 0;
     let existingCertificates = 0;
+    let failedStudents = 0;
 
     for (const enrollment of enrollments) {
       const studentId = enrollment.user.id;
@@ -144,11 +196,19 @@ export class CertificatesService {
       }
 
       eligibleStudents += 1;
-      const result = await this.issueCertificate(studentId, activityId);
-      if (result.created) {
-        issuedCertificates += 1;
-      } else {
-        existingCertificates += 1;
+      try {
+        const result = await this.issueCertificate(studentId, activityId);
+        if (result.created) {
+          issuedCertificates += 1;
+        } else {
+          existingCertificates += 1;
+        }
+      } catch (error) {
+        failedStudents += 1;
+        this.logger.error(
+          `No se pudo emitir certificado para estudiante ${studentId} en actividad ${activityId}`,
+          error instanceof Error ? error.stack : undefined,
+        );
       }
     }
 
@@ -157,6 +217,7 @@ export class CertificatesService {
       eligibleStudents,
       issuedCertificates,
       existingCertificates,
+      failedStudents,
     };
   }
 
@@ -297,5 +358,51 @@ export class CertificatesService {
       error instanceof QueryFailedError &&
       error.driverError?.code === '23505'
     );
+  }
+
+  private renderCertificatePdf(data: {
+    studentName: string;
+    activityName: string;
+    certificateCode: string;
+    issueDate: Date;
+  }): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const document = this.createPdfDocument({ size: 'A4', margin: 56 });
+      const chunks: Buffer[] = [];
+
+      document.on('data', (chunk: Buffer) => chunks.push(chunk));
+      document.on('error', reject);
+      document.on('end', () => resolve(Buffer.concat(chunks)));
+
+      document
+        .fontSize(24)
+        .text('Certificado de participacion', { align: 'center' })
+        .moveDown(2)
+        .fontSize(14)
+        .text('Se certifica que', { align: 'center' })
+        .moveDown()
+        .fontSize(20)
+        .text(data.studentName, { align: 'center' })
+        .moveDown()
+        .fontSize(14)
+        .text('participo en', { align: 'center' })
+        .moveDown()
+        .fontSize(18)
+        .text(data.activityName, { align: 'center' })
+        .moveDown(2)
+        .fontSize(11)
+        .text(`Codigo de certificado: ${data.certificateCode}`, {
+          align: 'center',
+        })
+        .text(
+          `Fecha de emision: ${new Intl.DateTimeFormat('es-CO', {
+            dateStyle: 'long',
+            timeZone: 'America/Bogota',
+          }).format(data.issueDate)}`,
+          { align: 'center' },
+        );
+
+      document.end();
+    });
   }
 }

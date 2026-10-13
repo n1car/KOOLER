@@ -4,6 +4,7 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  StreamableFile,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -45,5 +46,22 @@ export class CertificatesController {
       user.id,
       activityId,
     );
+  }
+
+  @Get(':certificateId/download')
+  @Roles('ESTUDIANTE')
+  async downloadMyCertificate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('certificateId', ParseIntPipe) certificateId: number,
+  ): Promise<StreamableFile> {
+    const { content, fileName } =
+      await this.certificatesService.downloadCertificatePdf(
+        user.id,
+        certificateId,
+      );
+    return new StreamableFile(content, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${fileName}"`,
+    });
   }
 }

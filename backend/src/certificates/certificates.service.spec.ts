@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import PDFDocument from 'pdfkit';
 import { QueryFailedError } from 'typeorm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivityEntity } from '../activities/entities/activity.entity';
@@ -12,7 +14,10 @@ import { EnrollmentEntity } from '../activities/entities/enrollment.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
 import { AttendanceEntity } from '../attendance/entities/attendance.entity';
 import { CertificateEntity } from './entities/certificate.entity';
-import { CertificatesService } from './certificates.service';
+import {
+  CERTIFICATE_PDF_DOCUMENT_FACTORY,
+  CertificatesService,
+} from './certificates.service';
 
 const createActivity = (
   status: ActivityEntity['status'] = 'FINISHED',
@@ -78,6 +83,7 @@ describe('CertificatesService', () => {
     find: ReturnType<typeof vi.fn>;
     findOne: ReturnType<typeof vi.fn>;
   };
+  let pdfDocumentFactory: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     certificateRepository = {
@@ -93,6 +99,10 @@ describe('CertificatesService', () => {
       find: vi.fn(),
       findOne: vi.fn(),
     };
+    pdfDocumentFactory = vi.fn(
+      (options: ConstructorParameters<typeof PDFDocument>[0]) =>
+        new PDFDocument(options),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -116,6 +126,10 @@ describe('CertificatesService', () => {
         {
           provide: getRepositoryToken(EnrollmentEntity),
           useValue: enrollmentRepository,
+        },
+        {
+          provide: CERTIFICATE_PDF_DOCUMENT_FACTORY,
+          useValue: pdfDocumentFactory,
         },
       ],
     }).compile();
@@ -144,6 +158,56 @@ describe('CertificatesService', () => {
       relations: { activity: true, user: true },
       order: { issueDate: 'DESC' },
     });
+  });
+
+  it('genera un PDF con identidad del estudiante, actividad, código y fecha', async () => {
+    const certificate = {
+      ...createCertificate(),
+      user: {
+        id: 10,
+        firstName: 'Ana',
+        lastName: 'Estudiante',
+      },
+      activity: { id: 20, name: 'Bienestar' },
+      issueDate: new Date('2026-10-02T12:00:00Z'),
+    };
+    certificateRepository.findOne.mockResolvedValue(certificate);
+
+    const result = await service.downloadCertificatePdf(10, 1);
+
+    expect(result.fileName).toBe('certificate-CERT-10-20.pdf');
+    expect(result.content.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(certificateRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 1, user: { id: 10 } },
+      relations: { activity: true, user: true },
+    });
+  });
+
+  it('no permite descargar un certificado de otro estudiante ni uno inexistente', async () => {
+    certificateRepository.findOne.mockResolvedValue(null);
+
+    await expect(service.downloadCertificatePdf(11, 1)).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(certificateRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 1, user: { id: 11 } },
+      relations: { activity: true, user: true },
+    });
+  });
+
+  it('devuelve un error explícito si falla la generación del PDF', async () => {
+    certificateRepository.findOne.mockResolvedValue({
+      ...createCertificate(),
+      user: { id: 10, firstName: 'Ana', lastName: 'Estudiante' },
+      activity: { id: 20, name: 'Bienestar' },
+    });
+    pdfDocumentFactory.mockImplementation(() => {
+      throw new Error('PDF generation failed');
+    });
+
+    await expect(service.downloadCertificatePdf(10, 1)).rejects.toThrow(
+      InternalServerErrorException,
+    );
   });
 
   it('considera elegible la asistencia exactamente del 80 por ciento', async () => {
@@ -298,6 +362,7 @@ describe('CertificatesService', () => {
       eligibleStudents: 0,
       issuedCertificates: 0,
       existingCertificates: 0,
+      failedStudents: 0,
     });
     expect(sessionRepository.find).not.toHaveBeenCalled();
     expect(certificateRepository.save).not.toHaveBeenCalled();
@@ -339,6 +404,7 @@ describe('CertificatesService', () => {
       eligibleStudents: 1,
       issuedCertificates: 1,
       existingCertificates: 0,
+      failedStudents: 0,
     });
     expect(certificateRepository.save).toHaveBeenCalledTimes(1);
     expect(certificateRepository.create).toHaveBeenCalledWith({
@@ -369,12 +435,14 @@ describe('CertificatesService', () => {
       eligibleStudents: 1,
       issuedCertificates: 1,
       existingCertificates: 0,
+      failedStudents: 0,
     });
     expect(secondResult).toEqual({
       activityId: 20,
       eligibleStudents: 1,
       issuedCertificates: 0,
       existingCertificates: 1,
+      failedStudents: 0,
     });
     expect(certificateRepository.save).toHaveBeenCalledTimes(1);
   });
@@ -401,7 +469,7 @@ describe('CertificatesService', () => {
     expect(certificateRepository.save).toHaveBeenCalledTimes(2);
   });
 
-  it('propaga los fallos de persistencia como error del servidor', async () => {
+  it('registra y contabiliza fallos de persistencia para reintentar sin abortar el lote', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
     sessionRepository.find.mockResolvedValue(createSessions(1));
     enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
@@ -411,8 +479,32 @@ describe('CertificatesService', () => {
     certificateRepository.findOne.mockResolvedValue(null);
     certificateRepository.save.mockRejectedValue(new Error('DB unavailable'));
 
-    await expect(service.issueEligibleCertificates(20)).rejects.toThrow(
-      InternalServerErrorException,
-    );
+    await expect(service.issueEligibleCertificates(20)).resolves.toEqual({
+      activityId: 20,
+      eligibleStudents: 1,
+      issuedCertificates: 0,
+      existingCertificates: 0,
+      failedStudents: 1,
+    });
+  });
+
+  it('emite en un ciclo posterior el certificado cuyo primer guardado falló', async () => {
+    activityRepository.findOneBy.mockResolvedValue(createActivity());
+    sessionRepository.find.mockResolvedValue(createSessions(1));
+    enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
+    attendanceRepository.find.mockResolvedValue([
+      createAttendance(10, 1, 'PRESENT'),
+    ]);
+    certificateRepository.findOne.mockResolvedValue(null);
+    certificateRepository.save
+      .mockRejectedValueOnce(new Error('Temporary database error'))
+      .mockResolvedValueOnce(createCertificate(10));
+
+    const failedCycle = await service.issueEligibleCertificates(20);
+    const retryCycle = await service.issueEligibleCertificates(20);
+
+    expect(failedCycle.failedStudents).toBe(1);
+    expect(retryCycle.issuedCertificates).toBe(1);
+    expect(certificateRepository.save).toHaveBeenCalledTimes(2);
   });
 });

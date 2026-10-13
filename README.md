@@ -82,6 +82,8 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Validación:** DTOs con `class-validator` y `class-transformer`
 * **Auditoría:** `LoggingInterceptor` global (registra método, URL, código de estado y tiempo de respuesta en ms)
 * **Pruebas:** Vitest (ejecución rápida con `npm test`)
+* **Tareas programadas:** `@nestjs/schedule` para finalizar actividades vencidas.
+* **PDF:** `pdfkit` para generar certificados en memoria, sin archivos temporales.
 
 ## 🗄️ Entidades de asistencia y certificación definidas
 * **Sesión (`SESSION`):** `id_session` (PK), `id_activity` (FK), `session_date`, `start_time`, `end_time` y `created_at`. Representa una sesión concreta dentro de una actividad. Para el cálculo vigente, todas las sesiones asociadas a la actividad cuentan como sesiones válidas.
@@ -92,8 +94,9 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Consulta de certificados:** `CertificatesModule` expone `GET /api/certificates` para el rol `ESTUDIANTE`, devolviendo los certificados del estudiante autenticado. El cliente no recibe un identificador configurable para consultar certificados ajenos; el endpoint usa `@CurrentUser()` para filtrar por la identidad real del usuario.
 * **Elegibilidad:** Se calcula sobre las sesiones asociadas a la actividad: `sesiones PRESENT / total de sesiones * 100`. Una sesión sin registro cuenta en el denominador, `ABSENT` no suma al numerador, las sesiones se cuentan una sola vez y se exige al menos 80 %. Actividades sin sesiones no otorgan certificado; la actividad debe estar `FINISHED` y ser certificable.
 * **Consulta de elegibilidad:** `GET /api/certificates/activities/:activityId/eligibility` requiere rol `ESTUDIANTE` e inscripción a esa actividad. La respuesta contiene solo el resumen de asistencia del estudiante autenticado.
-* **Emisión:** `CertificatesService.issueEligibleCertificates(activityId)` procesa todos los inscritos de una actividad finalizada y certificable. Es repetible sin duplicar certificados; debe volver a invocarse tras registrar asistencias pendientes para emitir certificados de estudiantes que alcancen el umbral. El repositorio actual no tiene un flujo que cambie actividades a `FINISHED`; por ello este método todavía no se invoca automáticamente al finalizar. Tampoco hay scheduler para completar RF09.
-* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha, código y resumen de elegibilidad). No exponen entidades relacionadas ni `passwordHash`. La descarga de archivos PDF no está implementada porque no existe infraestructura de generación/almacenamiento de documentos.
+* **Finalización automática:** Un cron cada minuto marca actividades en lotes de 50 únicamente si están `ACTIVE` y su combinación `date + endTime` ya venció. La comparación interpreta la fecha/hora en `America/Bogota`; horarios con formato no válido se omiten. Nunca cambia actividades `CANCELLED`.
+* **Emisión:** `CertificatesService.issueEligibleCertificates(activityId)` procesa inscritos en actividades `FINISHED` y certificables. Se exige el umbral fijo confirmado de 80 %; `ActivityEntity.minAttendancePercentage` permanece sin uso para no cambiar silenciosamente la regla vigente. La emisión es idempotente; los errores por estudiante o actividad se registran y se reintentan en ciclos posteriores. Sesiones sin asistencia y `ABSENT` no suman al numerador; actividades sin sesiones no emiten.
+* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha, código y resumen de elegibilidad). No exponen entidades relacionadas ni `passwordHash`. El PDF se genera en memoria y la búsqueda limita por certificado y estudiante autenticado.
 
 ---
 
@@ -175,8 +178,9 @@ Las rutas que declaran `@Roles(...)` se autentican primero mediante Passport/JWT
 | `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito en una sesión concreta de la actividad, únicamente cuando la actividad haya finalizado. |
 | `GET` | `/api/certificates` | ESTUDIANTE | Consulta los certificados emitidos para el usuario autenticado. El endpoint usa la identidad real del estudiante y no acepta un identificador del cliente para consultar certificados ajenos. |
 | `GET` | `/api/certificates/activities/:activityId/eligibility` | ESTUDIANTE inscrito | Consulta el porcentaje y la elegibilidad del estudiante autenticado para una actividad. |
+| `GET` | `/api/certificates/:certificateId/download` | ESTUDIANTE (propietario) | Descarga el certificado propio como PDF (`application/pdf`) con nombre, actividad, código y fecha de emisión. |
 
-La emisión idempotente está disponible en `CertificatesService.issueEligibleCertificates(activityId)` para integrarse desde un flujo confiable de finalización/reintento. Aún no existe en el backend un flujo que marque una actividad como `FINISHED` ni el scheduler requerido por RF09, así que la invocación automática queda pendiente.
+El cron de `ActivityFinalizationService` finaliza actividades vencidas cada minuto y luego intenta emitir certificados. También revisa actividades certificables ya finalizadas para reintentar emisiones fallidas o pendientes de registro de asistencia. El umbral de 80 % es más específico que RF14, cuya redacción original solicita que exista un registro de asistencia; este criterio debe mantenerse alineado con el equipo.
 
 ---
 
@@ -184,6 +188,7 @@ La emisión idempotente está disponible en `CertificatesService.issueEligibleCe
 ```bash
 cd backend
 npm test
+npm run test:e2e
 ```
 
 ## 📝 Registro de Uso de IA

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { RolesJwtAuthGuard } from './common/guards/roles-jwt-auth.guard';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -15,6 +16,7 @@ import { SeedModule } from './database/seed.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

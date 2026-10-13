@@ -5,6 +5,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import PDFDocument from 'pdfkit';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
@@ -15,7 +16,10 @@ import { AttendanceEntity } from '../src/attendance/entities/attendance.entity';
 import { RolesGuard } from '../src/common/guards/roles.guard';
 import { RolesJwtAuthGuard } from '../src/common/guards/roles-jwt-auth.guard';
 import { CertificatesController } from '../src/certificates/certificates.controller';
-import { CertificatesService } from '../src/certificates/certificates.service';
+import {
+  CERTIFICATE_PDF_DOCUMENT_FACTORY,
+  CertificatesService,
+} from '../src/certificates/certificates.service';
 import { CertificateEntity } from '../src/certificates/entities/certificate.entity';
 import { UsersService } from '../src/users/users.service';
 
@@ -33,8 +37,12 @@ const createUser = (id: number, roleName: string) => ({
 
 const createCertificate = (id: number, studentId: number, activityId: number) => ({
   id,
-  user: { id: studentId },
-  activity: { id: activityId },
+  user: {
+    id: studentId,
+    firstName: 'User',
+    lastName: `${studentId}`,
+  },
+  activity: { id: activityId, name: `Activity ${activityId}` },
   issueDate: new Date('2026-10-02T12:00:00Z'),
   certificateCode: `CERT-${studentId}-${activityId}`,
 });
@@ -86,7 +94,12 @@ describe('Certificates endpoint (e2e)', () => {
       find: vi.fn(async ({ where }: { where: { user: { id: number } } }) => {
         return certificatesByStudent.get(where.user.id) ?? [];
       }),
-      findOne: vi.fn(async () => null),
+      findOne: vi.fn(
+        async ({ where }: { where: { id: number; user: { id: number } } }) =>
+          certificatesByStudent
+            .get(where.user.id)
+            ?.find((certificate) => certificate.id === where.id) ?? null,
+      ),
       create: vi.fn((data) => data),
       save: vi.fn(async (data) => data),
     };
@@ -152,6 +165,11 @@ describe('Certificates endpoint (e2e)', () => {
         {
           provide: getRepositoryToken(EnrollmentEntity),
           useValue: enrollmentRepository,
+        },
+        {
+          provide: CERTIFICATE_PDF_DOCUMENT_FACTORY,
+          useValue: (options: ConstructorParameters<typeof PDFDocument>[0]) =>
+            new PDFDocument(options),
         },
         {
           provide: ConfigService,
@@ -297,6 +315,53 @@ describe('Certificates endpoint (e2e)', () => {
     await request(app.getHttpServer())
       .get('/api/certificates')
       .set('Authorization', `Bearer ${studentToken}`)
+      .expect(404);
+  });
+
+  it('downloads a PDF for the authenticated student certificate', async () => {
+    const token = tokenFor(usersById.get(10)!);
+    const response = await request(app.getHttpServer())
+      .get('/api/certificates/1/download')
+      .set('Authorization', `Bearer ${token}`)
+      .buffer(true)
+      .parse((res, callback) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => callback(null, Buffer.concat(chunks)));
+      })
+      .expect(200);
+
+    expect(response.headers['content-type']).toContain('application/pdf');
+    expect(response.headers['content-disposition']).toContain(
+      'attachment; filename="certificate-CERT-10-30.pdf"',
+    );
+    expect((response.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('requires JWT and the STUDENT role to download certificates', async () => {
+    await request(app.getHttpServer())
+      .get('/api/certificates/1/download')
+      .expect(401);
+
+    const organizerToken = tokenFor(usersById.get(20)!);
+    await request(app.getHttpServer())
+      .get('/api/certificates/1/download')
+      .set('Authorization', `Bearer ${organizerToken}`)
+      .expect(403);
+  });
+
+  it('does not allow downloading another student certificate or a missing certificate', async () => {
+    certificatesByStudent.set(20, [createCertificate(2, 20, 30)]);
+    const token = tokenFor(usersById.get(10)!);
+
+    await request(app.getHttpServer())
+      .get('/api/certificates/2/download')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/api/certificates/999/download')
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 });

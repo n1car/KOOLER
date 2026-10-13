@@ -64,6 +64,13 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 ## Registro de uso de IA — Elegibilidad y emisión de certificados
 - **Integrante:** Samuel (Persona S)
 - **Herramienta:** GitHub Copilot
-- **Ayuda en la implementación:** Cálculo de elegibilidad con umbral confirmado de 80 %, sesiones sin registro como ausencias, filtro por sesiones de la actividad, emisión idempotente y consulta privada de elegibilidad por el estudiante inscrito. El servicio de emisión se dejó listo para invocarse tras una finalización confiable.
+- **Ayuda en la implementación:** Revisión del Cálculo de elegibilidad con umbral confirmado de 80 %, sesiones sin registro como ausencias, filtro por sesiones de la actividad, emisión idempotente y consulta privada de elegibilidad por el estudiante inscrito. El servicio de emisión se dejó listo para invocarse tras una finalización confiable.
 - **Límites identificados:** No existe actualmente un flujo de backend que marque actividades como `FINISHED` ni un scheduler para RF09. Por eso no se añadió un cron ni una transición de estado artificial y la emisión aún requiere invocación desde un futuro flujo de finalización/reintento. No se implementó descarga PDF.
 - **Verificación:** `npm test` pasó con 38 pruebas en 6 archivos; `npm run test:e2e` pasó con 25 pruebas en 4 archivos; `npm run build` compiló correctamente. Las pruebas HTTP usan JWT/guards reales y repositorios mockeados, sin conexión a PostgreSQL.
+
+## Registro de uso de IA — Finalización automática y descarga PDF
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Ayuda en la implementación:** Sugerencia de Integración de `@nestjs/schedule` para procesar cada minuto actividades `ACTIVE` vencidas usando `date` y `endTime`, y reintentar la emisión idempotente sobre actividades certificables `FINISHED`. Se fijó la interpretación local `America/Bogota`; el umbral permanece fijo en 80 % y no se usa `minAttendancePercentage`. Se añadió descarga propia de certificados con PDFKit en memoria, protegida por JWT/rol y filtrada por estudiante.
+- **Límites:** Horarios con formato no reconocido se omiten con seguridad; la infraestructura no incluye persistencia de configuración de zona horaria. RF14 originalmente habla de asistencia registrada mientras la regla confirmada de este desarrollo exige 80 %. No se probó contra PostgreSQL real.
+- **Verificación:** `npm test` pasó con 48 pruebas en 7 archivos; `npm run test:e2e` pasó con 28 pruebas en 4 archivos; `npm run build` compiló correctamente. Las pruebas PDF usan PDFKit real en memoria. Las E2E usan la estrategia JWT/guards reales y repositorios simulados.
