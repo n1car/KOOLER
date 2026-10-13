@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { SeedModule } from './database/seed.module';
     AuthModule,
     ActivitiesModule,
     AttendanceModule,
+    CertificatesModule,
     SeedModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: RolesJwtAuthGuard }],

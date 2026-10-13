@@ -83,11 +83,14 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Auditoría:** `LoggingInterceptor` global (registra método, URL, código de estado y tiempo de respuesta en ms)
 * **Pruebas:** Vitest (ejecución rápida con `npm test`)
 
-## 🗄️ Entidad de asistencia definida
-* **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_activity` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). Cada estudiante puede tener como máximo un registro de asistencia por actividad.
+## 🗄️ Entidades de asistencia y certificación definidas
+* **Sesión (`SESSION`):** `id_session` (PK), `id_activity` (FK), `session_date`, `start_time`, `end_time` y `created_at`. Representa una sesión concreta dentro de una actividad. Aún no está conectada con cálculo de porcentaje ni emisión de certificados.
+* **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_session` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). La unicidad se aplica por estudiante y sesión para permitir varias asistencias dentro de la misma actividad en sesiones distintas.
 * **Inscripción (`ENROLLMENT`):** `id_enrollment` (PK), `id_user` (FK), `id_activity` (FK) y `enrollment_date`. Se permite una inscripción por estudiante y actividad; todavía no existen estados de inscripción.
-* **Registro de asistencia:** `AttendanceModule` expone `POST /api/activities/:activityId/attendance` para el rol `ORGANIZADOR`. El servicio exige que el organizador autenticado sea propietario de la actividad, que el estudiante exista y tenga rol de estudiante, que esté inscrito y que la actividad esté finalizada. Solo acepta `PRESENT` o `ABSENT`; los duplicados se rechazan.
-* **Respuesta y límites:** El endpoint devuelve únicamente ID de asistencia, ID del estudiante, ID de actividad, estado y fecha de registro. No expone entidades relacionadas ni `passwordHash`. No se documentan reglas de sesiones, porcentajes ni certificados como implementadas.
+* **Certificado (`CERTIFICATE`):** `id_certificate` (PK), `id_user` (FK), `id_activity` (FK), `issue_date` y `certificate_code` único. La restricción de unicidad evita más de un certificado por estudiante y actividad. La lógica de emisión y elegibilidad todavía no está automatizada ni vinculada al cálculo de porcentaje.
+* **Registro de asistencia:** `AttendanceModule` expone `POST /api/activities/:activityId/sessions/:sessionId/attendance` para el rol `ORGANIZADOR`. El servicio exige que el organizador autenticado sea propietario de la actividad, que la sesión pertenezca a su actividad indicada, que el estudiante exista y tenga rol de estudiante, que esté inscrito y que la actividad esté finalizada. Solo acepta `PRESENT` o `ABSENT`; los duplicados en la misma sesión se rechazan.
+* **Consulta de certificados:** `CertificatesModule` expone `GET /api/certificates` para el rol `ESTUDIANTE`, devolviendo los certificados del estudiante autenticado. El cliente no recibe un identificador configurable para consultar certificados ajenos; el endpoint usa `@CurrentUser()` para filtrar por la identidad real del usuario.
+* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha y código). No exponen entidades relacionadas ni `passwordHash`. La fórmula de porcentaje, la elegibilidad y la emisión automática de certificados siguen pendientes de decisión de negocio y no están implementadas como reglas ejecutables.
 
 ---
 
@@ -166,9 +169,10 @@ Las rutas que declaran `@Roles(...)` se autentican primero mediante Passport/JWT
 ### 📜 Certificados y Asistencia *(Responsable: Samuel)*
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/activities/:activityId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito, únicamente cuando la actividad haya finalizado. |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito en una sesión concreta de la actividad, únicamente cuando la actividad haya finalizado. |
+| `GET` | `/api/certificates` | ESTUDIANTE | Consulta los certificados emitidos para el usuario autenticado. El endpoint usa la identidad real del estudiante y no acepta un identificador del cliente para consultar certificados ajenos. |
 
-No hay endpoints de certificados implementados todavía.
+La emisión automática de certificados y la elegibilidad por porcentaje aún no están implementadas; este bloque aporta la infraestructura y la consulta segura del propio certificado.
 
 ---
 

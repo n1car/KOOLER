@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { ActivitiesService } from '../activities/activities.service';
-import { ActivityEntity } from '../activities/entities/activity.entity';
+import { SessionEntity } from '../activities/entities/session.entity';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 
@@ -19,8 +19,8 @@ export class AttendanceService {
   constructor(
     private readonly usersService: UsersService,
     private readonly activitiesService: ActivitiesService,
-    @InjectRepository(ActivityEntity)
-    private readonly activitiesRepository: Repository<ActivityEntity>,
+    @InjectRepository(SessionEntity)
+    private readonly sessionRepository: Repository<SessionEntity>,
     @InjectRepository(AttendanceEntity)
     private readonly attendanceRepository: Repository<AttendanceEntity>,
   ) {}
@@ -29,20 +29,28 @@ export class AttendanceService {
     organizerId: number,
     studentId: number,
     activityId: number,
+    sessionId: number,
     status: string,
   ): Promise<AttendanceEntity> {
     if (!this.isAttendanceStatus(status)) {
       throw new BadRequestException('Estado de asistencia inválido');
     }
 
-    const activity = await this.activitiesRepository.findOneBy({
-      id: activityId,
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: { activity: true },
     });
-    if (!activity) {
-      throw new NotFoundException(
-        `Actividad con id ${activityId} no encontrada`,
+    if (!session) {
+      throw new NotFoundException(`Sesión con id ${sessionId} no encontrada`);
+    }
+
+    const activity = session.activity;
+    if (activity.id !== activityId) {
+      throw new BadRequestException(
+        'La sesión indicada no pertenece a la actividad especificada',
       );
     }
+
     if (activity.organizer.id !== organizerId) {
       throw new ForbiddenException(
         'Solo el organizador propietario puede registrar asistencia',
@@ -73,7 +81,7 @@ export class AttendanceService {
 
     const attendance = this.attendanceRepository.create({
       user,
-      activity,
+      session,
       status,
     });
 
@@ -82,7 +90,7 @@ export class AttendanceService {
     } catch (error) {
       if (this.isDuplicateAttendanceError(error)) {
         throw new ConflictException(
-          'La asistencia del estudiante para esta actividad ya está registrada',
+          'La asistencia del estudiante para esta sesión ya está registrada',
         );
       }
       throw error;
@@ -101,7 +109,7 @@ export class AttendanceService {
     const driverError = error.driverError;
     return (
       driverError?.code === '23505' &&
-      driverError?.constraint === 'UQ_attendance_user_activity'
+      driverError?.constraint === 'UQ_attendance_user_session'
     );
   }
 }

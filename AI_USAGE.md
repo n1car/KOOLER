@@ -46,3 +46,17 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Orientación de GitHub Copilot:** Revisión de la estrategia JWT, los guards globales, `@CurrentUser()`, la relación de propietario en `ActivityEntity`, el DTO y los patrones de pruebas existentes.
 - **Ayuda de GitHub Copilot en la implementación:** Orientación para crear `POST /api/activities/:activityId/attendance`, validar al organizador propietario y al estudiante inscrito, construir una respuesta explícita sin entidades relacionadas, y ampliar las pruebas unitarias y HTTP E2E. La prueba E2E utiliza la estrategia JWT y los guards reales; los servicios de usuarios/inscripción y los repositorios están simulados. No se implementaron sesiones ni reglas de certificados.
 - **Verificación:** `npm test` pasó con 20 pruebas en 5 archivos; las pruebas E2E de asistencia y autorización pasaron con 16 pruebas en 2 archivos; `npm run build` compiló correctamente; `git diff --check` no reportó errores.
+
+## Registro de uso de IA — Asistencia por sesión
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Orientación de GitHub Copilot:** Revisión del modelo actual de asistencia, de la incompatibilidad entre la unicidad por actividad y el requisito de sesiones, y del patrón de TypeORM y NestJS del proyecto.
+- **Ayuda de GitHub Copilot en la implementación:** Análisis y ajuste para introducir `SessionEntity`, modificar `AttendanceEntity` para relacionarlo con sesión y no con actividad directa, adaptar `AttendanceService` y `AttendanceController` para validar `sessionId` y permitir varias asistencias en diferentes sesiones, y actualizar las pruebas unitarias y E2E para cubrir casos de sesión válida, duplicado por sesión, sesión ajena a la actividad y actividad no finalizada.
+- **Verificación:** Se ejecutará `npm test`, `npm run build` y `git diff --check` para confirmar el cambio real antes de cerrar la tarea.
+
+## Registro de uso de IA — Infraestructura de certificados
+- **Integrante:** Samuel (Persona S)
+- **Herramienta:** GitHub Copilot
+- **Orientación de GitHub Copilot:** Revisión de la estructura del backend, del diseño de base de datos para `CERTIFICATE`, de la identidad del usuario autenticado y del patrón `@CurrentUser()` para consultas del estudiante autenticado.
+- **Ayuda de GitHub Copilot en la implementación:** Creación de `CertificateEntity`, `CertificatesModule`, `CertificatesService`, `CertificatesController`, restricción única por estudiante y actividad, código único y endpoint seguro `GET /api/certificates` para consultar los propios certificados sin aceptar IDs arbitrarios del cliente. Se dejó explícito que la emisión automática de certificados y el porcentaje de elegibilidad siguen pendientes de decisión de negocio.
+- **Verificación:** Se ejecutarán `npm test`, `npm run build`, `npx vitest run --config ./vitest.config.e2e.ts` y `git diff --check` para confirmar la infraestructura introducida y conservar intactos los cambios de asistencia por sesión.

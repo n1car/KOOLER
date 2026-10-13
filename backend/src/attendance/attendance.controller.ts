@@ -12,10 +12,11 @@ interface AuthenticatedUser {
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Post(':activityId/attendance')
+  @Post(':activityId/sessions/:sessionId/attendance')
   @Roles('ORGANIZADOR')
   async recordAttendance(
     @Param('activityId', ParseIntPipe) activityId: number,
+    @Param('sessionId', ParseIntPipe) sessionId: number,
     @Body() dto: RecordAttendanceDto,
     @CurrentUser() organizer: AuthenticatedUser,
   ) {
@@ -23,13 +24,15 @@ export class AttendanceController {
       organizer.id,
       dto.studentId,
       activityId,
+      sessionId,
       dto.status,
     );
 
     return {
       id: attendance.id,
       studentId: attendance.user.id,
-      activityId: attendance.activity.id,
+      activityId: attendance.session.activity.id,
+      sessionId: attendance.session.id,
       status: attendance.status,
       registrationDate: attendance.registrationDate,
     };
