@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -13,7 +13,11 @@ export class ReviewsController {
 
   // Calificar una actividad finalizada a la que asistió (Solo Estudiante)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ESTUDIANTE')
+  @Roles('ESTUDIANTE', 'ORGANIZADOR')
+   @Get('activity/:activityId')
+  async findByActivity(@Param('activityId', ParseIntPipe) activityId: number) {
+    return this.reviewsService.findByActivity(activityId);
+  }
   @Post()
   async create(@Body() dto: CreateReviewDto, @CurrentUser() student: UserEntity) {
     return this.reviewsService.create(student, dto);

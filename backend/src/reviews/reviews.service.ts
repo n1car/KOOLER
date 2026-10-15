@@ -62,4 +62,30 @@ export class ReviewsService {
       throw err;
     }
   }
+    async findByActivity(activityId: number) {
+    const raw = await this.reviewRepo
+      .createQueryBuilder('r')
+      .select('AVG(r.rating)', 'avg')
+      .addSelect('COUNT(r.id)', 'total')
+      .where('r.idActivity = :activityId', { activityId })
+      .getRawOne<{ avg: string | null; total: string }>();
+
+    const rows = await this.reviewRepo.find({
+      where: { idActivity: activityId },
+      relations: { user: true },
+      order: { date: 'DESC' },
+    });
+
+    return {
+      average: raw?.avg ? Math.round(Number(raw.avg) * 10) / 10 : 0,
+      total: Number(raw?.total ?? 0),
+      items: rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        date: r.date,
+        author: r.user.firstName, // solo el nombre; nunca devuelvas UserEntity completa
+      })),
+    };
+  }
 }
