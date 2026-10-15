@@ -167,7 +167,19 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `GET` | `/api/activities/:id/enrollments` | ORGANIZADOR (Dueño) | Ver la lista de estudiantes inscritos a su actividad. |
 
 ### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
-*(Documentar aquí los endpoints creados por J: consultar reseñas públicas y calificar actividad finalizada).*
+*(### ⭐ Valoraciones y Reseñas (`/api/reviews`) — Responsable: Jhon
+
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/reviews` | ESTUDIANTE | Calificar (1-5) y comentar una actividad finalizada a la que asistió. Una sola vez. |
+| `GET` | `/api/reviews/activity/:activityId` | ESTUDIANTE / ORGANIZADOR | Promedio y comentarios públicos de una actividad. |
+| `GET` | `/api/reviews/organizer/activity/:activityId` | ORGANIZADOR (Dueño) | Solo lectura. El organizador no puede editar ni eliminar reseñas. |
+
+### 📅 Historial del estudiante (`/api/history`)
+
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/history` | ESTUDIANTE | Actividades finalizadas con asistencia y calificación propia. |).*
 
 ### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Samuel)*
 *(Documentar aquí los endpoints creados por S: registrar asistencia y consultar/descargar certificado).*
