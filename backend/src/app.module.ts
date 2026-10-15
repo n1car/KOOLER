@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { SeedModule } from './database/seed.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { HistoryModule } from './history/history.module';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { ReviewsModule } from './reviews/reviews.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule, HistoryModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
