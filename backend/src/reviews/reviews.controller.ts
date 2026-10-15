@@ -13,13 +13,26 @@ export class ReviewsController {
 
   // Calificar una actividad finalizada a la que asistió (Solo Estudiante)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ESTUDIANTE', 'ORGANIZADOR')
+  @Roles('ESTUDIANTE',)
    @Get('activity/:activityId')
   async findByActivity(@Param('activityId', ParseIntPipe) activityId: number) {
     return this.reviewsService.findByActivity(activityId);
   }
+  // Promedio y comentarios públicos de una actividad (Estudiante u Organizador)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ESTUDIANTE','ORGANIZADOR')
   @Post()
   async create(@Body() dto: CreateReviewDto, @CurrentUser() student: UserEntity) {
     return this.reviewsService.create(student, dto);
+  }
+    // Retroalimentación de su actividad (Solo Organizador dueño, solo lectura)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ORGANIZADOR')
+  @Get('organizer/activity/:activityId')
+  async findForOrganizer(
+    @Param('activityId', ParseIntPipe) activityId: number,
+    @CurrentUser() organizer: UserEntity,
+  ) {
+    return this.reviewsService.findForOrganizer(organizer.id, activityId);
   }
 }

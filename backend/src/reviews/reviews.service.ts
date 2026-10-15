@@ -88,4 +88,16 @@ export class ReviewsService {
       })),
     };
   }
+    async findForOrganizer(organizerId: number, activityId: number) {
+    const activity = await this.activityRepo.findOne({
+      where: { id: activityId },
+      relations: { organizer: true },
+    });
+    if (!activity) throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+
+    if (activity.organizer.id !== organizerId) {
+      throw new ForbiddenException('Solo el organizador responsable puede ver esta retroalimentación');
+    }
+    return this.findByActivity(activityId);
+  }
 }
