@@ -8,6 +8,8 @@ import { ActivitiesModule } from './activities/activities.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { HistoryModule } from './history/history.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { SeedModule } from './database/seed.module';
     AttendanceModule,
     CertificatesModule,
     SeedModule,
+    ReviewsModule,
+    HistoryModule,
   ],
 })
 export class AppModule {}
