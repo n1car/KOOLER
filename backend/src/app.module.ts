@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 
 @Module({
@@ -11,6 +14,7 @@ import { SeedModule } from './database/seed.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -28,6 +32,8 @@ import { SeedModule } from './database/seed.module';
     UsersModule,
     AuthModule,
     ActivitiesModule,
+    AttendanceModule,
+    CertificatesModule,
     SeedModule,
   ],
 })

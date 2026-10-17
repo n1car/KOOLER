@@ -95,6 +95,21 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Validación:** DTOs con `class-validator` y `class-transformer`
 * **Auditoría:** `LoggingInterceptor` global (registra método, URL, código de estado y tiempo de respuesta en ms)
 * **Pruebas:** Vitest (ejecución rápida con `npm test`)
+* **Tareas programadas:** `@nestjs/schedule` para finalizar actividades vencidas.
+* **PDF:** `pdfkit` para generar certificados en memoria, sin archivos temporales.
+
+## 🗄️ Entidades de asistencia y certificación definidas
+* **Sesión (`SESSION`):** `id_session` (PK), `id_activity` (FK), `session_date`, `start_time`, `end_time` y `created_at`. Representa una sesión concreta dentro de una actividad. Para el cálculo vigente, todas las sesiones asociadas a la actividad cuentan como sesiones válidas.
+* **Asistencia (`ATTENDANCE`):** `id_attendance` (PK), `id_user` (FK), `id_session` (FK), `registration_date` y `status` (`PRESENT` o `ABSENT`). La unicidad se aplica por estudiante y sesión para permitir varias asistencias dentro de la misma actividad en sesiones distintas.
+* **Inscripción (`ENROLLMENT`):** `id_enrollment` (PK), `id_user` (FK), `id_activity` (FK) y `enrollment_date`. Se permite una inscripción por estudiante y actividad; todavía no existen estados de inscripción.
+* **Certificado (`CERTIFICATE`):** `id_certificate` (PK), `id_user` (FK), `id_activity` (FK), `issue_date` y `certificate_code` único. La restricción de unicidad evita más de un certificado por estudiante y actividad. La emisión del servicio es idempotente y genera códigos aleatorios únicos, respetando también la restricción de base de datos.
+* **Registro de asistencia:** `AttendanceModule` expone `POST /api/activities/:activityId/sessions/:sessionId/attendance` para el rol `ORGANIZADOR`. El servicio exige que el organizador autenticado sea propietario de la actividad, que la sesión pertenezca a su actividad indicada, que el estudiante exista y tenga rol de estudiante, que esté inscrito y que la actividad esté finalizada. Solo acepta `PRESENT` o `ABSENT`; los duplicados en la misma sesión se rechazan.
+* **Consulta de certificados:** `CertificatesModule` expone `GET /api/certificates` para el rol `ESTUDIANTE`, devolviendo los certificados del estudiante autenticado. El cliente no recibe un identificador configurable para consultar certificados ajenos; el endpoint usa `@CurrentUser()` para filtrar por la identidad real del usuario.
+* **Elegibilidad:** Se calcula sobre las sesiones asociadas a la actividad: `sesiones PRESENT / total de sesiones * 100`. Una sesión sin registro cuenta en el denominador, `ABSENT` no suma al numerador, las sesiones se cuentan una sola vez y se exige al menos 80 %. Actividades sin sesiones no otorgan certificado; la actividad debe estar `FINISHED` y ser certificable.
+* **Consulta de elegibilidad:** `GET /api/certificates/activities/:activityId/eligibility` requiere rol `ESTUDIANTE` e inscripción a esa actividad. La respuesta contiene solo el resumen de asistencia del estudiante autenticado.
+* **Finalización automática:** Un cron cada minuto marca actividades en lotes de 50 únicamente si están `ACTIVE` y su combinación `date + endTime` ya venció. La comparación interpreta la fecha/hora en `America/Bogota`; horarios con formato no válido se omiten. Nunca cambia actividades `CANCELLED`.
+* **Emisión:** `CertificatesService.issueEligibleCertificates(activityId)` procesa inscritos en actividades `FINISHED` y certificables. Se exige el umbral fijo confirmado de 80 %; `ActivityEntity.minAttendancePercentage` permanece sin uso para no cambiar silenciosamente la regla vigente. La emisión es idempotente; los errores por estudiante o actividad se registran y se reintentan en ciclos posteriores. Sesiones sin asistencia y `ABSENT` no suman al numerador; actividades sin sesiones no emiten.
+* **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha, código y resumen de elegibilidad). No exponen entidades relacionadas ni `passwordHash`. El PDF se genera en memoria y la búsqueda limita por certificado y estudiante autenticado.
 
 ---
 
@@ -169,8 +184,15 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 ### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
 *(Documentar aquí los endpoints creados por J: consultar reseñas públicas y calificar actividad finalizada).*
 
-### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Samuel)*
-*(Documentar aquí los endpoints creados por S: registrar asistencia y consultar/descargar certificado).*
+### 📜 Certificados y Asistencia *(Responsable: Samuel)*
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito en una sesión concreta de la actividad, únicamente cuando la actividad haya finalizado. |
+| `GET` | `/api/certificates` | ESTUDIANTE | Consulta los certificados emitidos para el usuario autenticado. El endpoint usa la identidad real del estudiante y no acepta un identificador del cliente para consultar certificados ajenos. |
+| `GET` | `/api/certificates/activities/:activityId/eligibility` | ESTUDIANTE inscrito | Consulta el porcentaje y la elegibilidad del estudiante autenticado para una actividad. |
+| `GET` | `/api/certificates/:certificateId/download` | ESTUDIANTE (propietario) | Descarga el certificado propio como PDF (`application/pdf`) con nombre, actividad, código y fecha de emisión. |
+
+El cron de `ActivityFinalizationService` finaliza actividades vencidas cada minuto y luego intenta emitir certificados. También revisa actividades certificables ya finalizadas para reintentar emisiones fallidas o pendientes de registro de asistencia. El umbral de 80 % es más específico que RF14, cuya redacción original solicita que exista un registro de asistencia; este criterio debe mantenerse alineado con el equipo.
 
 ---
 
@@ -178,6 +200,7 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 ```bash
 cd backend
 npm test
+npm run test:e2e
 ```
 
 ## 📝 Registro de Uso de IA

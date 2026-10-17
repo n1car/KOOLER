@@ -142,4 +142,33 @@ describe('ActivitiesService (Persona N)', () => {
     await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
     expect(pastActivity.status).toBe('FINISHED');
   });
+
+  // isStudentEnrolled: integrado desde la Funcionalidad 3 (Persona S) para que
+  // AttendanceService pueda validar la inscripción antes de registrar asistencia.
+  describe('isStudentEnrolled (Persona S)', () => {
+    it('debe retornar true cuando el estudiante está inscrito', async () => {
+      enrollmentRepo.findOne.mockResolvedValue({ id: 1 });
+
+      await expect(service.isStudentEnrolled(10, 2)).resolves.toBe(true);
+      expect(enrollmentRepo.findOne).toHaveBeenCalledWith({
+        where: {
+          activity: { id: 10 },
+          user: { id: 2 },
+        },
+      });
+    });
+
+    it('debe retornar false cuando no existe inscripción', async () => {
+      enrollmentRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.isStudentEnrolled(10, 2)).resolves.toBe(false);
+    });
+
+    it('debe propagar errores del repositorio', async () => {
+      const repositoryError = new Error('Database unavailable');
+      enrollmentRepo.findOne.mockRejectedValue(repositoryError);
+
+      await expect(service.isStudentEnrolled(10, 2)).rejects.toBe(repositoryError);
+    });
+  });
 });

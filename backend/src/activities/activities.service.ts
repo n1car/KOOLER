@@ -309,4 +309,20 @@ export class ActivitiesService {
       },
     }));
   }
+
+  // 9. Verificar si un estudiante está inscrito en una actividad.
+  // Usado por AttendanceService (Funcionalidad 3) antes de registrar asistencia.
+  async isStudentEnrolled(
+    activityId: number,
+    studentId: number,
+  ): Promise<boolean> {
+    const enrollment = await this.enrollmentRepo.findOne({
+      where: {
+        activity: { id: activityId },
+        user: { id: studentId },
+      },
+    });
+
+    return enrollment !== null;
+  }
 }
