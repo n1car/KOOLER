@@ -9,7 +9,6 @@ import { App } from 'supertest/types';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivitiesService } from '../src/activities/activities.service';
-import { ActivityEntity } from '../src/activities/entities/activity.entity';
 import { SessionEntity } from '../src/activities/entities/session.entity';
 import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
 import { AttendanceController } from '../src/attendance/attendance.controller';
@@ -62,7 +61,6 @@ describe('Attendance endpoint (e2e)', () => {
   let app: import('@nestjs/common').INestApplication<App>;
   let jwtService: JwtService;
   let usersById: Map<number, ReturnType<typeof createUser>>;
-  let activitiesById: Map<number, ReturnType<typeof createActivity>>;
   let sessionsById: Map<number, ReturnType<typeof createSession>>;
   let enrolledPairs: Set<string>;
   let attendanceRecords: Map<string, any>;
@@ -87,11 +85,6 @@ describe('Attendance endpoint (e2e)', () => {
     const activity10 = createActivity(10, owner);
     const activity11 = createActivity(11, otherOrganizer);
     const activity12 = createActivity(12, owner, 'ACTIVE');
-    activitiesById = new Map([
-      [10, activity10],
-      [11, activity11],
-      [12, activity12],
-    ]);
     sessionsById = new Map([
       [1, createSession(1, activity10)],
       [2, createSession(2, activity12)],

@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppController } from '../src/app.controller';
-import { AppService } from '../src/app.service';
+import { AppModule } from './../src/app.module.js';
 
 // Requiere Docker levantado: `docker compose up -d` (Postgres 17 en 5433).
 // Cubre el arranque real con prefijo global /api y seed de demo.
@@ -12,8 +11,7 @@ describe('App (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+      imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
