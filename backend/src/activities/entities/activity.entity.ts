@@ -8,6 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
+import { ActivityTypeEntity } from '../../catalog/entities/activity-type.entity';
+import { LocationEntity } from '../../catalog/entities/location.entity';
 import { EnrollmentEntity } from './enrollment.entity';
 
 @Entity('activities')
@@ -47,6 +49,14 @@ export class ActivityEntity {
 
   @Column({ name: 'image_url', nullable: true, length: 255 })
   imageUrl?: string;
+
+  @ManyToOne(() => ActivityTypeEntity, { eager: true, nullable: true })
+  @JoinColumn({ name: 'id_type' })
+  activityType?: ActivityTypeEntity | null;
+
+  @ManyToOne(() => LocationEntity, { eager: true, nullable: true })
+  @JoinColumn({ name: 'id_location' })
+  location?: LocationEntity | null;
 
   @ManyToOne(() => UserEntity, { eager: true, nullable: false })
   @JoinColumn({ name: 'id_organizer' })

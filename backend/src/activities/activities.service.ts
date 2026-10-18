@@ -14,6 +14,7 @@ import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { FilterActivitiesDto } from './dto/filter-activities.dto';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { CatalogService } from '../catalog/catalog.service';
 
 @Injectable()
 export class ActivitiesService {
@@ -26,6 +27,8 @@ export class ActivitiesService {
 
     @InjectRepository(SessionEntity)
     private readonly sessionRepo: Repository<SessionEntity>,
+
+    private readonly catalogService: CatalogService,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -41,12 +44,21 @@ export class ActivitiesService {
 
   // 1. Crear actividad (Solo Organizador)
   async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
+    const { activityTypeId, locationId, ...rest } = createDto;
+
     const activity = this.activityRepo.create({
-      ...createDto,
+      ...rest,
       organizer,
       status: 'ACTIVE',
       registrationDeadline: new Date(createDto.registrationDeadline),
     });
+
+    if (activityTypeId !== undefined) {
+      activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
+    }
+    if (locationId !== undefined) {
+      activity.location = await this.catalogService.findLocationById(locationId);
+    }
 
     return this.activityRepo.save(activity);
   }
@@ -61,6 +73,10 @@ export class ActivitiesService {
 
     if (filter?.search) {
       where.name = ILike(`%${filter.search}%`);
+    }
+
+    if (filter?.activityTypeId) {
+      where.activityType = { id: filter.activityTypeId };
     }
 
     const activities = await this.activityRepo.find({
@@ -129,24 +145,33 @@ export class ActivitiesService {
       throw new ForbiddenException('Solo el organizador responsable puede modificar esta actividad');
     }
 
+    const { activityTypeId, locationId, registrationDeadline, ...rest } = updateDto;
+
     // Regla de negocio: no reducir el cupo por debajo de los ya inscritos.
-    if (updateDto.capacity !== undefined) {
+    if (rest.capacity !== undefined) {
       const enrolledCount = await this.enrollmentRepo.count({
         where: { activity: { id } },
       });
-      if (updateDto.capacity < enrolledCount) {
+      if (rest.capacity < enrolledCount) {
         throw new BadRequestException(
-          `No se puede reducir el cupo a ${updateDto.capacity}: ya hay ${enrolledCount} inscritos`,
+          `No se puede reducir el cupo a ${rest.capacity}: ya hay ${enrolledCount} inscritos`,
         );
       }
     }
 
-    if (updateDto.registrationDeadline) {
-      activity.registrationDeadline = new Date(updateDto.registrationDeadline);
-      delete updateDto.registrationDeadline;
+    if (registrationDeadline) {
+      activity.registrationDeadline = new Date(registrationDeadline);
     }
 
-    Object.assign(activity, updateDto);
+    if (activityTypeId !== undefined) {
+      activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
+    }
+
+    if (locationId !== undefined) {
+      activity.location = await this.catalogService.findLocationById(locationId);
+    }
+
+    Object.assign(activity, rest);
     return this.activityRepo.save(activity);
   }
 
@@ -185,10 +210,11 @@ export class ActivitiesService {
       const enrollmentRepo = manager.getRepository(EnrollmentEntity);
 
       // Postgres no permite FOR UPDATE con LEFT JOIN: se bloquea solo la
-      // fila de la actividad (sin relations) y el conteo va por query aparte.
+      // fila de la actividad (sin relations ni eager) y el conteo va por query aparte.
       const activity = await activityRepo.findOne({
         where: { id: activityId },
         lock: { mode: 'pessimistic_write' },
+        loadEagerRelations: false,
       });
 
       if (!activity) {
@@ -311,6 +337,9 @@ export class ActivitiesService {
         endTime: e.activity.endTime,
         status: e.activity.status,
         imageUrl: e.activity.imageUrl,
+        isCertifiable: e.activity.isCertifiable,
+        category: e.activity.activityType?.name ?? null,
+        location: e.activity.location?.name ?? null,
       },
     }));
   }

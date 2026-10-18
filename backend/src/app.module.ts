@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
@@ -34,6 +35,7 @@ import { HistoryModule } from './history/history.module';
     UsersModule,
     AuthModule,
     ActivitiesModule,
+    CatalogModule,
     AttendanceModule,
     CertificatesModule,
     SeedModule,

@@ -7,6 +7,7 @@ import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { SessionEntity } from './entities/session.entity';
 import { UserEntity } from '../users/entities/user.entity';
+import { CatalogService } from '../catalog/catalog.service';
 import { DataSource } from 'typeorm';
 
 describe('ActivitiesService (Persona N)', () => {
@@ -15,6 +16,10 @@ describe('ActivitiesService (Persona N)', () => {
   let enrollmentRepo: any;
   let sessionRepo: any;
   let dataSource: any;
+  const catalogService = {
+    findActivityTypeById: vi.fn(),
+    findLocationById: vi.fn(),
+  };
 
   const mockOrganizer = { id: 1, email: 'organizador@icesi.edu.co' } as UserEntity;
   const mockOtherUser = { id: 99, email: 'otro@icesi.edu.co' } as UserEntity;
@@ -69,6 +74,7 @@ describe('ActivitiesService (Persona N)', () => {
         { provide: getRepositoryToken(ActivityEntity), useValue: activityRepo },
         { provide: getRepositoryToken(EnrollmentEntity), useValue: enrollmentRepo },
         { provide: getRepositoryToken(SessionEntity), useValue: sessionRepo },
+        { provide: CatalogService, useValue: catalogService },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -13,6 +13,21 @@ interface AuthenticatedUser {
 @Controller('activities')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ORGANIZADOR')
+  @Get(':activityId/sessions/:sessionId/attendance')
+  async getAttendance(
+    @Param('activityId', ParseIntPipe) activityId: number,
+    @Param('sessionId', ParseIntPipe) sessionId: number,
+    @CurrentUser() organizer: AuthenticatedUser,
+  ) {
+    return this.attendanceService.getSessionAttendance(
+      organizer.id,
+      activityId,
+      sessionId,
+    );
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post(':activityId/sessions/:sessionId/attendance')

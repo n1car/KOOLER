@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { RoleEntity } from '../roles/entities/role.entity';
 import { UserEntity } from '../users/entities/user.entity';
+import { ActivityTypeEntity } from '../catalog/entities/activity-type.entity';
+import { LocationEntity } from '../catalog/entities/location.entity';
 
 @Injectable()
 export class SeedService implements OnApplicationBootstrap {
@@ -14,11 +16,17 @@ export class SeedService implements OnApplicationBootstrap {
     private readonly roleRepo: Repository<RoleEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(ActivityTypeEntity)
+    private readonly activityTypeRepo: Repository<ActivityTypeEntity>,
+    @InjectRepository(LocationEntity)
+    private readonly locationRepo: Repository<LocationEntity>,
   ) {}
 
   async onApplicationBootstrap() {
     await this.seedRoles();
     await this.seedDemoUsers();
+    await this.seedActivityTypes();
+    await this.seedLocations();
   }
 
   private async seedRoles() {
@@ -72,6 +80,45 @@ export class SeedService implements OnApplicationBootstrap {
         }),
       );
       this.logger.log(`Usuario organizador demo creado: ${organizerEmail}`);
+    }
+  }
+
+  private async seedActivityTypes() {
+    const types: Array<{ name: string; requiresEnrollment: boolean }> = [
+      { name: 'Deportiva', requiresEnrollment: true },
+      { name: 'Cultural', requiresEnrollment: true },
+      { name: 'Salud Mental', requiresEnrollment: true },
+      { name: 'Artística', requiresEnrollment: true },
+      { name: 'Académica', requiresEnrollment: true },
+      { name: 'Recreativa', requiresEnrollment: true },
+      { name: 'Voluntariado', requiresEnrollment: true },
+    ];
+
+    for (const type of types) {
+      const exists = await this.activityTypeRepo.findOneBy({ name: type.name });
+      if (!exists) {
+        await this.activityTypeRepo.save(this.activityTypeRepo.create(type));
+        this.logger.log(`Categoría creada: ${type.name}`);
+      }
+    }
+  }
+
+  private async seedLocations() {
+    const locations: Array<{ name: string; building: string }> = [
+      { name: 'Auditorio Varela', building: 'Edificio Central' },
+      { name: 'Cancha 1', building: 'Zona Deportiva' },
+      { name: 'Coliseo', building: 'Zona Deportiva' },
+      { name: 'Biblioteca', building: 'Edificio Central' },
+      { name: 'Sala de Música', building: 'Bloque C' },
+      { name: 'Piscina', building: 'Zona Deportiva' },
+    ];
+
+    for (const location of locations) {
+      const exists = await this.locationRepo.findOneBy({ name: location.name });
+      if (!exists) {
+        await this.locationRepo.save(this.locationRepo.create(location));
+        this.logger.log(`Ubicación creada: ${location.name}`);
+      }
     }
   }
 }
