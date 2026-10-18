@@ -83,8 +83,22 @@
                                                 ],
                                      "body":  {
                                                   "mode":  "raw",
-                                                  "raw":  "{\n  \"name\": \"Torneo relÃ¡mpago de fÃºtbol 5\",\n  \"description\": \"Torneo universitario de bienestar\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 16,\n  \"registrationDeadline\": \"2026-11-19T23:59:59.000Z\"\n}"
+                                                   "raw":  "{\n  \"name\": \"Torneo relÃ¡mpago de fÃºtbol 5\",\n  \"description\": \"Torneo universitario de bienestar\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 16,\n  \"registrationDeadline\": \"2026-11-19T23:59:59.000Z\",\n  \"isCertifiable\": true,\n  \"activityTypeId\": 1,\n  \"locationId\": 1\n}"
                                               }
+                                 }
+                 },
+                 {
+                     "name":  "3b. Listar categorias (publico)",
+                     "request":  {
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/activity-types"
+                                 }
+                 },
+                 {
+                     "name":  "3c. Listar ubicaciones (publico)",
+                     "request":  {
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/locations"
                                  }
                  },
                  {
@@ -232,6 +246,19 @@
                                                         "key":  "Content-Type",
                                                         "value":  "application/json"
                                                     },
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{orgToken}}"
+                                                    }
+                                                ]
+                                 }
+                 },
+                 {
+                     "name":  "14b. Leer asistencia de la sesion (ORGANIZADOR dueno)",
+                     "request":  {
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/activities/{{activityId}}/sessions/{{sessionId}}/attendance",
+                                     "header":  [
                                                     {
                                                         "key":  "Authorization",
                                                         "value":  "Bearer {{orgToken}}"

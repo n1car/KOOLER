@@ -13,6 +13,8 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * [`docs/Arquitectura inicial.md`](./docs/Arquitectura%20inicial.md) — Diagrama y decisiones técnicas.
 * [`docs/Funcionalidades.md`](./docs/Funcionalidades.md) — Detalle de las 3 funcionalidades.
 * [`docs/Plan de trabajo.md`](./docs/Plan%20de%20trabajo.md) — Reparto de tareas y cronograma.
+* [`docs/Modulos de diseño.md`](./docs/Modulos%20de%20diseño.md) — Tokens de diseño, pantallas, estados y reglas de UI del frontend (Figma "BU").
+* [`docs/Problematica.md`](./docs/Problematica.md) — Problemática y justificación del proyecto.
 * [`docs/Taller y rubrica del proyecto.md`](./docs/Taller%20y%20rubrica%20del%20proyecto.md) — Criterios de evaluación oficiales.
 
 ---
@@ -29,6 +31,7 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
   * Funcionalidad 1: Gestión de actividades (`ActivityEntity`) e inscripciones (`EnrollmentEntity`).
+  * Catálogos de apoyo: categorías (`ActivityTypeEntity`) y ubicaciones (`LocationEntity`) exigidos por RF03/RF06.
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Reseñas y calificaciones (`ReviewEntity`).
   * Endpoints públicos de lectura de reseñas y creación por estudiantes que hayan participado.
@@ -95,6 +98,12 @@ Para asegurar un historial de Git limpio, legible y profesional ante la revisió
    * Al agregar un nuevo módulo (`ReviewsModule`, `CertificatesModule`), agrégalo al arreglo `imports` sin eliminar los módulos existentes.
 4. **NO subir secretos:**
    * NUNCA hardcodear contraseñas ni llaves en el código. Usar `ConfigService.get(...)` y documentar nuevas variables en `.env.example`.
+5. **Catálogos y decisiones de alcance fijadas:**
+   * `LOCATION` (`id_location`, `name`, `building`) y `ACTIVITY_TYPE` (`id_type`, `name`, `requires_enrollment`) son parte del modelo oficial. Se consultan con `GET /api/activity-types` y `GET /api/locations`; `ACTIVITY` se relaciona con ambos de forma opcional (`activityTypeId`, `locationId`).
+   * **Imágenes de actividad:** solo por URL (`ACTIVITY.image_url`). **NO** implementar subida de archivos binarios.
+   * **Certificados:** el PDF se genera automáticamente en el backend (`pdfkit`); **NO** existe (ni debe agregarse) campo para subir una plantilla de certificado.
+   * **Plataforma del frontend:** Next.js web mobile-first (la palabra "móvil" en `docs/Módulos de diseño.md` se interpreta como diseño mobile-first responsivo; RNF03 exige uso desde celular y computador).
+   * **Lock pesimista:** en consultas con bloqueo (`pessimistic_write`) usar `loadEagerRelations: false` para evitar `FOR UPDATE` sobre `LEFT JOIN` (error Postgres `0A000`).
 
 ---
 

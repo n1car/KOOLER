@@ -67,10 +67,11 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Límite de D2 (Fuera de alcance):**
   * NO incluir pagos, reservas de espacios físicos ni subida binaria a AWS S3.
 
-#### ✅ Estado de avance D2 — Persona N (verificado 2026-10-11, rama `dev`)
+#### ✅ Estado de avance D2 — Persona N (verificado 2026-10-17, rama `feature/frontend`)
 * **Backend N terminado y probado en vivo:**
-  * `npm run build` 0 errores · `npm test` 12/12 · `npm run lint` 0 warnings · `npm run test:e2e` 2/2 (requiere `docker compose up -d`).
-  * Smoke HTTP real: login org/estudiante, crear actividad `201`, inscribirse `200`, duplicado `400`, estudiante-creando `403`, cupo agotado `400`.
+  * `npm run build` 0 errores · `npm test` 67/67 · `npm run lint` 0 warnings · `npm run test:e2e` 29/29 (requiere `docker compose up -d`).
+  * `npm run smoke` 25/25: script E2E verificable (`backend/scripts/smoke.ps1`) que recorre login/roles, catálogos, actividades, inscripción, sesión, asistencia, elegibilidad, certificado (PDF), reseñas e historial, con casos negativos 400/403/409.
+  * Catálogos añadidos (`LOCATION`, `ACTIVITY_TYPE`) con relación a `ACTIVITY`, filtro por categoría y seed demo; `GET` de asistencia por sesión para el panel admin.
   * Reglas cubiertas: cupo máximo, no duplicados (`@Unique`), solo `ACTIVE`, `registration_deadline`, solo dueño edita/cancela, cupo no reducible bajo inscritos, `ACTIVE→FINISHED` automático (RF09), inscripción transaccional con lock pesimista (RNF07).
 * **Pendiente grupal D2 (no es de N):** módulos de Jhon (`Review`) y Samuel (`Attendance`/`Certificate`), URL pública del deploy.
 * **Pendiente frontend D2 — alcance de N (Funcionalidad 1, con mocks):**
@@ -110,6 +111,15 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Finalización automática:** Un cron cada minuto marca actividades en lotes de 50 únicamente si están `ACTIVE` y su combinación `date + endTime` ya venció. La comparación interpreta la fecha/hora en `America/Bogota`; horarios con formato no válido se omiten. Nunca cambia actividades `CANCELLED`.
 * **Emisión:** `CertificatesService.issueEligibleCertificates(activityId)` procesa inscritos en actividades `FINISHED` y certificables. Se exige el umbral fijo confirmado de 80 %; `ActivityEntity.minAttendancePercentage` permanece sin uso para no cambiar silenciosamente la regla vigente. La emisión es idempotente; los errores por estudiante o actividad se registran y se reintentan en ciclos posteriores. Sesiones sin asistencia y `ABSENT` no suman al numerador; actividades sin sesiones no emiten.
 * **Respuesta y límites:** Los endpoints devuelven únicamente los campos necesarios (IDs, fecha, código y resumen de elegibilidad). No exponen entidades relacionadas ni `passwordHash`. El PDF se genera en memoria y la búsqueda limita por certificado y estudiante autenticado.
+
+---
+
+## 🗂️ Catálogos de categorías y ubicaciones
+* **Categoría (`ACTIVITY_TYPE`):** `id_type` (PK), `name` (único) y `requires_enrollment`. Catálogo público de tipos de actividad exigido por RF03/RF06.
+* **Ubicación (`LOCATION`):** `id_location` (PK), `name` y `building`. Catálogo público de espacios donde se realizan las actividades.
+* **Relación en `ACTIVITY`:** `id_type` (FK → `ACTIVITY_TYPE`) e `id_location` (FK → `LOCATION`), ambos opcionales. `CreateActivityDto`/`UpdateActivityDto` aceptan `activityTypeId` y `locationId`; `GET /api/activities?activityTypeId=..` filtra por categoría. Las consultas que usan bloqueo pesimista (inscripción) desactivan el eager loading para evitar `FOR UPDATE` sobre `LEFT JOIN`.
+* **Seed:** crea 7 categorías (Deportiva, Cultural, Salud Mental, Artística, Académica, Recreativa, Voluntariado) y 6 ubicaciones demo (Auditorio Varela, Cancha 1, Coliseo, Biblioteca, Sala de Música, Piscina).
+* **Emisión inmediata:** al registrar asistencia, `AttendanceService` dispara `issueEligibleCertificates` (idempotente) para dejar el certificado disponible sin esperar el cron; el cron sigue cubriendo reintentos.
 
 ---
 
@@ -183,6 +193,12 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
 | `POST` | `/api/activities/:id/sessions` | ORGANIZADOR (Dueño) | Crear una sesión en la actividad (habilita asistencia y certificados). |
 
+### 🗂️ Catálogos (`/api/activity-types`, `/api/locations`) *(Soporte RF03/RF06)*
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/activity-types` | Público | Lista las categorías de actividad (para filtros y creación). |
+| `GET` | `/api/locations` | Público | Lista las ubicaciones disponibles (para creación de actividades). |
+
 ### ⭐ Valoraciones, Reseñas e Historial (`/api/reviews`, `/api/history`) *(Responsable: Jhon)*
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
@@ -195,6 +211,7 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Registrar `PRESENT` o `ABSENT` para un estudiante inscrito en una sesión concreta de la actividad, únicamente cuando la actividad haya finalizado. |
+| `GET` | `/api/activities/:activityId/sessions/:sessionId/attendance` | ORGANIZADOR (Dueño) | Leer la asistencia registrada en una sesión (usado por el panel admin para mostrar el estado actual). |
 | `GET` | `/api/certificates` | ESTUDIANTE | Consulta los certificados emitidos para el usuario autenticado. El endpoint usa la identidad real del estudiante y no acepta un identificador del cliente para consultar certificados ajenos. |
 | `GET` | `/api/certificates/activities/:activityId/eligibility` | ESTUDIANTE inscrito | Consulta el porcentaje y la elegibilidad del estudiante autenticado para una actividad. |
 | `GET` | `/api/certificates/:certificateId/download` | ESTUDIANTE (propietario) | Descarga el certificado propio como PDF (`application/pdf`) con nombre, actividad, código y fecha de emisión. |

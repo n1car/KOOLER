@@ -155,3 +155,23 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
   - Smoke HTTP real: login org/estudiante, crear actividad, inscribir, crear sesión, finalizar, registrar asistencia, elegibilidad 100 %, reseña, historial y certificado; descarga PDF válida (`%PDF-`) y 403 al intentar descargar certificado ajeno.
   - Tablas verificadas en PostgreSQL/DBeaver: `activities`, `attendances`, `certificates`, `enrollments`, `review`, `roles`, `sessions`, `users`.
 - **Límites:** el frontend Next.js del D2 aún no existe en el repositorio; el umbral de certificado permanece fijo en 80 %; pendiente resolver el orden de push de los integrantes a `dev`.
+
+---
+
+## Registro de uso de IA — Catálogos y soporte de frontend (rama `feature/frontend`)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** OpenCode / deepseek-v4.1-flash-free
+- **Tarea:** Preparar el backend para el frontend: añadir las entidades que faltaban del modelo oficial (`LOCATION`, `ACTIVITY_TYPE`), relacionarlas con `ACTIVITY`, habilitar la lectura de asistencia por sesión y detectar/cerrar gaps reales de flujo.
+- **Propósito:** Que las pantallas de crear actividad (categoría/ubicación) y de control de asistencia (leer estado actual) tengan datos reales, alineando el diseño de `docs/Modulos de diseño.md` con el backend.
+- **Resultado utilizado:**
+  - Nuevo `CatalogModule` con `LocationEntity` (`id_location`, `name`, `building`) y `ActivityTypeEntity` (`id_type`, `name`, `requires_enrollment`), endpoints públicos `GET /api/activity-types` y `GET /api/locations`, y seed de 7 categorías y 6 ubicaciones demo.
+  - `ActivityEntity` con `activityType` (`id_type`) y `location` (`id_location`) opcionales; `CreateActivityDto`/`UpdateActivityDto` con `activityTypeId`/`locationId`; `FilterActivitiesDto.activityTypeId` con `@Type(() => Number)`.
+  - `GET /api/activities/:activityId/sessions/:sessionId/attendance` (organizador dueño) para pintar los switches del panel admin.
+  - Bug corregido: la inscripción con lock pesimista fallaba (`0A000 FOR UPDATE cannot be applied to the nullable side of an outer join`) porque las relaciones eager añadían `LEFT JOIN`; se solucionó con `loadEagerRelations: false` en esa consulta.
+  - Gaps detectados y corregidos en el flujo: el certificado no se emitía porque se registraba asistencia después de finalizar y la emisión dependía de un cron de 1 minuto; ahora `AttendanceService` dispara `issueEligibleCertificates` (idempotente) al registrar asistencia.
+  - `scripts/smoke.ps1` ampliado y corregido (25 checks) cubriendo catálogos, categoría/ubicación en la actividad, lectura de asistencia y descarga de PDF; se corrigió un quirk de PS 5.1 donde `Invoke-RestMethod` dentro de una función no enumera arrays.
+- **Cambios realizados por el equipo:**
+  - Se confirmó con el equipo la plataforma (Next.js web mobile-first), el uso de imagen por URL (sin subida de archivos) y el registro con dos campos (nombres/apellidos) + rol Estudiante/Organizador.
+- **Forma de verificación:**
+  - `npm run build` (0 errores), `npm run lint` (0 warnings), `npm test` (67/67), `npm run test:e2e` (29/29 con Postgres) y `npm run smoke` (25/25).
+- **Límites:** pendiente el scaffold del frontend Next.js; el umbral de certificado sigue fijo en 80 %.
