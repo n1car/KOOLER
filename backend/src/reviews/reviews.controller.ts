@@ -11,21 +11,21 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  // Calificar una actividad finalizada a la que asistió (Solo Estudiante)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ESTUDIANTE',)
-   @Get('activity/:activityId')
+  // Promedio y comentarios públicos de una actividad (lectura pública)
+  @Get('activity/:activityId')
   async findByActivity(@Param('activityId', ParseIntPipe) activityId: number) {
     return this.reviewsService.findByActivity(activityId);
   }
-  // Promedio y comentarios públicos de una actividad (Estudiante u Organizador)
+
+  // Calificar una actividad finalizada a la que asistió (Solo Estudiante)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ESTUDIANTE','ORGANIZADOR')
+  @Roles('ESTUDIANTE')
   @Post()
   async create(@Body() dto: CreateReviewDto, @CurrentUser() student: UserEntity) {
     return this.reviewsService.create(student, dto);
   }
-    // Retroalimentación de su actividad (Solo Organizador dueño, solo lectura)
+
+  // Retroalimentación de su actividad (Solo Organizador dueño, solo lectura)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ORGANIZADOR')
   @Get('organizer/activity/:activityId')
