@@ -87,11 +87,8 @@ export class SeedService implements OnApplicationBootstrap {
     const types: Array<{ name: string; requiresEnrollment: boolean }> = [
       { name: 'Deportiva', requiresEnrollment: true },
       { name: 'Cultural', requiresEnrollment: true },
-      { name: 'Salud Mental', requiresEnrollment: true },
-      { name: 'Artística', requiresEnrollment: true },
-      { name: 'Académica', requiresEnrollment: true },
+      { name: 'Taller', requiresEnrollment: true },
       { name: 'Recreativa', requiresEnrollment: true },
-      { name: 'Voluntariado', requiresEnrollment: true },
     ];
 
     for (const type of types) {

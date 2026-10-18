@@ -118,7 +118,7 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Categoría (`ACTIVITY_TYPE`):** `id_type` (PK), `name` (único) y `requires_enrollment`. Catálogo público de tipos de actividad exigido por RF03/RF06.
 * **Ubicación (`LOCATION`):** `id_location` (PK), `name` y `building`. Catálogo público de espacios donde se realizan las actividades.
 * **Relación en `ACTIVITY`:** `id_type` (FK → `ACTIVITY_TYPE`) e `id_location` (FK → `LOCATION`), ambos opcionales. `CreateActivityDto`/`UpdateActivityDto` aceptan `activityTypeId` y `locationId`; `GET /api/activities?activityTypeId=..` filtra por categoría. Las consultas que usan bloqueo pesimista (inscripción) desactivan el eager loading para evitar `FOR UPDATE` sobre `LEFT JOIN`.
-* **Seed:** crea 7 categorías (Deportiva, Cultural, Salud Mental, Artística, Académica, Recreativa, Voluntariado) y 6 ubicaciones demo (Auditorio Varela, Cancha 1, Coliseo, Biblioteca, Sala de Música, Piscina).
+* **Seed:** crea 4 categorías (Deportiva, Cultural, Taller, Recreativa) y 6 ubicaciones demo (Auditorio Varela, Cancha 1, Coliseo, Biblioteca, Sala de Música, Piscina).
 * **Emisión inmediata:** al registrar asistencia, `AttendanceService` dispara `issueEligibleCertificates` (idempotente) para dejar el certificado disponible sin esperar el cron; el cron sigue cubriendo reintentos.
 
 ---
