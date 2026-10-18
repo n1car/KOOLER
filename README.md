@@ -19,10 +19,13 @@ Todos los documentos de especificación inicial y diseño se encuentran organiza
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Template base de backend (Docker, Auth JWT, RolesGuard, Entidades comunes).
   * Funcionalidad 1: Gestión y participación en actividades (creación, edición, cancelación, cupos e inscripciones).
+  * Frontend: Inicio (Bienvenida), Home del estudiante, Mis Inscripciones, Detalle de actividad, Mis Actividades y Crear/editar (organizador).
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Historial, valoraciones y comentarios públicos.
+  * Frontend: Registro, Login y Cuenta creada; Historial, Valoraciones y Retroalimentación (organizador).
 * **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia por sesión y emisión de certificados.
+  * Frontend: Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
 
 > ⚠️ **Para agentes de IA y desarrolladores:** Leer obligatoriamente el archivo [`AGENTS.md`](./AGENTS.md) antes de escribir código.
 
@@ -74,11 +77,21 @@ Todo commit debe seguir el formato Conventional Commits:
   * Catálogos añadidos (`LOCATION`, `ACTIVITY_TYPE`) con relación a `ACTIVITY`, filtro por categoría y seed demo; `GET` de asistencia por sesión para el panel admin.
   * Reglas cubiertas: cupo máximo, no duplicados (`@Unique`), solo `ACTIVE`, `registration_deadline`, solo dueño edita/cancela, cupo no reducible bajo inscritos, `ACTIVE→FINISHED` automático (RF09), inscripción transaccional con lock pesimista (RNF07).
 * **Pendiente grupal D2 (no es de N):** módulos de Jhon (`Review`) y Samuel (`Attendance`/`Certificate`), URL pública del deploy.
-* **Pendiente frontend D2 — alcance de N (Funcionalidad 1, con mocks):**
-  * Scaffold Next.js (App Router) + layout + navegación + estilos mobile-first.
-  * Rutas: `/login`, `/register`, `/activities`, `/activities/[id]`, `/my-enrollments`, `/organizer/activities`, `/organizer/activities/new`.
-  * Pantallas: listado con filtros (estado/búsqueda), detalle con cupos e inscripción + confirmación, formulario crear/editar (organizador), mis inscripciones.
-  * Capa `lib/mock-data.ts` con el mismo contrato del backend para conectar la API real en D3 sin reescribir pantallas.
+* **Frontend D2 (proyecto `frontend/`, Next.js 16 + Tailwind v4) — avance visual de D2:**
+  * Scaffold Next.js (App Router, TypeScript, mobile-first) con tokens de diseño, layout, navegación y estilos base.
+  * Rutas: `/` (Bienvenida), `/login`, `/register`, `/account-created`; estudiante `/home`, `/my-enrollments`, `/progress`, `/history`; detalle `/activities/[id]`; organizador `/organizer/activities`, `/organizer/activities/[id]`, `/organizer/activities/[id]/attendance`, `/organizer/activities/[id]/feedback`, `/organizer/activities/new`.
+  * Pantallas representativas con **datos temporales** (`src/lib/mock.ts`): listado con búsqueda/filtro e inscripción, mis inscripciones, progreso con elegibilidad y certificado, historial con valoración de 5 estrellas; panel del organizador con métricas, detalle, control de asistencia, retroalimentación y formulario de creación.
+  * Alcance D2: pantallas que corresponden al prototipo de Figma y son navegables; **sin** conexión al backend ni sesión real (eso corresponde a D3), como permite la rúbrica (datos temporales).
+
+### 🖥️ Frontend — Ejecución local
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:3001
+```
+* No requiere el backend ni variables de entorno: el prototipo de D2 usa datos temporales locales.
+* Verificación: `npm run lint` (0 errores) y `npm run build` (type-check en verde).
+
 
 ### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
 * Integración punta a punta de todos los flujos sin datos falsos.

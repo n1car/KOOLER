@@ -175,3 +175,24 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Forma de verificación:**
   - `npm run build` (0 errores), `npm run lint` (0 warnings), `npm test` (67/67), `npm run test:e2e` (29/29 con Postgres) y `npm run smoke` (25/25).
 - **Límites:** pendiente el scaffold del frontend Next.js; el umbral de certificado sigue fijo en 80 %.
+
+---
+
+## Registro de uso de IA — Frontend Next.js mobile-first para D2 (rama `feature/frontend`)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** OpenCode / deepseek-v4.1-flash-free
+- **Tarea:** Construir el frontend Next.js (App Router, TypeScript, Tailwind v4) siguiendo `docs/Modulos de diseño.md`: tokens de diseño, layout mobile-first, navegación y pantallas de Autenticación, Estudiante y Organizador, como avance visual de D2 con datos temporales.
+- **Propósito:** Cubrir el entregable de frontend de D2 (proyecto Next.js organizado, layout/navegación/estilos, pantallas de autenticación, dashboard y al menos una pantalla representativa por funcionalidad) sin adelantar la integración de D3.
+- **Descripción de la consulta o prompt:** "Deja solo lo justo y necesario de D2 (ni más ni menos) y quita todo lo que sea D3".
+- **Resultado utilizado:**
+  - `create-next-app` con Next.js 16, React 19 y Tailwind v4 (`src/`, App Router, alias `@/*`); se desactivó `cacheComponents`/`partialPrefetching` del scaffold por ser una SPA con datos en el cliente.
+  - Tokens de diseño en `globals.css` (`@theme`): primario `#007AFF`, éxito `#34C759`, fondos claro/oscuro, radios 12/16 px y tipografía Inter.
+  - Componentes reutilizables (`ui.tsx`, `icons.tsx`), tarjeta de actividad y shells con cabecera de perfil y bottom-nav del estudiante / nav del organizador.
+  - Pantallas: Bienvenida (oscura), Registro, Login y Cuenta creada; estudiante: Home (búsqueda + filtro + inscripción), Mis Inscripciones, Mi Progreso e Historial (valoración 5 estrellas); detalle de actividad; organizador: Mis Actividades (métricas), Detalle, Asistencia, Retroalimentación y Crear Actividad.
+  - Datos temporales en `src/lib/mock.ts` (actividades, catálogo, inscripciones, historial, reseñas, certificados, sesiones y asistencia) para que las pantallas sean navegables sin backend.
+  - **Fuera de alcance de D2 (retirado a propósito):** cliente HTTP, JWT/sesión en `localStorage`, guards por rol, descarga real de certificado y estados de carga/error de la API; eso pertenece a D3.
+- **Cambios realizados por el equipo:**
+  - Se siguió el aviso de `frontend/AGENTS.md`: se leyeron los docs versionados de Next 16 en `node_modules/next/dist/docs/` antes de codificar (cambios: Turbopack por defecto, APIs de request asíncronas, `next lint` eliminado).
+- **Forma de verificación:**
+  - `npm run lint` (0 errores) y `npm run build` (compilación + type-check en verde, 13 rutas); servidor de producción sirviendo `/`, `/login`, `/home`, `/organizer/activities`, `/activities/5` y `/progress` con HTTP 200.
+- **Límites:** el prototipo no consume el backend (datos temporales, permitido en D2); el pulido visual fino depende de las exportaciones de Figma del usuario; el umbral de certificado sigue fijo en 80 %.

@@ -45,7 +45,8 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
   * Endpoint `GET` `/actividades/:id/inscritos` — solo visible para el organizador dueño[cite: 6].
   * Al menos 1 prueba de servicio[cite: 6].
 * **Frontend:**
-  * Listado con filtros, detalle con inscripción, confirmación, creación/edición (organizador), dashboard organizador[cite: 6].
+  * Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado con filtros + inscripción), Mis Inscripciones, Detalle de actividad, panel Mis Actividades del organizador, Detalle admin y Crear/editar actividad[cite: 6].
+  * *(Nota 2026-10-17: las pantallas de Registro, Login y Cuenta creada pasan a J para descargar a N.)*
 
 ---
 
@@ -58,7 +59,7 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
   * Endpoints de calificar, consultar público, vista organizador, historial del estudiante[cite: 6].
   * Al menos 1 prueba de servicio[cite: 6].
 * **Frontend:**
-  * Historial personal, sección de reseñas en detalle de actividad, formulario de calificar, panel organizador[cite: 6].
+  * Registro, Login y Cuenta creada (pantallas de autenticación), Historial personal, sección de reseñas en el detalle de actividad, formulario de calificar (estrellas 1–5 + comentario) y panel de Retroalimentación (vista organizador)[cite: 6].
 * **Nota:** el organizador no puede editar ni eliminar comentarios de estudiantes[cite: 6].
 
 ---
@@ -176,7 +177,8 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 * 🚩 Domingo 12 de octubre: Merge de las 3 ramas. El backend queda cerrado.
 
 **Etapa 2: Frontend Next.js + Postman (13 al 16 de octubre — 4 días)**
-* Layout base y pantallas de autenticación (Login/Registro).
+* Layout base y navegación (pantalla oscura de Bienvenida: Nico).
+* Pantallas de autenticación: Registro, Login y Cuenta creada (Jhon).
 * Pantalla de actividades e inscripción (Nico).
 * Pantalla de reseñas y modal de calificar (Jhon).
 * Pantalla de control de asistencia y certificados (Samuel).
