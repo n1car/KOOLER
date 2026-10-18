@@ -14,6 +14,7 @@ import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
 import { AttendanceController } from '../src/attendance/attendance.controller';
 import { AttendanceService } from '../src/attendance/attendance.service';
 import { AttendanceEntity } from '../src/attendance/entities/attendance.entity';
+import { CertificatesService } from '../src/certificates/certificates.service';
 import { UsersService } from '../src/users/users.service';
 
 const JWT_SECRET = 'attendance-http-test-secret';
@@ -156,6 +157,18 @@ describe('Attendance endpoint (e2e)', () => {
         JwtStrategy,
         { provide: UsersService, useValue: usersService },
         { provide: ActivitiesService, useValue: activitiesService },
+        {
+          provide: CertificatesService,
+          useValue: {
+            issueEligibleCertificates: vi.fn().mockResolvedValue({
+              activityId: 0,
+              eligibleStudents: 0,
+              issuedCertificates: 0,
+              existingCertificates: 0,
+              failedStudents: 0,
+            }),
+          },
+        },
         { provide: getRepositoryToken(SessionEntity), useValue: sessionRepository },
         {
           provide: getRepositoryToken(AttendanceEntity),
