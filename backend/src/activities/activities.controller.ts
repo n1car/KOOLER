@@ -16,6 +16,7 @@ import { ActivitiesService } from './activities.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { FilterActivitiesDto } from './dto/filter-activities.dto';
+import { CreateSessionDto } from './dto/create-session.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -44,6 +45,24 @@ export class ActivitiesController {
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.activitiesService.findOne(id);
+  }
+
+  // 3.1 Listar sesiones de una actividad (público)
+  @Get(':id/sessions')
+  async getSessions(@Param('id', ParseIntPipe) id: number) {
+    return this.activitiesService.getSessions(id);
+  }
+
+  // 3.2 Crear una sesión en la actividad (Solo Organizador Dueño)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ORGANIZADOR')
+  @Post(':id/sessions')
+  async createSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() createSessionDto: CreateSessionDto,
+    @CurrentUser() organizer: UserEntity,
+  ) {
+    return this.activitiesService.createSession(id, createSessionDto, organizer);
   }
 
   // 4. Crear actividad (Solo Organizador)

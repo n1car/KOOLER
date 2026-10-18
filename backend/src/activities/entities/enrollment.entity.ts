@@ -10,7 +10,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 import { ActivityEntity } from './activity.entity';
 
 @Entity('enrollments')
-@Unique(['user', 'activity'])
+@Unique('UQ_enrollment_user_activity', ['user', 'activity'])
 export class EnrollmentEntity {
   @PrimaryGeneratedColumn({ name: 'id_enrollment' })
   id!: number;

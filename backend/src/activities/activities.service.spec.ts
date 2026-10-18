@@ -5,6 +5,7 @@ import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
+import { SessionEntity } from './entities/session.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { DataSource } from 'typeorm';
 
@@ -12,6 +13,7 @@ describe('ActivitiesService (Persona N)', () => {
   let service: ActivitiesService;
   let activityRepo: any;
   let enrollmentRepo: any;
+  let sessionRepo: any;
   let dataSource: any;
 
   const mockOrganizer = { id: 1, email: 'organizador@icesi.edu.co' } as UserEntity;
@@ -44,6 +46,12 @@ describe('ActivitiesService (Persona N)', () => {
       count: vi.fn(),
     };
 
+    sessionRepo = {
+      create: vi.fn().mockImplementation((dto) => dto),
+      save: vi.fn().mockImplementation((session) => Promise.resolve({ id: 7, ...session })),
+      find: vi.fn(),
+    };
+
     // La inscripción corre en transacción: el manager entrega los mismos
     // repositorios mockeados para mantener los tests sin BD real.
     dataSource = {
@@ -60,6 +68,7 @@ describe('ActivitiesService (Persona N)', () => {
         ActivitiesService,
         { provide: getRepositoryToken(ActivityEntity), useValue: activityRepo },
         { provide: getRepositoryToken(EnrollmentEntity), useValue: enrollmentRepo },
+        { provide: getRepositoryToken(SessionEntity), useValue: sessionRepo },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();

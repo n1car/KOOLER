@@ -8,6 +8,7 @@ import { ActivitiesController } from './activities.controller';
 import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
+import { SessionEntity } from './entities/session.entity';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 
@@ -97,6 +98,7 @@ describe('Activities flow (integración sin BD)', () => {
         ActivitiesService,
         { provide: getRepositoryToken(ActivityEntity), useValue: activityRepo },
         { provide: getRepositoryToken(EnrollmentEntity), useValue: enrollmentRepo },
+        { provide: getRepositoryToken(SessionEntity), useValue: { create: (d: any) => d, save: async (s: any) => s, find: async () => [] } },
         { provide: DataSource, useValue: dataSource },
       ],
     })

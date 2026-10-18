@@ -8,10 +8,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, ILike, Repository } from 'typeorm';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
+import { SessionEntity } from './entities/session.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { FilterActivitiesDto } from './dto/filter-activities.dto';
+import { CreateSessionDto } from './dto/create-session.dto';
 
 @Injectable()
 export class ActivitiesService {
@@ -21,6 +23,9 @@ export class ActivitiesService {
 
     @InjectRepository(EnrollmentEntity)
     private readonly enrollmentRepo: Repository<EnrollmentEntity>,
+
+    @InjectRepository(SessionEntity)
+    private readonly sessionRepo: Repository<SessionEntity>,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -310,7 +315,51 @@ export class ActivitiesService {
     }));
   }
 
-  // 9. Verificar si un estudiante está inscrito en una actividad.
+  // 9. Crear una sesión dentro de una actividad (Solo Organizador Dueño).
+  // Las sesiones habilitan el registro de asistencia y el cálculo de certificados.
+  async createSession(
+    activityId: number,
+    dto: CreateSessionDto,
+    user: UserEntity,
+  ): Promise<SessionEntity> {
+    const activity = await this.activityRepo.findOne({
+      where: { id: activityId },
+      relations: { organizer: true },
+    });
+
+    if (!activity) {
+      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+    }
+
+    if (activity.organizer.id !== user.id) {
+      throw new ForbiddenException('Solo el organizador responsable puede crear sesiones');
+    }
+
+    const session = this.sessionRepo.create({
+      activity,
+      sessionDate: dto.sessionDate,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+    });
+
+    return this.sessionRepo.save(session);
+  }
+
+  // 10. Listar las sesiones de una actividad (público).
+  async getSessions(activityId: number): Promise<SessionEntity[]> {
+    const activity = await this.activityRepo.findOne({ where: { id: activityId } });
+
+    if (!activity) {
+      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+    }
+
+    return this.sessionRepo.find({
+      where: { activity: { id: activityId } },
+      order: { sessionDate: 'ASC', startTime: 'ASC' },
+    });
+  }
+
+  // 11. Verificar si un estudiante está inscrito en una actividad.
   // Usado por AttendanceService (Funcionalidad 3) antes de registrar asistencia.
   async isStudentEnrolled(
     activityId: number,
