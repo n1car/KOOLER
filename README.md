@@ -180,21 +180,16 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `POST` | `/api/activities/:id/enroll` | ESTUDIANTE | Inscribirse a una actividad (valida cupos, fecha y duplicados). |
 | `GET` | `/api/activities/my-enrollments` | ESTUDIANTE | Ver las inscripciones del estudiante conectado. |
 | `GET` | `/api/activities/:id/enrollments` | ORGANIZADOR (Dueño) | Ver la lista de estudiantes inscritos a su actividad. |
+| `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
+| `POST` | `/api/activities/:id/sessions` | ORGANIZADOR (Dueño) | Crear una sesión en la actividad (habilita asistencia y certificados). |
 
-### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
-*(### ⭐ Valoraciones y Reseñas (`/api/reviews`) — Responsable: Jhon
-
+### ⭐ Valoraciones, Reseñas e Historial (`/api/reviews`, `/api/history`) *(Responsable: Jhon)*
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/reviews` | ESTUDIANTE | Calificar (1-5) y comentar una actividad finalizada a la que asistió. Una sola vez. |
-| `GET` | `/api/reviews/activity/:activityId` | ESTUDIANTE / ORGANIZADOR | Promedio y comentarios públicos de una actividad. |
+| `GET` | `/api/reviews/activity/:activityId` | Público | Promedio y comentarios públicos de una actividad. |
 | `GET` | `/api/reviews/organizer/activity/:activityId` | ORGANIZADOR (Dueño) | Solo lectura. El organizador no puede editar ni eliminar reseñas. |
-
-### 📅 Historial del estudiante (`/api/history`)
-
-| Método | Endpoint | Rol permitido | Descripción |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/history` | ESTUDIANTE | Actividades finalizadas con asistencia y calificación propia. |).*
+| `GET` | `/api/history` | ESTUDIANTE | Actividades finalizadas del estudiante con asistencia y calificación propia. |
 
 ### 📜 Certificados y Asistencia *(Responsable: Samuel)*
 | Método | Endpoint | Rol permitido | Descripción |
@@ -205,6 +200,10 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 | `GET` | `/api/certificates/:certificateId/download` | ESTUDIANTE (propietario) | Descarga el certificado propio como PDF (`application/pdf`) con nombre, actividad, código y fecha de emisión. |
 
 El cron de `ActivityFinalizationService` finaliza actividades vencidas cada minuto y luego intenta emitir certificados. También revisa actividades certificables ya finalizadas para reintentar emisiones fallidas o pendientes de registro de asistencia. El umbral de 80 % es más específico que RF14, cuya redacción original solicita que exista un registro de asistencia; este criterio debe mantenerse alineado con el equipo.
+
+> **Sesiones:** la asistencia y los certificados dependen de que la actividad tenga sesiones. El organizador dueño las crea con `POST /api/activities/:id/sessions` y cualquier usuario puede listarlas con `GET /api/activities/:id/sessions`.
+
+> **Seguridad (unificada):** todas las rutas protegidas usan `@UseGuards(JwtAuthGuard, RolesGuard)` de forma explícita por ruta. El `RolesGuard` **no** se registra global (corría antes que `JwtAuthGuard`, veía `request.user` vacío y devolvía 403 en toda ruta protegida).
 
 ---
 

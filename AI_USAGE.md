@@ -133,3 +133,25 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Ayuda en la implementación:** Sugerencia de Integración de `@nestjs/schedule` para procesar cada minuto actividades `ACTIVE` vencidas usando `date` y `endTime`, y reintentar la emisión idempotente sobre actividades certificables `FINISHED`. Se fijó la interpretación local `America/Bogota`; el umbral permanece fijo en 80 % y no se usa `minAttendancePercentage`. Se añadió descarga propia de certificados con PDFKit en memoria, protegida por JWT/rol y filtrada por estudiante.
 - **Límites:** Horarios con formato no reconocido se omiten con seguridad; la infraestructura no incluye persistencia de configuración de zona horaria. RF14 originalmente habla de asistencia registrada mientras la regla confirmada de este desarrollo exige 80 %. No se probó contra PostgreSQL real.
 - **Verificación:** `npm test` pasó con 48 pruebas en 7 archivos; `npm run test:e2e` pasó con 28 pruebas en 4 archivos; `npm run build` compiló correctamente. Las pruebas PDF usan PDFKit real en memoria. Las E2E usan la estrategia JWT/guards reales y repositorios simulados.
+
+---
+
+## Registro de uso de IA — Integración D2 de las 3 funcionalidades en `dev`
+- **Integrante:** Nico (Persona N) — integración asistida por IA
+- **Herramienta:** OpenCode / deepseek-v4
+- **Tarea:** Integrar `feature/certificados` y `feature/valoraciones` sobre `dev` resolviendo los conflictos reales, unificar el modelo de seguridad, habilitar la creación de sesiones y validar el sistema completo contra PostgreSQL.
+- **Causa raíz detectada:** `feature/certificados` se creó desde `main` (más viejo que `dev`), por lo que "pisaba" la Funcionalidad 1 (`ActivitiesService`/`ActivitiesController`/`EnrollmentEntity`) y revertía docs. `feature/valoraciones` salió correctamente de `dev`.
+- **Resultado utilizado:**
+  - `activities.service.ts`: se conservó el CRUD de Nico y se añadió `isStudentEnrolled()`.
+  - `activities.module.ts`: se combinó `ActivitiesController` + `ActivityFinalizationService` + `CertificatesModule` + `SessionEntity`.
+  - `enrollment.entity.ts`: se conservó la versión de `dev` y se nombró la restricción `UQ_enrollment_user_activity`.
+  - Seguridad unificada: se eliminó `RolesJwtAuthGuard` y el `APP_GUARD` global; `AttendanceController` y `CertificatesController` ahora usan `@UseGuards(JwtAuthGuard, RolesGuard)`.
+  - `reviews.controller.ts`: se corrigieron los `@Roles` invertidos (crear reseña solo ESTUDIANTE; lectura pública; organizador solo lectura).
+  - `app.module.ts`: `HistoryModule` movido al array `imports` (estaba mal dentro de `TypeOrmModule.forRootAsync`); se registró `ScheduleModule`, `AttendanceModule` y `CertificatesModule`.
+  - Nuevo endpoint de sesiones (`POST`/`GET /api/activities/:id/sessions`) con `CreateSessionDto`, ya que la asistencia y los certificados lo requerían y no existía.
+  - Tests: `reviews.integration.spec.ts` reescrito sin `AppModule` (no depende de BD); `app.e2e-spec.ts` restaurado a la versión de `dev`; e2e de F3 migrados al patrón de guards per-ruta.
+- **Forma de verificación:**
+  - `npm run build` (0 errores), `npm run lint` (0 warnings), `npm test` (67/67 verde), `npm run test:e2e` (29/29 verde con Postgres en Docker).
+  - Smoke HTTP real: login org/estudiante, crear actividad, inscribir, crear sesión, finalizar, registrar asistencia, elegibilidad 100 %, reseña, historial y certificado; descarga PDF válida (`%PDF-`) y 403 al intentar descargar certificado ajeno.
+  - Tablas verificadas en PostgreSQL/DBeaver: `activities`, `attendances`, `certificates`, `enrollments`, `review`, `roles`, `sessions`, `users`.
+- **Límites:** el frontend Next.js del D2 aún no existe en el repositorio; el umbral de certificado permanece fijo en 80 %; pendiente resolver el orden de push de los integrantes a `dev`.
