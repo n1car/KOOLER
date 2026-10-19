@@ -117,8 +117,10 @@ Cada vez que un agente de IA cree o modifique un endpoint o entidad, **TIENE LA 
 1. **Actualizar `README.md`:**
    * Agregar la nueva entidad en el Modelo de Datos.
    * Documentar el nuevo endpoint (Método HTTP, Ruta, Rol requerido y qué hace).
-2. **Actualizar `AI_USAGE.md`:**
-   * Añadir una entrada con el integrante, tarea realizada y verificación (exigido por la rúbrica de D2).
+2. **Actualizar `AI_USAGE.md` (formato básico OBLIGATORIO para todos los integrantes y ramas):**
+   * Cada entrada va en el formato `## Tarea breve (Integrante)` seguida de **máximo 3 viñetas**: **Herramienta**, **Uso** (una sola línea con el apoyo puntual) y **Verificación** (comandos en verde).
+   * Registrar **solo el apoyo puntual y concreto**; prohibido detallar la implementación completa, listar cada archivo, pegar prompts largos o dar a entender que la IA hizo todo el trabajo.
+   * No volver al formato extenso: si una entrada supera las 3 viñetas o ~4 líneas, debe acortarse.
 3. **Verificar antes de hacer commit:**
    * Ejecutar `npm run build` (debe compilar con 0 errores).
    * Ejecutar `npm test` (todas las pruebas deben pasar).
