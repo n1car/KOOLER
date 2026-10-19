@@ -8,6 +8,7 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 import type { ActivityStatus } from "@/lib/types";
+import { StarIcon } from "./icons";
 
 export function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
@@ -88,7 +89,7 @@ function FieldWrapper({ label, error, hint, children }: FieldWrapperProps) {
 }
 
 const controlClass =
-  "w-full rounded-input border border-border bg-white px-4 py-3 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-input border border-[#E2E8F0] bg-white px-4 py-3 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -162,7 +163,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-card border border-border bg-white p-5 shadow-sm",
+        "rounded-card border border-[#E2E8F0] bg-white p-5",
         className,
       )}
     >
@@ -245,11 +246,13 @@ export function Stars({
   onChange,
   readOnly = false,
   size = 22,
+  variant = "default",
 }: {
   value: number;
   onChange?: (value: number) => void;
   readOnly?: boolean;
   size?: number;
+  variant?: "default" | "onDark";
 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -265,11 +268,16 @@ export function Stars({
             className={cn(
               "leading-none",
               readOnly ? "cursor-default" : "cursor-pointer",
-              filled ? "text-[#FFCC00]" : "text-border",
+              variant === "onDark"
+                ? filled
+                  ? "text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.7)]"
+                  : "text-white/30"
+                : filled
+                  ? "text-[#FE9A00]"
+                  : "text-border",
             )}
-            style={{ fontSize: size }}
           >
-            ★
+            <StarIcon width={size} height={size} />
           </button>
         );
       })}

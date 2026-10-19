@@ -5,7 +5,7 @@ import { CheckIcon } from "@/components/icons";
 
 export default function AccountCreatedPage() {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-surface">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <div className="flex h-24 w-24 items-center justify-center rounded-full bg-success/15 text-success">
           <CheckIcon width={44} height={44} />

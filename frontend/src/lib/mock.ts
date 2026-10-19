@@ -41,6 +41,9 @@ export const mockOrganizer: AuthUser = {
   role: "ORGANIZADOR",
 };
 
+// Actividades en las que el estudiante demo ya está inscrito (prototipo D2).
+export const mockEnrolledIds = new Set([1, 3]);
+
 export const mockActivityTypes: ActivityType[] = [
   { id: 1, name: "Deportiva", requiresEnrollment: true },
   { id: 2, name: "Cultural", requiresEnrollment: true },
@@ -110,8 +113,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 1,
     name: "Torneo de fútbol 5",
+    imageUrl: "https://picsum.photos/seed/kooler-futbol/400/300",
     description:
-      "Torneo recreativo entre facultades. Forma tu equipo y participa por premios institucionales.",
+      "Torneo recreativo entre facultades donde podrás demostrar tu talento en la cancha. Forma tu equipo de cinco jugadores y participa por premios institucionales. Habrá árbitros, hidratación y zonas de descanso para todos los asistentes.",
     date: "2026-11-05",
     startTime: "14:00",
     endTime: "18:00",
@@ -126,8 +130,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 2,
     name: "Concierto de la Banda Sinfónica",
+    imageUrl: "https://picsum.photos/seed/kooler-concierto/400/300",
     description:
-      "Presentación musical abierta a toda la comunidad universitaria en el auditorio principal.",
+      "Presentación musical abierta a toda la comunidad universitaria en el auditorio principal. Disfruta de un repertorio que recorre desde clásicos hasta piezas contemporáneas. La entrada es libre y no requiere inscripción previa.",
     date: "2026-11-12",
     startTime: "18:30",
     endTime: "20:30",
@@ -142,8 +147,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 3,
     name: "Taller de fotografía urbana",
+    imageUrl: "https://picsum.photos/seed/kooler-foto/400/300",
     description:
-      "Aprende composición y edición básica recorriendo el campus. Trae tu cámara o celular.",
+      "Aprende composición, encuadre y edición básica recorriendo los rincones más fotogénicos del campus. Trae tu cámara o tu celular y practica junto a otros aficionados. Al final compartiremos las mejores tomas y daremos retroalimentación.",
     date: "2026-11-20",
     startTime: "09:00",
     endTime: "12:00",
@@ -159,8 +165,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 4,
     name: "Yoga al aire libre",
+    imageUrl: "https://picsum.photos/seed/kooler-yoga/400/300",
     description:
-      "Sesión guiada de yoga y respiración para cerrar la semana con energía renovada.",
+      "Sesión guiada de yoga y respiración para cerrar la semana con energía renovada. Apta para principiantes y niveles intermedios, con ejercicios de estiramiento y relajación. Lleva ropa cómoda y una esterilla o toalla.",
     date: "2026-11-08",
     startTime: "07:00",
     endTime: "08:00",
@@ -176,8 +183,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 5,
     name: "Seminario de liderazgo estudiantil",
+    imageUrl: "https://picsum.photos/seed/kooler-seminario/400/300",
     description:
-      "Talleres de liderazgo, trabajo en equipo y comunicación para representantes estudiantiles.",
+      "Talleres de liderazgo, trabajo en equipo y comunicación para representantes estudiantiles. Aprenderás herramientas prácticas para gestionar proyectos y movilizar a tu comunidad. Incluye actividades dinámicas y un espacio de networking entre participantes.",
     date: "2026-10-02",
     startTime: "08:00",
     endTime: "12:00",
@@ -193,8 +201,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 6,
     name: "Cine club: cine colombiano",
+    imageUrl: "https://picsum.photos/seed/kooler-cine/400/300",
     description:
-      "Proyección y conversatorio alrededor del cine colombiano contemporáneo.",
+      "Proyección y conversatorio alrededor del cine colombiano contemporáneo. Veremos una selección de cortometrajes y hablaremos con invitados del sector audiovisual. Un espacio ideal para cinéfilos y curiosos.",
     date: "2026-10-25",
     startTime: "17:00",
     endTime: "19:30",
@@ -209,8 +218,9 @@ export const mockActivities: Activity[] = [
   buildActivity({
     id: 7,
     name: "Maratón de lectura",
+    imageUrl: "https://picsum.photos/seed/kooler-lectura/400/300",
     description:
-      "Jornada de lectura compartida y club de discusión sobre narrativa latinoamericana.",
+      "Jornada de lectura compartida y club de discusión sobre narrativa latinoamericana. Comparte tus libros favoritos, descubre nuevas lecturas y conversa con otros apasionados. Habrá recomendaciones y un espacio cómodo para leer en grupo.",
     date: "2026-09-15",
     startTime: "10:00",
     endTime: "13:00",
@@ -488,6 +498,86 @@ export const mockAttendance: Record<string, AttendanceRecord[]> = {
 };
 
 export const mockActivityReviews: Record<number, ReviewSummary> = {
+  1: {
+    average: 4.5,
+    total: 2,
+    items: [
+      {
+        id: 11,
+        rating: 5,
+        comment: "Muy buen torneo, bien organizado y muy divertido.",
+        date: "2026-11-06T16:20:00.000Z",
+        author: "Juan P.",
+      },
+      {
+        id: 12,
+        rating: 4,
+        comment: "Faltó hidratación, pero estuvo chévere.",
+        date: "2026-11-06T18:05:00.000Z",
+        author: "María R.",
+      },
+    ],
+  },
+  2: {
+    average: 4.5,
+    total: 2,
+    items: [
+      {
+        id: 21,
+        rating: 5,
+        comment: "La banda estuvo espectacular.",
+        date: "2026-11-12T20:40:00.000Z",
+        author: "Carlos R.",
+      },
+      {
+        id: 22,
+        rating: 4,
+        comment: "Buen sonido, aunque empezó unos minutos tarde.",
+        date: "2026-11-12T21:10:00.000Z",
+        author: "Ana G.",
+      },
+    ],
+  },
+  3: {
+    average: 4.5,
+    total: 2,
+    items: [
+      {
+        id: 31,
+        rating: 5,
+        comment: "Aprendí muchísimo, muy práctico.",
+        date: "2026-11-20T12:30:00.000Z",
+        author: "Luisa T.",
+      },
+      {
+        id: 32,
+        rating: 4,
+        comment: "Buen taller, aunque el recorrido fue corto.",
+        date: "2026-11-20T13:00:00.000Z",
+        author: "Juan P.",
+      },
+    ],
+  },
+  4: {
+    average: 5,
+    total: 2,
+    items: [
+      {
+        id: 41,
+        rating: 5,
+        comment: "Relajante y muy bien guiado.",
+        date: "2026-11-08T08:15:00.000Z",
+        author: "Ana G.",
+      },
+      {
+        id: 42,
+        rating: 5,
+        comment: "Excelente para empezar el día.",
+        date: "2026-11-08T08:20:00.000Z",
+        author: "María R.",
+      },
+    ],
+  },
   5: {
     average: 4.5,
     total: 4,
@@ -519,6 +609,46 @@ export const mockActivityReviews: Record<number, ReviewSummary> = {
         comment: null,
         date: "2026-10-04T11:15:00.000Z",
         author: "Carlos R.",
+      },
+    ],
+  },
+  6: {
+    average: 3.5,
+    total: 2,
+    items: [
+      {
+        id: 61,
+        rating: 4,
+        comment: "Buena película y buen conversatorio.",
+        date: "2026-10-25T19:40:00.000Z",
+        author: "Carlos R.",
+      },
+      {
+        id: 62,
+        rating: 3,
+        comment: "El lugar estaba muy lleno.",
+        date: "2026-10-25T20:10:00.000Z",
+        author: "Luisa T.",
+      },
+    ],
+  },
+  7: {
+    average: 4.5,
+    total: 2,
+    items: [
+      {
+        id: 71,
+        rating: 5,
+        comment: "Muy enriquecedor, conocí buenos autores.",
+        date: "2026-09-15T13:20:00.000Z",
+        author: "Ana G.",
+      },
+      {
+        id: 72,
+        rating: 4,
+        comment: "Faltaron más libros disponibles.",
+        date: "2026-09-15T13:45:00.000Z",
+        author: "Juan P.",
       },
     ],
   },

@@ -1,97 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, Button, cn, StatusBadge } from "./ui";
-import { CertificateIcon } from "./icons";
+import { BookmarkIcon } from "./icons";
+import { activityTypeColor } from "@/lib/category";
 import type { Activity } from "@/lib/types";
-import { formatDateLong, formatTimeRange } from "@/lib/format";
 
 export function ActivityCard({
   activity,
   enrolled = false,
-  onEnroll,
-  enrolling = false,
 }: {
   activity: Activity;
   enrolled?: boolean;
-  onEnroll?: (activity: Activity) => void;
-  enrolling?: boolean;
 }) {
-  const spots = activity.availableSpots ?? activity.capacity;
-  const full = spots <= 0;
-  const isActive = activity.status === "ACTIVE";
+  const color = activityTypeColor(activity.activityType?.name);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-card border border-border bg-white shadow-sm">
-      <Link href={`/activities/${activity.id}`} className="flex flex-col gap-3 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-bold leading-snug text-foreground">
-            {activity.name}
-          </h3>
-          <StatusBadge status={activity.status} />
-        </div>
-
-        <dl className="flex flex-col gap-1 text-sm text-muted">
-          <Detail icon="📅" text={formatDateLong(activity.date)} />
-          <Detail
-            icon="🕒"
-            text={formatTimeRange(activity.startTime, activity.endTime)}
-          />
-          <Detail icon="📍" text={activity.location?.name ?? "Sin ubicación"} />
-          <Detail
-            icon="🎟️"
-            text={
-              full
-                ? "Sin cupos disponibles"
-                : `${spots} de ${activity.capacity} cupos disponibles`
-            }
-          />
-        </dl>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {activity.activityType && (
-            <Badge tone="primary">{activity.activityType.name}</Badge>
-          )}
-          {activity.isCertifiable && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-              <CertificateIcon width={14} height={14} />
-              Certifica
-            </span>
-          )}
-        </div>
-      </Link>
-
-      {onEnroll && (
-        <div className="border-t border-border p-4">
-          <Button
-            fullWidth
-            variant={enrolled ? "secondary" : full || !isActive ? "outline" : "primary"}
-            disabled={enrolled || full || !isActive || enrolling}
-            loading={enrolling}
-            onClick={() => onEnroll(activity)}
-            className={cn((full || !isActive) && !enrolled && "text-muted")}
-          >
-            {enrolled
-              ? "Inscrito"
-              : !isActive
-                ? "No disponible"
-                : full
-                  ? "Agotado / Sin cupos"
-                  : "Inscribirse"}
-          </Button>
-        </div>
+    <Link
+      href={`/activities/${activity.id}`}
+      className="relative flex min-h-36 flex-col justify-end overflow-hidden rounded-card p-4"
+      style={{ backgroundColor: color }}
+    >
+      {activity.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={activity.imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-10"
+        />
       )}
-    </article>
-  );
-}
 
-function Detail({ icon, text }: { icon: string; text: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span aria-hidden className="text-xs">
-        {icon}
-      </span>
-      <span>{text}</span>
-    </div>
+      {enrolled && (
+        <span
+          className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white"
+          style={{ color }}
+        >
+          <BookmarkIcon width={13} height={13} />
+        </span>
+      )}
+
+      <div className="relative z-10 flex flex-col items-start gap-2">
+        <h3 className="text-base font-bold leading-snug text-white">
+          {activity.name}
+        </h3>
+        {activity.activityType && (
+          <span className="rounded-full bg-white/25 px-3 py-1 text-xs font-semibold text-white">
+            {activity.activityType.name}
+          </span>
+        )}
+      </div>
+    </Link>
   );
 }

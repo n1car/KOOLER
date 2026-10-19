@@ -26,7 +26,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-surface">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
       <div className="flex flex-1 flex-col gap-6 px-6 py-10">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-foreground">Crear cuenta</h1>

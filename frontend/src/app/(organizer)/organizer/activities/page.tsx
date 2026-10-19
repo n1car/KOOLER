@@ -46,7 +46,7 @@ export default function OrganizerActivitiesPage() {
             <Link
               key={activity.id}
               href={`/organizer/activities/${activity.id}`}
-              className="flex items-center gap-4 rounded-card border border-border bg-white p-4 shadow-sm"
+              className="flex items-center gap-4 rounded-card border border-[#E2E8F0] bg-white p-4"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-input bg-surface-2 text-2xl">
                 {categoryEmoji(activity.activityType?.name)}
@@ -92,7 +92,7 @@ function Metric({
   tone: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-card border border-border bg-white p-3 text-center shadow-sm">
+    <div className="flex flex-col items-center gap-1 rounded-card border border-[#E2E8F0] bg-white p-3 text-center">
       <span className={`text-2xl font-extrabold ${tone}`}>{value}</span>
       <span className="text-[11px] font-medium text-muted">{label}</span>
     </div>

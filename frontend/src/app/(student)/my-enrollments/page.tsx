@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { Badge, EmptyState } from "@/components/ui";
-import { formatDateLong, formatTimeRange } from "@/lib/format";
-import { TicketIcon } from "@/components/icons";
-import { mockEnrollments } from "@/lib/mock";
+import { ActivityCard } from "@/components/ActivityCard";
+import { EmptyState } from "@/components/ui";
+import { BookmarkIcon } from "@/components/icons";
+import { mockActivities, mockEnrolledIds } from "@/lib/mock";
 
 export default function MyEnrollmentsPage() {
-  const items = mockEnrollments;
+  const enrolledActivities = mockActivities.filter((activity) =>
+    mockEnrolledIds.has(activity.id),
+  );
 
-  if (items.length === 0) {
+  if (enrolledActivities.length === 0) {
     return (
       <EmptyState
-        icon={<TicketIcon width={36} height={36} />}
+        icon={<BookmarkIcon width={36} height={36} />}
         title="Aún no tienes inscripciones"
         description="Explora las actividades disponibles y apúntate a las que te interesen."
         action={
@@ -28,33 +30,19 @@ export default function MyEnrollmentsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold text-foreground">Mis inscripciones</h2>
-      {items.map(({ enrollmentId, enrollmentDate, activity }) => (
-        <Link
-          key={enrollmentId}
-          href={`/activities/${activity.id}`}
-          className="relative flex flex-col gap-2 rounded-card border border-border bg-white p-5 shadow-sm"
-        >
-          <span className="absolute right-4 top-4">
-            <Badge tone="success">Inscrito / Confirmado</Badge>
-          </span>
-          <h3 className="pr-28 text-base font-bold text-foreground">
-            {activity.name}
-          </h3>
-          <p className="text-sm text-muted">{formatDateLong(activity.date)}</p>
-          <p className="text-sm text-muted">
-            {formatTimeRange(activity.startTime, activity.endTime)}
-          </p>
-          <p className="text-xs text-muted">
-            Inscrito el {formatDateLong(enrollmentDate)}
-          </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            {activity.category && <Badge tone="primary">{activity.category}</Badge>}
-            {activity.isCertifiable && <Badge tone="success">Certifica</Badge>}
-          </div>
-        </Link>
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-0.5">
+        <h1 className="text-xl font-bold text-foreground lg:text-2xl">
+          Mis inscripciones
+        </h1>
+        <p className="text-sm text-muted">Actividades a las que ya te uniste</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
+        {enrolledActivities.map((activity) => (
+          <ActivityCard key={activity.id} activity={activity} enrolled />
+        ))}
+      </div>
+    </>
   );
 }

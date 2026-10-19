@@ -16,7 +16,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-surface">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
       <div className="flex flex-1 flex-col justify-center gap-6 px-6 py-10">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-foreground">Bienvenido</h1>
@@ -53,13 +53,22 @@ export default function LoginPage() {
               Regístrate
             </Link>
           </p>
-          <button
-            type="button"
-            onClick={() => router.push("/organizer/activities")}
-            className="text-xs font-medium text-muted underline underline-offset-2"
-          >
-            Entrar como organizador demo
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/home")}
+              className="text-xs font-medium text-muted underline underline-offset-2"
+            >
+              Entrar como estudiante demo
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/organizer/activities")}
+              className="text-xs font-medium text-muted underline underline-offset-2"
+            >
+              Entrar como organizador demo
+            </button>
+          </div>
         </div>
       </div>
     </div>
