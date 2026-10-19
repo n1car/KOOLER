@@ -196,3 +196,24 @@ Este documento registra de forma transparente y estructurada el apoyo recibido m
 - **Forma de verificación:**
   - `npm run lint` (0 errores) y `npm run build` (compilación + type-check en verde, 13 rutas); servidor de producción sirviendo `/`, `/login`, `/home`, `/organizer/activities`, `/activities/5` y `/progress` con HTTP 200.
 - **Límites:** el prototipo no consume el backend (datos temporales, permitido en D2); el pulido visual fino depende de las exportaciones de Figma del usuario; el umbral de certificado sigue fijo en 80 %.
+
+---
+
+## Registro de uso de IA — Pulido visual y versión responsive para PC (rama `feature/frontend`)
+- **Integrante:** Nico (Persona N)
+- **Herramienta:** OpenCode / deepseek-v4.1-flash-free
+- **Tarea:** Iterar el diseño de las pantallas de actividades (Bienvenida, Home del estudiante, Mis Inscripciones, Detalle de actividad) y su versión responsive para PC, ajustando tokens, tarjetas, botones, estrellas e imágenes, sin romper la vista móvil.
+- **Propósito:** Acercar el prototipo al Figma y dejar el flujo de actividades usable tanto en celular como en computador (mobile-first responsivo), según la rúbrica de D2.
+- **Descripción de la consulta o prompt:** "Apóyame haciendo los reajustes que te dije con las pantallas, todo lo de la vista del celular está perfecto, que no se te dañe" y "en el detalle de la actividad pon más texto; la foto de banner debe quedar 100 % al ras de la pantalla".
+- **Resultado utilizado:**
+  - Color de texto global a `#475569`; tarjetas e inputs con borde `#E2E8F0` y sin sombra; estrellas y trofeo en `#FE9A00` (estrellas ahora como SVG con esquinas redondeadas).
+  - Botones de estado: "Inscrito" (`#CAFFE6`/`#065F46`) y "Sin cupos" (`#FFEBEB`/`#991B1B`).
+  - Detalle de actividad: banner a color por categoría + imagen, secciones en orden (aviso, descripción, fecha/lugar/cupos, certificación, botón, comentarios) y comentarios desplegables con promedio y una sola estrella.
+  - Navegación: barra inferior flotante en móvil y `DesktopNav` superior en PC; el organizador ahora usa la misma estructura que el estudiante ("Mis Actividades" + "Crear").
+  - Responsive con clases `lg:` (sin tocar móvil): contenedor a pantalla completa, grillas de 3 columnas, títulos más grandes y banner PC a proporción real de la imagen (`bannerPC.png`, 5757×1185, `w-full h-auto`, sin recorte).
+  - Descripciones ampliadas en `src/lib/mock.ts` para que el detalle tenga más texto; imágenes nuevas en `public/images/` (`bannerPC.png`, `BienvenidaPC.png`) servidas con `unoptimized` para no recomprimir.
+- **Cambios realizados por el equipo:**
+  - Se acordó mover el panel **Mis Actividades del organizador** de N a S y descartar la pantalla de **editar actividad**; el acuerdo se actualizó en `AGENTS.md`, `README.md` y `docs/Plan de trabajo.md`.
+- **Forma de verificación:**
+  - `npm run lint` (0 errores) y `npm run build` (verde, 13 rutas); HTML servido en el puerto 3001 verificado con PowerShell (banner, navegación y textos presentes en `/home`, `/progress`, `/history`, `/my-enrollments`, `/organizer/activities` y `/activities/1`).
+- **Límites:** el prototipo sigue sin consumir el backend (datos temporales); el alto del banner PC depende de las dimensiones exactas del archivo `bannerPC.png`; el umbral de certificado sigue fijo en 80 %.

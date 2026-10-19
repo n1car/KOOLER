@@ -32,7 +32,7 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
   * Funcionalidad 1: Gestión de actividades (`ActivityEntity`) e inscripciones (`EnrollmentEntity`).
   * Catálogos de apoyo: categorías (`ActivityTypeEntity`) y ubicaciones (`LocationEntity`) exigidos por RF03/RF06.
-  * **Frontend:** Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado + filtros + inscripción), Mis Inscripciones, Detalle de actividad, panel **Mis Actividades** del organizador, Detalle admin y Crear/editar actividad.
+  * **Frontend:** Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado + filtros + inscripción), Mis Inscripciones, Detalle de actividad, Detalle admin y Crear/editar actividad.
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Reseñas y calificaciones (`ReviewEntity`).
   * Endpoints públicos de lectura de reseñas y creación por estudiantes que hayan participado.
@@ -41,9 +41,9 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia (`AttendanceEntity`) y certificados (`CertificateEntity`).
   * Cálculo del porcentaje de asistencia y emisión de código único de certificado.
-  * **Frontend:** Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
+  * **Frontend:** panel **Mis Actividades** (dashboard del organizador), Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
 
-> **Nota de reparto frontend (acordado 2026-10-17):** las pantallas de **Registro, Login y Cuenta creada** pasan de N a **J** porque N quedó muy cargado. La pantalla de **Inicio/Bienvenida (oscura)** permanece con **N** (es su puerta de entrada al flujo de actividades).
+> **Nota de reparto frontend (acordado 2026-10-17):** las pantallas de **Registro, Login y Cuenta creada** pasan de N a **J** porque N quedó muy cargado. El **panel Mis Actividades del organizador** pasa de N a **S**. La pantalla de **Inicio/Bienvenida (oscura)** permanece con **N** (es su puerta de entrada al flujo de actividades).
 
 ---
 

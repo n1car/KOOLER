@@ -19,13 +19,13 @@ Todos los documentos de especificación inicial y diseño se encuentran organiza
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Template base de backend (Docker, Auth JWT, RolesGuard, Entidades comunes).
   * Funcionalidad 1: Gestión y participación en actividades (creación, edición, cancelación, cupos e inscripciones).
-  * Frontend: Inicio (Bienvenida), Home del estudiante, Mis Inscripciones, Detalle de actividad, Mis Actividades y Crear/editar (organizador).
+  * Frontend: Inicio (Bienvenida), Home del estudiante, Mis Inscripciones, Detalle de actividad y Crear/editar (organizador).
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Historial, valoraciones y comentarios públicos.
   * Frontend: Registro, Login y Cuenta creada; Historial, Valoraciones y Retroalimentación (organizador).
 * **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia por sesión y emisión de certificados.
-  * Frontend: Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
+  * Frontend: Mis Actividades (dashboard del organizador), Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
 
 > ⚠️ **Para agentes de IA y desarrolladores:** Leer obligatoriamente el archivo [`AGENTS.md`](./AGENTS.md) antes de escribir código.
 
