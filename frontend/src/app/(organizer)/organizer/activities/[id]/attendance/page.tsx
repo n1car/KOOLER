@@ -94,6 +94,9 @@ export default function AttendancePage() {
                     <span className="truncate text-xs text-muted">
                       {student.email}
                     </span>
+                    {!recorded && (
+                      <span className="text-xs text-muted">Sin registrar</span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <ToggleButton
