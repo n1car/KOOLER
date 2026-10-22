@@ -78,3 +78,8 @@ Registro breve del apoyo puntual recibido con herramientas de IA, en cumplimient
 - **Herramienta:** OpenCode.
 - **Uso:** apoyo puntual para el pulido visual de las pantallas de actividades y su versión responsive.
 - **Verificación:** `npm run lint` y `npm run build` en verde.
+
+## Orientación y validación visual D2 (Samuel)
+- **Herramienta:** GitHub Copilot.
+- **Uso:** revisión de requerimientos y plan de trabajo; orientación y validación visual de Mi Progreso / Mi Certificado y Registro de asistencia, dentro del alcance D2 y sin integración con backend ni autenticación.
+- **Verificación:** `git diff --check` en verde; lint y build no ejecutados por ausencia de dependencias locales.
