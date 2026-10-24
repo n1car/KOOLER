@@ -183,6 +183,49 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 
 ---
 
+## ☁️ Despliegue del backend (Render)
+
+El repositorio incluye [`render.yaml`](./render.yaml), un blueprint que crea en un solo paso el backend (imagen Docker) y una base de datos PostgreSQL administrada.
+
+| Recurso | Valor |
+| :--- | :--- |
+| **URL de la API** | `https://kooler-api.onrender.com/api` |
+| **Health check** | `https://kooler-api.onrender.com/api/health` |
+| **Credenciales demo** | `estudiante@icesi.edu.co` y `organizador@icesi.edu.co` / `Password123!` |
+
+### Cómo desplegar
+
+1. En Render: **New → Blueprint** y seleccionar el repositorio `n1car/KOOLER`, rama `dev`.
+2. Render crea `kooler-api` y `kooler-db`, e inyecta las variables `DB_*` desde la base de datos. `JWT_SECRET` se genera aleatorio.
+3. Esperar el primer build y verificar `GET /api/health` → `{"status":"ok","database":"up"}`.
+4. Cada push a `dev` vuelve a desplegar automáticamente.
+
+### Variables de entorno en producción
+
+| Variable | Origen |
+| :--- | :--- |
+| `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | Las inyecta Render desde `kooler-db` |
+| `JWT_SECRET` | Generado por Render; nunca se versiona |
+| `JWT_EXPIRES_IN` | `24h` |
+| `PORT` | Lo define la plataforma |
+
+El arranque valida la configuración (`src/config/env.validation.ts`): si falta una variable obligatoria o `JWT_SECRET` conserva un valor de ejemplo, el proceso no inicia.
+
+### Comportamiento del plan gratuito (importante para la demo)
+
+* El servicio **se suspende tras 15 minutos sin tráfico** y tarda entre 30 y 60 segundos en despertar. Antes de la sustentación conviene abrir `/api/health` un par de minutos antes.
+* La base de datos gratuita **expira a los 30 días**. Para reconstruirla: recrear `kooler-db`, actualizar `DB_HOST` y `DB_PASSWORD`, y reiniciar el servicio; el esquema se genera con `synchronize` y el seed repuebla los datos demo.
+* Mientras el servicio está suspendido el cron de finalización no corre; al despertar, la finalización también se aplica en las lecturas, así que el estado se corrige solo.
+
+### Smoke test contra el despliegue
+
+```powershell
+cd backend
+npm run smoke -- -BaseUrl https://kooler-api.onrender.com/api
+```
+
+---
+
 ## 📡 Catálogo de Endpoints de la API
 
 ### 🩺 Salud del servicio (`/api/health`)
