@@ -179,6 +179,11 @@ describe('Attendance endpoint (e2e)', () => {
           useValue: {
             get: (key: string) =>
               key === 'JWT_SECRET' ? JWT_SECRET : undefined,
+            getOrThrow: (key: string) => {
+              const value = key === 'JWT_SECRET' ? JWT_SECRET : undefined;
+              if (value === undefined) throw new Error(`Missing ${key}`);
+              return value;
+            },
           },
         },
       ],
