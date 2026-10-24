@@ -11,6 +11,7 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { HistoryModule } from './history/history.module';
+import { HealthModule } from './health/health.module';
 import { validateEnv } from './config/env.validation';
 
 @Module({
@@ -43,6 +44,7 @@ import { validateEnv } from './config/env.validation';
     SeedModule,
     ReviewsModule,
     HistoryModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

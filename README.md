@@ -185,6 +185,12 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
 
 ## 📡 Catálogo de Endpoints de la API
 
+### 🩺 Salud del servicio (`/api/health`)
+
+| Método | Endpoint | Rol permitido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/health` | Público | Estado del servicio y de la conexión a PostgreSQL (`200` operativo / `503` base de datos no disponible). Lo usan el proveedor de despliegue y el smoke test. |
+
 ### 🔐 Autenticación (`/api/auth`)
 | Método | Endpoint | Rol permitido | Descripción |
 | :--- | :--- | :--- | :--- |
