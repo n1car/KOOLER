@@ -11,11 +11,13 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { HistoryModule } from './history/history.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
