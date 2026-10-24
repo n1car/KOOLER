@@ -7,5 +7,9 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // La app exige JWT_SECRET desde el entorno: en pruebas se usa un valor propio.
+    env: {
+      JWT_SECRET: 'e2e_test_only_secret_value',
+    },
   },
 });
