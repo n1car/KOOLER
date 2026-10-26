@@ -1,95 +1,50 @@
 # Registro de Uso de Inteligencia Artificial — Proyecto Kooler
 
-Registro breve del apoyo puntual recibido con herramientas de IA, en cumplimiento de las políticas académicas del curso.
+Este documento registra de forma general el apoyo recibido de herramientas de Inteligencia Artificial durante el proyecto Kooler, en cumplimiento de las políticas académicas del curso. La IA se usó como apoyo; el diseño, las decisiones técnicas y el código final fueron revisados, probados y adaptados por el equipo.
 
 ---
 
-## D2 — Backend base (Nico)
-- **Herramienta:** Google Antigravity / Gemini.
-- **Uso:** setup de NestJS, Docker/PostgreSQL, autenticación (JWT, bcrypt, RolesGuard) y entidades base.
-- **Verificación:** `npm run build` y `npm test` en verde.
+## Herramientas utilizadas
 
-## D2 — Funcionalidad 1: actividades e inscripciones (Nico)
-- **Herramienta:** Google Antigravity / Gemini.
-- **Uso:** `EnrollmentEntity`, CRUD de actividades, control de cupos y concurrencia, pruebas unitarias.
-- **Verificación:** `npm test` y `npm run test:e2e` en verde.
+- **Google Antigravity / Gemini:** apoyo en la configuración inicial del proyecto.
+- **OpenCode:** apoyo en la revisión de estándares, integración y validación del proyecto.
+- **GitHub Copilot:** apoyo puntual en tareas de desarrollo del backend y del frontend.
 
-## D2 — Seguridad y reglas de negocio (Nico)
+---
+
+## Registro por integrante
+
+### Nico (N)
+
+- **Herramientas:** Google Antigravity / Gemini, OpenCode.
+- **Tareas de apoyo:**
+  - Base del proyecto: estructura inicial del backend, configuración de Docker y de la base de datos.
+  - Especificaciones y estándares del equipo (convenciones de nombres, organización por módulos).
+  - Revisión de aspectos sistemáticos: llaves foráneas, restricciones y coherencia con el modelo de datos.
+  - Integración de los módulos del equipo y apoyo en la base del frontend.
+- **Verificación:** revisión manual del código, compilación y ejecución de pruebas antes de integrar cambios.
+
+### Jhon (J)
+
 - **Herramienta:** OpenCode.
-- **Uso:** revisión contra la rúbrica: rol en el registro, filtros, tope de cupos, concurrencia de inscripción y log de errores.
-- **Verificación:** `npm test`, `npm run test:e2e` y smoke HTTP en verde.
+- **Tareas de apoyo:**
+  - Apoyo en aspectos sistemáticos de la configuración del backend (variables de entorno, validación al arranque).
+  - Apoyo en la preparación del despliegue y de la colección de pruebas de la API.
+- **Verificación:** compilación, pruebas automatizadas y validación de la colección de la API.
 
-## D2 — Sincronía de ramas y colección Postman (Nico)
-- **Herramienta:** OpenCode.
-- **Uso:** igualar `feature/actividades` con `dev` y validar la colección Postman.
-- **Verificación:** ramas iguales y 11 requests ejecutados en verde.
+### Samuel (S)
 
-## Asistencia (Samuel)
 - **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para el módulo de asistencia y sus pruebas.
-- **Verificación:** `npm run build` y `npm test` en verde.
+- **Tareas de apoyo:**
+  - Apoyo en la especificación y en la estructura de los módulos de asistencia y certificados.
+  - Apoyo en la implementación de algunos componentes del backend y del frontend.
+  - Apoyo en la revisión de requerimientos y del plan de trabajo.
+- **Verificación:** compilación, pruebas y revisión manual de cada cambio antes de integrarlo.
 
-## Autenticación por roles (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para el guard de roles y sus pruebas.
-- **Verificación:** `npm test` y e2e de autorización en verde.
+---
 
-## Registro de asistencia (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para el endpoint de registro de asistencia y sus pruebas.
-- **Verificación:** `npm test`, e2e y `npm run build` en verde.
+## Compromiso del equipo
 
-## Asistencia por sesión (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para relacionar la asistencia con sesiones y ajustar pruebas.
-- **Verificación:** `npm test`, `npm run build` y `git diff --check` en verde.
-
-## Infraestructura de certificados (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para la entidad, el módulo y la consulta de certificados.
-- **Verificación:** `npm test`, e2e y `npm run build` en verde.
-
-## Elegibilidad y emisión de certificados (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para el cálculo de elegibilidad (80 %) y la emisión idempotente.
-- **Verificación:** `npm test`, `npm run test:e2e` y `npm run build` en verde.
-
-## Finalización automática y descarga PDF (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** apoyo puntual para la finalización programada de actividades y la descarga de certificados en PDF.
-- **Verificación:** `npm test`, `npm run test:e2e` y `npm run build` en verde.
-
-## Integración D2 en `dev` (Nico)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para integrar las 3 funcionalidades, resolver conflictos y unificar la seguridad.
-- **Verificación:** `npm test`, `npm run test:e2e` y smoke HTTP contra PostgreSQL.
-
-## Catálogos y soporte de frontend (Nico)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para `LOCATION`/`ACTIVITY_TYPE`, lectura de asistencia y corrección de gaps de flujo.
-- **Verificación:** `npm run build`, `npm test`, `npm run test:e2e` y smoke en verde.
-
-## Frontend Next.js para D2 (Nico)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para construir el frontend (layout, navegación, estilos y pantallas) con datos temporales.
-- **Verificación:** `npm run lint` y `npm run build` en verde.
-
-## Pulido visual y versión responsive para PC (Nico)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para el pulido visual de las pantallas de actividades y su versión responsive.
-- **Verificación:** `npm run lint` y `npm run build` en verde.
-
-## Orientación y validación visual D2 (Samuel)
-- **Herramienta:** GitHub Copilot.
-- **Uso:** revisión de requerimientos y plan de trabajo; orientación y validación visual de Mi Progreso / Mi Certificado y Registro de asistencia, dentro del alcance D2 y sin integración con backend ni autenticación.
-- **Verificación:** `git diff --check` en verde; lint y build no ejecutados por ausencia de dependencias locales.
-
-## Endpoint de salud y configuración por entorno (Jhon)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para `GET /api/health`, la validación de variables al arrancar y la eliminación del secreto JWT por defecto.
-- **Verificación:** `npm run build`, `npm test` (76/76), `npm run test:e2e` (30/30) y `npm run smoke` (27/27) en verde.
-
-## Blueprint de despliegue y colección Postman (Jhon)
-- **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para `render.yaml`, la captura automática de tokens en Postman y la corrección de sus aserciones.
-- **Verificación:** `npx newman run Kooler-D2.postman_collection.json` con 23 requests y 46 aserciones en verde.
+- Todo resultado generado con IA fue revisado y comprendido por quien lo integró.
+- No se compartieron contraseñas, tokens ni secretos con ninguna herramienta.
+- Cada integrante puede explicar y modificar el código que aparece en el repositorio.
