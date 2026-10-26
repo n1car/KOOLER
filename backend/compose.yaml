@@ -12,5 +12,23 @@
     volumes:
       - kooler_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: kooler_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el entorno}
+
 volumes:
   kooler_data:
