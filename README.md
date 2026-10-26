@@ -1,170 +1,179 @@
-# Kooler — Plataforma de Bienestar Universitario
+# KOOLER — Bienestar Universitario
 
-Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar y certificar las actividades de bienestar estudiantil e institucional (Caso de estudio: Universidad Icesi).
+KOOLER es una aplicación web para organizar y gestionar las actividades de bienestar universitario, tomando como caso de estudio la Universidad Icesi. La idea es reunir en un solo lugar la información de las actividades y facilitar la participación de los estudiantes, el trabajo de los organizadores y el seguimiento de la asistencia.
 
----
+## Funcionalidades principales
 
-## 📚 Documentación del Proyecto (`docs/`)
-Todos los documentos de especificación inicial y diseño se encuentran organizados en la carpeta [`docs/`](./docs):
-* 📋 [`Requerimientos.md`](./docs/Requerimientos.md) — Requerimientos del sistema.
-* 🗄️ [`Diseño base de datos.md`](./docs/Diseño%20base%20de%20datos.md) — Modelo relacional de 9 entidades.
-* 🏛️ [`Arquitectura inicial.md`](./docs/Arquitectura%20inicial.md) — Arquitectura y stack tecnológico.
-* 💡 [`Funcionalidades.md`](./docs/Funcionalidades.md) — Detalle de las funcionalidades principales.
-* 📅 [`Plan de trabajo.md`](./docs/Plan%20de%20trabajo.md) — Reparto de tareas y tiempos.
-* 🎯 [`Taller y rubrica del proyecto.md`](./docs/Taller%20y%20rubrica%20del%20proyecto.md) — Criterios de evaluación oficiales.
+- **Gestión de actividades:** creación, edición y cancelación de actividades, con información sobre sus fechas, categorías y cupos.
+- **Inscripciones:** los estudiantes pueden inscribirse en las actividades disponibles, teniendo en cuenta los cupos y las condiciones de inscripción.
+- **Control de asistencia:** registro de asistencia de los participantes por sesión.
+- **Historial y valoraciones:** consulta de actividades y publicación de comentarios y valoraciones cuando la actividad ha finalizado.
+- **Certificados:** gestión de certificados asociados a la participación y asistencia de los estudiantes.
+- **Usuarios y permisos:** registro e inicio de sesión, con acceso a las funciones según el rol del usuario.
 
----
+La disponibilidad de algunas funciones puede variar entre el frontend y el backend, ya que la integración completa de todos los flujos forma parte del desarrollo del proyecto.
 
-## 👥 Reparto de Funcionalidades (Entrega D2)
-* **Persona N (Nico) — Rama: `feature/actividades`:**
-  * Template base de backend (Docker, Auth JWT, RolesGuard, Entidades comunes).
-  * Funcionalidad 1: Gestión y participación en actividades (creación, edición, cancelación, cupos e inscripciones).
-* **Persona J (Jhon) — Rama: `feature/valoraciones`:**
-  * Funcionalidad 2: Historial, valoraciones y comentarios públicos.
-* **Persona S (Samuel) — Rama: `feature/certificados`:**
-  * Funcionalidad 3: Control de asistencia por sesión y emisión de certificados.
+## Tecnologías utilizadas
 
-> ⚠️ **Para agentes de IA y desarrolladores:** Leer obligatoriamente el archivo [`AGENTS.md`](./AGENTS.md) antes de escribir código.
+| Componente | Tecnología |
+|---|---|
+| Frontend | Next.js, React y TypeScript |
+| Backend | NestJS 11 |
+| Base de datos | PostgreSQL 17 |
+| ORM | TypeORM |
+| Autenticación | JWT y Passport |
+| Validación | class-validator y class-transformer |
+| Contenedores | Docker Compose |
+| Pruebas | Pruebas automatizadas del backend |
 
----
+## Estructura del proyecto
 
-## 📝 Estándar de Commits y Límites por Persona
-Todo commit debe seguir el formato Conventional Commits:
+```text
+KOOLER/
+├── backend/       # API, lógica de negocio y acceso a datos
+├── frontend/      # Interfaz web
+├── docs/          # Documentación y diseño del proyecto
+├── AGENTS.md      # Instrucciones para trabajar en el repositorio
+├── AI_USAGE.md    # Registro de uso de herramientas de IA
+└── README.md
 ```
-<tipo>(<alcance>): <descripción concisa>
+
+## Requisitos
+
+Antes de ejecutar el proyecto, asegúrate de tener instalado:
+
+- Node.js y npm.
+- Docker Desktop con Docker Compose.
+- Git.
+
+## Cómo ejecutar el proyecto
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/n1car/KOOLER.git
+cd KOOLER
 ```
-* **Tipos:** `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
-* **Alcances por integrante:**
-  * **Nico (N):** `feat(base)`, `feat(auth)`, `feat(actividades)`, `feat(inscripciones)`
-  * **Jhon (J):** `feat(valoraciones)`, `feat(comentarios)`, `feat(historial)`
-  * **Samuel (S):** `feat(certificados)`, `feat(asistencia)`
-  * **Común:** `chore(docker)`, `docs(readme)`, `test(auth)`
 
-### 🔢 Límite Máximo de Commits por Persona:
-* **Entrega D2:** **Máximo 20 commits por persona** (Recomendado: 10 - 18 commits atómicos).
-* **Entrega D3:** **Máximo 15 commits por persona** (Recomendado: 8 - 12 commits).
-* **Entrega Final (DF):** **Máximo 10 commits por persona** (Recomendado: 5 - 8 commits).
+Para trabajar con la rama de integración del equipo:
 
----
+```bash
+git checkout dev
+```
 
-## 🎯 Límites y Entregables por Hito (Deliveries)
+### 2. Configurar y levantar la base de datos
 
-### 📌 Entrega D2 (Actual — 10% de la Nota)
-* **Backend:**
-  * Soporte funcional completo para las 3 funcionalidades.
-  * Base de datos PostgreSQL 17 reproducida con Docker (`compose.yaml`).
-  * Autenticación JWT + Passport con contraseñas encriptadas con `bcrypt`.
-  * Autorización verificada en backend con `RolesGuard` (no solo ocultando botones).
-  * Validación estricta con DTOs y class-validator.
-  * Interceptor de logging para auditoría de peticiones HTTP y tiempos de respuesta.
-  * Pruebas automatizadas de servicio e integración.
-  * Colección de Postman exportada y ejecutable.
-  * Backend desplegado con URL pública funcional.
-* **Frontend:**
-  * Proyecto Next.js con layout base, navegación y estilos mobile-first.
-  * Pantallas de login/registro, dashboard y al menos 1 representativa por funcionalidad.
-* **Límite de D2 (Fuera de alcance):**
-  * NO incluir pagos, reservas de espacios físicos ni subida binaria a AWS S3.
+Desde la raíz del repositorio, ejecuta:
 
-### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
-* Integración punta a punta de todos los flujos sin datos falsos.
-* Pruebas completas de regresión y concurrencia.
-* Frontend, Backend y BD desplegados en la nube.
-* Sustentación oral individual: cada estudiante debe dominar y poder explicar cualquier línea de código.
-
----
-
-## 🚀 Tecnologías del Backend
-* **Framework:** NestJS 11 con TypeORM
-* **Base de Datos:** PostgreSQL 17 (Docker) en puerto `5433`
-* **Autenticación:** JWT con Passport y encriptación `bcrypt`
-* **Autorización:** `RolesGuard` genérico y `JwtAuthGuard`
-* **Validación:** DTOs con `class-validator` y `class-transformer`
-* **Auditoría:** `LoggingInterceptor` global (registra método, URL, código de estado y tiempo de respuesta en ms)
-* **Pruebas:** Vitest (ejecución rápida con `npm test`)
-
----
-
-## 🌿 Estrategia de Ramas en Git (Git Flow del Equipo)
-El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del proyecto:
-1. **`main` (Producción / Entrega Oficial):** Rama 100% estable. Solo recibe merges desde `dev` una vez verificado que todo compila y pasa pruebas.
-2. **`dev` (Integración y Pruebas Conjuntas):** Rama de integración del equipo. Aquí se unen los avances de las 3 ramas para probar que todo funcione junto y corregir detalles sin romper `main`.
-3. **Ramas de Funcionalidad (`feature/*`):** Cada integrante trabaja de forma aislada en su propia rama creada a partir de `dev`:
-   * Nico: `feature/actividades`
-   * Jhon: `feature/valoraciones`
-   * Samuel: `feature/certificados`
-
-### 🛠️ Guía Rápida para Jhon y Samuel al Clonar el Repositorio
-
-1. **Clonar, cambiarse a `dev` y sacar su rama de trabajo:**
-   ```bash
-   git clone https://github.com/n1car/KOOLER.git
-   cd KOOLER
-   
-   # Cambiarse a la rama dev (base común)
-   git checkout dev
-   
-   # Si eres Jhon (Persona J):
-   git checkout -b feature/valoraciones
-   
-   # Si eres Samuel (Persona S):
-   git checkout -b feature/certificados
-   ```
-   *(Al terminar avances, cada integrante hace merge o PR hacia `dev`, NUNCA directo a `main`)*.
-
-2. **Levantar la base de datos (Docker Desktop debe estar abierto):**
-   ```bash
-   cd backend
-   docker compose up -d
-   ```
-
-3. **Instalar dependencias y encender el backend:**
-   ```bash
-   cd backend
-   npm install
-   npm run start:dev
-   ```
-   El backend iniciará en: `http://localhost:3000/api`
-
-4. **Credenciales Demo de Fábrica (creadas automáticamente por Seed):**
-   * **Estudiante:** `estudiante@icesi.edu.co` | `Password123!`
-   * **Organizador:** `organizador@icesi.edu.co` | `Password123!`
-
----
-
-## 📡 Catálogo de Endpoints de la API
-
-### 🔐 Autenticación (`/api/auth`)
-| Método | Endpoint | Rol permitido | Descripción |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Público | Registro de usuarios (asigna rol ESTUDIANTE por defecto). |
-| `POST` | `/api/auth/login` | Público | Inicio de sesión, devuelve token JWT y rol. |
-| `GET` | `/api/auth/profile` | Autenticado | Devuelve los datos del usuario conectado según su token JWT. |
-
-### 📅 Actividades (`/api/activities`) *(En desarrollo por Persona N)*
-| Método | Endpoint | Rol permitido | Descripción |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/activities` | Público / Autenticado | Listado de actividades con filtros (estado, categoría). |
-| `GET` | `/api/activities/:id` | Público / Autenticado | Detalle de la actividad con cupos disponibles calculados. |
-| `POST` | `/api/activities` | ORGANIZADOR | Crear una nueva actividad de bienestar. |
-| `PATCH` | `/api/activities/:id` | ORGANIZADOR (Dueño) | Modificar datos de una actividad existente. |
-| `DELETE` | `/api/activities/:id` | ORGANIZADOR (Dueño) | Cancelar una actividad (cambia su estado a CANCELLED). |
-| `POST` | `/api/activities/:id/enroll` | ESTUDIANTE | Inscribirse a una actividad (valida cupos, fecha y duplicados). |
-| `GET` | `/api/activities/:id/enrollments` | ORGANIZADOR (Dueño) | Ver la lista de estudiantes inscritos a su actividad. |
-
-### ⭐ Valoraciones y Reseñas (`/api/reviews`) *(Responsable: Jhon)*
-*(Documentar aquí los endpoints creados por J: consultar reseñas públicas y calificar actividad finalizada).*
-
-### 📜 Certificados y Asistencia (`/api/certificates`) *(Responsable: Samuel)*
-*(Documentar aquí los endpoints creados por S: registrar asistencia y consultar/descargar certificado).*
-
----
-
-## 🧪 Pruebas Automatizadas
 ```bash
 cd backend
+docker compose up -d
+```
+
+Esto inicia los servicios definidos en el archivo `backend/compose.yaml`.
+
+### 3. Configurar el backend
+
+Instala las dependencias:
+
+```bash
+cd backend
+npm install
+```
+
+Configura las variables de entorno requeridas por el backend. Consulta el archivo de validación de configuración y la configuración de TypeORM para verificar los nombres y valores necesarios en tu entorno local.
+
+No utilices credenciales reales ni secretos de producción en archivos que vayan a subirse al repositorio.
+
+Inicia el servidor en modo desarrollo:
+
+```bash
+npm run start:dev
+```
+
+La API está disponible en:
+
+`http://localhost:3000/api`
+
+El endpoint de salud es:
+
+`http://localhost:3000/api/health`
+
+### 4. Ejecutar el frontend
+
+Abre otra terminal desde la raíz del repositorio:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Next.js iniciará el servidor de desarrollo. La dirección local se muestra en la terminal al arrancar.
+
+Si necesitas configurar variables de entorno para el frontend, revisa los archivos de configuración y las variables utilizadas por la aplicación.
+
+## Usuarios de prueba
+
+En el entorno de desarrollo se pueden crear usuarios de demostración mediante el proceso de seed, según la configuración del backend.
+
+Las cuentas de demostración no deben utilizarse en producción. Si necesitas las credenciales locales, revisa la configuración de seed del proyecto.
+
+## API
+
+La API utiliza el prefijo `/api`.
+
+### Autenticación — `/api/auth`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Público | Registra un usuario. |
+| `POST` | `/api/auth/login` | Público | Inicia sesión y devuelve la información de autenticación. |
+| `GET` | `/api/auth/profile` | Autenticado | Consulta el perfil del usuario autenticado. |
+
+### Actividades — `/api/activities`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/activities` | Público o autenticado | Consulta las actividades y sus filtros disponibles. |
+| `GET` | `/api/activities/:id` | Público o autenticado | Consulta el detalle de una actividad. |
+| `POST` | `/api/activities` | Organizador | Crea una actividad. |
+| `PATCH` | `/api/activities/:id` | Organizador autorizado | Modifica una actividad propia. |
+| `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad. |
+| `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |
+| `GET` | `/api/activities/:id/enrollments` | Organizador autorizado | Consulta las inscripciones de una actividad propia. |
+
+Los permisos, validaciones y condiciones específicas se aplican desde el backend.
+
+Para consultar la implementación de asistencia, certificados y valoraciones, revisa los controladores y módulos correspondientes en `backend/src`.
+
+## Pruebas
+
+Desde la carpeta `backend`, ejecuta:
+
+```bash
 npm test
 ```
 
-## 📝 Registro de Uso de IA
-Ver detalles en el archivo obligatorio [`AI_USAGE.md`](./AI_USAGE.md).
+El proyecto también contiene pruebas de integración y de extremo a extremo. Revisa los scripts definidos en `backend/package.json` para conocer los comandos disponibles y los requisitos de cada tipo de prueba.
+
+## Despliegue
+
+El backend cuenta con un despliegue en Render. El estado del servicio puede consultarse en:
+
+`https://kooler-api.onrender.com/api/health`
+
+El frontend y el backend deben configurarse por separado cuando se despliegan en la nube. La integración entre ambos depende de las variables de entorno y de las llamadas a la API implementadas en el frontend.
+
+## Documentación adicional
+
+En la carpeta [`docs/`](./docs/) se encuentran los documentos de apoyo del proyecto:
+
+- [Requerimientos](./docs/Requerimientos.md)
+- [Diseño de base de datos](./docs/Diseño%20base%20de%20datos.md)
+- [Arquitectura](./docs/Arquitectura%20inicial.md)
+- [Funcionalidades](./docs/Funcionalidades.md)
+- [Plan de trabajo](./docs/Plan%20de%20trabajo.md)
+- [Taller y rúbrica del proyecto](./docs/Taller%20y%20rubrica%20del%20proyecto.md)
+
+También puedes consultar [`AGENTS.md`](./AGENTS.md) para las instrucciones de trabajo del repositorio y [`AI_USAGE.md`](./AI_USAGE.md) para el registro del uso de herramientas de inteligencia artificial.
