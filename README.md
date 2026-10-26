@@ -70,13 +70,16 @@ Todo commit debe seguir el formato Conventional Commits:
 * **Límite de D2 (Fuera de alcance):**
   * NO incluir pagos, reservas de espacios físicos ni subida binaria a AWS S3.
 
-#### ✅ Estado de avance D2 — Persona N (verificado 2026-10-17, rama `feature/frontend`)
-* **Backend N terminado y probado en vivo:**
-  * `npm run build` 0 errores · `npm test` 67/67 · `npm run lint` 0 warnings · `npm run test:e2e` 29/29 (requiere `docker compose up -d`).
-  * `npm run smoke` 25/25: script E2E verificable (`backend/scripts/smoke.ps1`) que recorre login/roles, catálogos, actividades, inscripción, sesión, asistencia, elegibilidad, certificado (PDF), reseñas e historial, con casos negativos 400/403/409.
+#### ✅ Estado de avance D2 (verificado 2026-10-25, rama `dev`)
+* **Backend completo y probado en vivo:**
+  * `npm run build` 0 errores · `npm test` 76/76 · `npm run lint` 0 warnings · `npm run test:e2e` 30/30 (requiere `docker compose up -d`) · `npm run smoke` 27/27.
+  * `npm run smoke` recorre salud del servicio, login/roles, catálogos, actividades, inscripción, sesión, asistencia, elegibilidad, certificado (PDF), reseñas e historial, con casos negativos 400/403/409.
+  * `GET /api/health` verifica proceso y conexión a PostgreSQL; lo usa el proveedor de despliegue.
+  * La configuración se valida al arrancar (`src/config/env.validation.ts`); no hay secretos por defecto en el código.
   * Catálogos añadidos (`LOCATION`, `ACTIVITY_TYPE`) con relación a `ACTIVITY`, filtro por categoría y seed demo; `GET` de asistencia por sesión para el panel admin.
   * Reglas cubiertas: cupo máximo, no duplicados (`@Unique`), solo `ACTIVE`, `registration_deadline`, solo dueño edita/cancela, cupo no reducible bajo inscritos, `ACTIVE→FINISHED` automático (RF09), inscripción transaccional con lock pesimista (RNF07).
-* **Pendiente grupal D2 (no es de N):** módulos de Jhon (`Review`) y Samuel (`Attendance`/`Certificate`), URL pública del deploy.
+* **Las tres funcionalidades están integradas:** actividades/inscripciones (N), reseñas/historial (J) y asistencia/certificados (S).
+* **Pendiente único de D2:** confirmar la URL pública del despliegue en Render (blueprint listo en `render.yaml`).
 * **Frontend D2 (proyecto `frontend/`, Next.js 16 + Tailwind v4) — avance visual de D2:**
   * Scaffold Next.js (App Router, TypeScript, mobile-first) con tokens de diseño, layout, navegación y estilos base.
   * Rutas: `/` (Bienvenida), `/login`, `/register`, `/account-created`; estudiante `/home`, `/my-enrollments`, `/progress`, `/history`; detalle `/activities/[id]`; organizador `/organizer/activities`, `/organizer/activities/[id]`, `/organizer/activities/[id]/attendance`, `/organizer/activities/[id]/feedback`, `/organizer/activities/new`.
@@ -115,7 +118,7 @@ npx newman run Kooler-D2.postman_collection.json
 ---
 
 ## 🚀 Tecnologías del Backend
-* **Framework:** NestJS 11 con TypeORM
+* **Framework:** NestJS 12 con TypeORM
 * **Base de Datos:** PostgreSQL 17 (Docker) en puerto `5433`
 * **Autenticación:** JWT con Passport y encriptación `bcrypt`
 * **Autorización:** `RolesGuard` genérico y `JwtAuthGuard`
