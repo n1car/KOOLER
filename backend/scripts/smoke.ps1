@@ -62,7 +62,7 @@ function Get-StatusCode {
     $params.Body = ($Body | ConvertTo-Json -Depth 6)
   }
   try {
-    Invoke-WebRequest @params | Out-Null
+    Invoke-WebRequest @params -UseBasicParsing | Out-Null
     return 200
   } catch {
     return [int]$_.Exception.Response.StatusCode.value__
@@ -73,12 +73,18 @@ Write-Host "== Kooler smoke test ($BaseUrl) ==" -ForegroundColor Cyan
 
 # 0. Disponibilidad del backend
 try {
-  Invoke-WebRequest -Uri "$BaseUrl/activities" -Method Get | Out-Null
+  Invoke-WebRequest -Uri "$BaseUrl/activities" -Method Get -UseBasicParsing | Out-Null
 } catch {
   Write-Host "No se pudo contactar el backend en $BaseUrl." -ForegroundColor Red
   Write-Host "Levanta Postgres (docker compose up -d) y el backend (npm run start)." -ForegroundColor Yellow
   exit 2
 }
+
+# 0b. Health check del servicio y de la base de datos
+Write-Host "`n[0] Salud del servicio"
+$health = Invoke-Api "GET" "/health" $null $null
+Check ($health.status -eq "ok") "Health check del servicio (status=$($health.status))"
+Check ($health.database -eq "up") "Conexion a PostgreSQL (database=$($health.database))"
 
 # 1. Autenticacion
 Write-Host "`n[1] Autenticacion y roles"
@@ -150,7 +156,7 @@ Check ((Get-StatusCode "GET" "/history" $null $ot) -eq 403) "Organizador no acce
 Write-Host "`n[5] Descarga de certificado PDF"
 $pdfPath = Join-Path $env:TEMP "kooler-cert-smoke.pdf"
 try {
-  Invoke-WebRequest -Uri "$BaseUrl/certificates/$($myCert.id)/download" -Headers @{ Authorization = "Bearer $st" } -OutFile $pdfPath
+  Invoke-WebRequest -Uri "$BaseUrl/certificates/$($myCert.id)/download" -Headers @{ Authorization = "Bearer $st" } -OutFile $pdfPath -UseBasicParsing
   $bytes = [System.IO.File]::ReadAllBytes($pdfPath)
   $header = [System.Text.Encoding]::ASCII.GetString($bytes[0..4])
   Check ($header -eq "%PDF-") "PDF valido ($($bytes.Length) bytes)"
