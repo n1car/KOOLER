@@ -222,6 +222,7 @@ describe('Attendance endpoint (e2e)', () => {
     return token ? httpRequest.set('Authorization', `Bearer ${token}`) : httpRequest;
   };
 
+  // El endpoint debe rechazar tanto la falta de identidad como el rol equivocado.
   it('rejects requests without a JWT', async () => {
     await sendAttendance(10, 1, 1, 'PRESENT').expect(401);
     expect(attendanceRepository.save).not.toHaveBeenCalled();
@@ -254,6 +255,7 @@ describe('Attendance endpoint (e2e)', () => {
     expect(attendanceRepository.save).toHaveBeenCalledTimes(1);
   });
 
+  // Tener el rol ORGANIZADOR no habilita operar actividades de otra persona.
   it('rejects an organizer who does not own the activity', async () => {
     const token = tokenFor(usersById.get(2)!);
 
@@ -299,6 +301,7 @@ describe('Attendance endpoint (e2e)', () => {
     expect(attendanceRecords.size).toBe(1);
   });
 
+  // Pipe global: enum, enteros de ruta y propiedades extra se validan antes de guardar.
   it('rejects invalid status and non-integer identifiers', async () => {
     const token = tokenFor(usersById.get(2)!);
 

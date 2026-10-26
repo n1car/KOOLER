@@ -28,6 +28,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const duration = Date.now() - now;
         const status = err?.status ?? 500;
         this.logger.warn(`[${method}] ${url} ${status} - ${duration}ms :: ${err?.message}`);
+        // El interceptor registra el fallo, pero deja que Nest gestione la respuesta HTTP.
         return throwError(() => err);
       }),
     );

@@ -11,6 +11,7 @@ import { ActivityEntity } from '../../activities/entities/activity.entity';
 import { UserEntity } from '../../users/entities/user.entity';
 
 @Entity('certificates')
+// La clave compuesta mantiene la emisión idempotente por estudiante y actividad.
 @Unique('UQ_certificate_user_activity', ['user', 'activity'])
 export class CertificateEntity {
   @PrimaryGeneratedColumn({ name: 'id_certificate' })

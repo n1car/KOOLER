@@ -111,6 +111,7 @@ describe('ActivitiesService (Persona N)', () => {
     await expect(service.cancel(10, mockOtherUser)).rejects.toThrow(ForbiddenException);
   });
 
+  // Estos casos protegen los límites de cupo y la inscripción única.
   it('debe inscribir exitosamente al estudiante si hay cupo y no está duplicado', async () => {
     activityRepo.findOne.mockResolvedValue(mockActivity);
     enrollmentRepo.findOne.mockResolvedValue(null); // No duplicado
@@ -145,6 +146,7 @@ describe('ActivitiesService (Persona N)', () => {
     );
   });
 
+  // RF09 cubre el caso en que la hora ya terminó aunque el estado aún siga ACTIVE.
   it('debe tratar como finalizada (RF09) una actividad con horario ya pasado', async () => {
     const pastActivity = {
       ...mockActivity,

@@ -32,6 +32,7 @@ import { validateEnv } from './config/env.validation';
         password: configService.get<string>('DB_PASSWORD') ?? 'postgres',
         database: configService.get<string>('DB_DATABASE') ?? 'kooler_db',
         autoLoadEntities: true,
+        // TypeORM aplica los cambios de entidades al esquema al iniciar.
         synchronize: true, // Modo desarrollo, igual que en clase
       }),
     }),

@@ -75,6 +75,7 @@ describe('SeedService', () => {
     return { seedService: moduleFixture.get(SeedService), repositories };
   };
 
+  // Este entorno debe conservar catálogos y roles sin crear cuentas de demostración.
   it('seeds roles and catalogs but skips demo users in production', async () => {
     const { seedService, repositories } = await createSeedService('production');
 
@@ -87,6 +88,7 @@ describe('SeedService', () => {
     expect(repositories.users.save).not.toHaveBeenCalled();
   });
 
+  // El segundo arranque comprueba que las búsquedas de existencia eviten duplicados.
   it('continues to seed demo users outside production and avoids duplicates', async () => {
     const { seedService, repositories } =
       await createSeedService('development');

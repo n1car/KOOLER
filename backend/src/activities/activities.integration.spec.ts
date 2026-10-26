@@ -122,6 +122,7 @@ describe('Activities flow (integración sin BD)', () => {
     await app?.close();
   });
 
+  // Verifica juntos los códigos HTTP y los cupos que observa el cliente al completar el flujo.
   it('flujo completo: crear -> inscribir -> duplicado bloqueado -> cupo agotado', async () => {
     currentUser = organizer;
     const created = await request(app.getHttpServer())

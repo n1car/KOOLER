@@ -8,6 +8,7 @@ function buildController(query: () => Promise<unknown>) {
 }
 
 describe('HealthController', () => {
+  // La ruta solo informa disponibilidad completa si la consulta a PostgreSQL responde.
   it('reporta estado ok cuando la base de datos responde', async () => {
     const controller = buildController(vi.fn().mockResolvedValue([{ ok: 1 }]));
 

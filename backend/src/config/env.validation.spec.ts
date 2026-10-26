@@ -12,6 +12,7 @@ const validEnv = {
 };
 
 describe('validateEnv', () => {
+  // PORT es opcional, pero las variables de conexión y el secreto JWT no.
   it('acepta una configuración completa y válida', () => {
     expect(validateEnv({ ...validEnv })).toMatchObject(validEnv);
   });

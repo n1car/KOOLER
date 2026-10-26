@@ -57,6 +57,7 @@ describe('Reviews: integración de permisos', () => {
 
   afterAll(async () => app.close());
 
+  // La autorización por rol y la validación de DTO se ejercitan a través de HTTP.
   it('un organizador no puede calificar (403)', async () => {
     currentUser = { id: 1, role: { name: 'ORGANIZADOR' } };
     await request(app.getHttpServer())

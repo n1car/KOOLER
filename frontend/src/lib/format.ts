@@ -24,6 +24,7 @@ const WEEKDAYS = [
 ];
 
 function parseDateOnly(value: string): Date {
+  // Se construye en hora local para que una fecha YYYY-MM-DD no cambie de día por UTC.
   const [year, month, day] = value.slice(0, 10).split("-").map(Number);
   return new Date(year, (month ?? 1) - 1, day ?? 1);
 }

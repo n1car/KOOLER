@@ -195,6 +195,7 @@ describe('Certificates endpoint (e2e)', () => {
   const tokenFor = (user: ReturnType<typeof createUser>) =>
     jwtService.sign({ sub: user.id, email: user.email });
 
+  // Los recursos personales no se consultan sin JWT ni desde un rol distinto al estudiante.
   it('rejects requests without a JWT', async () => {
     await request(app.getHttpServer()).get('/api/certificates').expect(401);
   });
@@ -350,6 +351,7 @@ describe('Certificates endpoint (e2e)', () => {
       .expect(403);
   });
 
+  // Se responde igual ante certificados ajenos e inexistentes para no revelar su existencia.
   it('does not allow downloading another student certificate or a missing certificate', async () => {
     certificatesByStudent.set(20, [createCertificate(2, 20, 30)]);
     const token = tokenFor(usersById.get(10)!);

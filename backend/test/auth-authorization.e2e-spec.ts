@@ -147,6 +147,7 @@ describe('Authentication and role authorization (e2e)', () => {
     await app.close();
   });
 
+  // Distingue falta de autenticación (401) de autenticación con rol insuficiente (403).
   it('returns 401 for a role-protected route without a token', async () => {
     await request(app.getHttpServer())
       .get('/api/authorization-test/organizer')
@@ -198,6 +199,7 @@ describe('Authentication and role authorization (e2e)', () => {
       });
   });
 
+  // El perfil exige JWT y la respuesta nunca debe incluir el hash de contraseña.
   it('keeps profile protected by its local JWT guard', async () => {
     await request(app.getHttpServer()).get('/api/auth/profile').expect(401);
 

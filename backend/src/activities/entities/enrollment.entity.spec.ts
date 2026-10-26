@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 const metadata = getMetadataArgsStorage();
 
 describe('EnrollmentEntity metadata', () => {
+  // Comprueba que el mapeo de TypeORM conserve la tabla y su clave primaria.
   it('maps to the enrollments table with a generated identifier', () => {
     const table = metadata.tables.find(
       (entry) => entry.target === EnrollmentEntity,

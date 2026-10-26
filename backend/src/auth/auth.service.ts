@@ -52,6 +52,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.usersService.findByEmail(loginDto.email);
     if (!user) {
+      // Se usa el mismo error para no revelar si el correo está registrado.
       throw new UnauthorizedException('Credenciales inválidas');
     }
 

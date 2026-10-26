@@ -19,6 +19,7 @@ describe('App (e2e)', () => {
     await app.init();
   });
 
+  // Smoke test con AppModule real: valida bootstrap, seed y conexión local a PostgreSQL.
   it('/api (GET) responde sin tumbar el bootstrap', () => {
     return request(app.getHttpServer()).get('/api').expect(404);
   });

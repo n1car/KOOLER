@@ -26,6 +26,7 @@ export class SeedService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     await this.seedRoles();
+    // Roles y catálogos se inicializan en producción; las cuentas demo no.
     if (this.configService.get<string>('NODE_ENV') !== 'production') {
       await this.seedDemoUsers();
     }

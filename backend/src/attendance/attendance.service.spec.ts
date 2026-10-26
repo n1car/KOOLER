@@ -107,6 +107,7 @@ describe('AttendanceService', () => {
     service = module.get(AttendanceService);
   });
 
+  // La marcación requiere que coincidan propietario, actividad, sesión y estudiante inscrito.
   it('registra asistencia para estudiante inscrito y propietario autenticado', async () => {
     const user = createUser();
     const activity = createActivity();
@@ -224,6 +225,7 @@ describe('AttendanceService', () => {
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
+  // La restricción única se expone como conflicto; otros fallos de persistencia se propagan.
   it('convierte la violación de unicidad por sesión en conflicto', async () => {
     const user = createUser();
     const activity = createActivity();

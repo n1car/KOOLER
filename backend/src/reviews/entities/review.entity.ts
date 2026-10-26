@@ -6,7 +6,9 @@ import { UserEntity } from '../../users/entities/user.entity';
 import { ActivityEntity } from '../../activities/entities/activity.entity';
 
 @Entity('review')
+// Cada estudiante puede dejar una sola reseña por actividad.
 @Unique('UQ_review_user_activity', ['idUser', 'idActivity'])
+// La base de datos mantiene el rango válido aunque falle la validación de entrada.
 @Check(`"rating" BETWEEN 1 AND 5`)
 export class ReviewEntity {
   @PrimaryGeneratedColumn({ name: 'id_review' })
