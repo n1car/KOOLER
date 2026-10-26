@@ -50,4 +50,3 @@ databases:
   - name: kooler-db
     plan: free
     databaseName: kooler_db
-    user: postgres
