@@ -55,7 +55,7 @@ Los siguientes módulos están registrados en `AppModule`:
 * **ReviewsModule:** creación y consulta de reseñas.
 * **HistoryModule:** historial de actividades del estudiante.
 * **HealthModule:** comprobación de salud de la API.
-* **SeedModule:** creación de roles y usuarios de demostración al iniciar la aplicación.
+* **SeedModule:** creación de roles y catálogos al iniciar la aplicación; los usuarios de demostración se crean solo fuera de producción.
 
 La configuración de TypeORM se realiza en `AppModule`. Los guards JWT y de roles y el interceptor de logging son componentes compartidos, no módulos funcionales independientes.
 

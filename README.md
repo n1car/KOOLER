@@ -7,7 +7,7 @@ Kooler es una aplicación web mobile-first diseñada para centralizar, gestionar
 ## 📚 Documentación del Proyecto (`docs/`)
 Todos los documentos de especificación inicial y diseño se encuentran organizados en la carpeta [`docs/`](./docs):
 * 📋 [`Requerimientos.md`](./docs/Requerimientos.md) — Requerimientos del sistema.
-* 🗄️ [`Diseño base de datos.md`](./docs/Diseño%20base%20de%20datos.md) — Modelo relacional de 9 entidades.
+* 🗄️ [`Diseño base de datos.md`](./docs/Diseño%20base%20de%20datos.md) — Modelo relacional de 10 entidades.
 * 🏛️ [`Arquitectura inicial.md`](./docs/Arquitectura%20inicial.md) — Arquitectura y stack tecnológico.
 * 💡 [`Funcionalidades.md`](./docs/Funcionalidades.md) — Detalle de las funcionalidades principales.
 * 📅 [`Plan de trabajo.md`](./docs/Plan%20de%20trabajo.md) — Reparto de tareas y tiempos.
@@ -196,7 +196,7 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
    docker compose logs backend
    ```
 
-Al iniciar NestJS, `SeedService` se ejecuta automáticamente y agrega los roles, catálogos y usuarios demo que aún no existan. No hay que ejecutar un comando de seed separado. Las credenciales de demostración definidas en el seed son:
+Al iniciar NestJS, `SeedService` se ejecuta automáticamente y agrega los roles y catálogos que aún no existan. En entornos distintos de producción también crea los usuarios demo si no existen; en producción no crea esas cuentas. No hay que ejecutar un comando de seed separado. Las credenciales de demostración definidas en el seed son:
 
 * **Estudiante:** `estudiante@icesi.edu.co` / `Password123!`
 * **Organizador:** `organizador@icesi.edu.co` / `Password123!`

@@ -84,12 +84,12 @@ Registro breve del apoyo puntual recibido con herramientas de IA, en cumplimient
 - **Uso:** revisión de requerimientos y plan de trabajo; orientación y validación visual de Mi Progreso / Mi Certificado y Registro de asistencia, dentro del alcance D2 y sin integración con backend ni autenticación.
 - **Verificación:** `git diff --check` en verde; lint y build no ejecutados por ausencia de dependencias locales.
 
-## Endpoint de salud y configuracion por entorno (Jhon)
+## Endpoint de salud y configuración por entorno (Jhon)
 - **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para `GET /api/health`, la validacion de variables al arrancar y la eliminacion del secreto JWT por defecto.
-- **Verificacion:** `npm run build`, `npm test` (76/76), `npm run test:e2e` (30/30) y `npm run smoke` (27/27) en verde.
+- **Uso:** apoyo puntual para `GET /api/health`, la validación de variables al arrancar y la eliminación del secreto JWT por defecto.
+- **Verificación:** `npm run build`, `npm test` (76/76), `npm run test:e2e` (30/30) y `npm run smoke` (27/27) en verde.
 
-## Blueprint de despliegue y coleccion Postman (Jhon)
+## Blueprint de despliegue y colección Postman (Jhon)
 - **Herramienta:** OpenCode.
-- **Uso:** apoyo puntual para `render.yaml`, la captura automatica de tokens en Postman y la correccion de sus aserciones.
-- **Verificacion:** `npx newman run Kooler-D2.postman_collection.json` con 23 requests y 46 aserciones en verde.
+- **Uso:** apoyo puntual para `render.yaml`, la captura automática de tokens en Postman y la corrección de sus aserciones.
+- **Verificación:** `npx newman run Kooler-D2.postman_collection.json` con 23 requests y 46 aserciones en verde.
