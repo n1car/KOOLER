@@ -1,318 +1,768 @@
 {
-    "info":  {
-                 "name":  "Kooler D2 - Persona N (Actividades e Inscripciones)",
-                 "_postman_id":  "kooler-d2-persona-n",
-                 "description":  "Flujo D2 de la Funcionalidad 1 (Nico). Orden sugerido: 1 Registrar org -\u003e 2 Login org (copiar accessToken a la variable orgToken) -\u003e 3 Crear actividad (copiar id a activityId) -\u003e 4 Registrar estudiante -\u003e 5 Login estudiante (copiar accessToken a studentToken) -\u003e 6..11. Requiere `docker compose up -d` y `npm run start:dev`. Seeds demo: estudiante@icesi.edu.co / organizador@icesi.edu.co | Password123!",
-                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-             },
-    "variable":  [
-                     {
-                         "key":  "baseUrl",
-                         "value":  "http://localhost:3000/api"
-                     },
-                     {
-                         "key":  "orgToken",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "studentToken",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "activityId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "sessionId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "certificateId",
-                         "value":  "1"
-                     }
-                 ],
-    "item":  [
-                 {
-                     "name":  "1. Registrar organizador",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/auth/register",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    }
-                                                ],
-                                     "body":  {
-                                                  "mode":  "raw",
-                                                  "raw":  "{\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Organizadora\",\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ORGANIZADOR\"\n}"
-                                              }
-                                 }
-                 },
-                 {
-                     "name":  "2. Login organizador",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/auth/login",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    }
-                                                ],
-                                     "body":  {
-                                                  "mode":  "raw",
-                                                  "raw":  "{\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
-                                              }
-                                 }
-                 },
-                 {
-                     "name":  "3. Crear actividad (ORGANIZADOR)",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/activities",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    },
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{orgToken}}"
-                                                    }
-                                                ],
-                                     "body":  {
-                                                  "mode":  "raw",
-                                                  "raw":  "{\n  \"name\": \"Torneo relÃ¡mpago de fÃºtbol 5\",\n  \"description\": \"Torneo universitario de bienestar\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 16,\n  \"registrationDeadline\": \"2026-11-19T23:59:59.000Z\"\n}"
-                                              }
-                                 }
-                 },
-                 {
-                     "name":  "4. Registrar estudiante",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/auth/register",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    }
-                                                ],
-                                     "body":  {
-                                                  "mode":  "raw",
-                                                  "raw":  "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Estudiante\",\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ESTUDIANTE\"\n}"
-                                              }
-                                 }
-                 },
-                 {
-                     "name":  "5. Login estudiante",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/auth/login",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    }
-                                                ],
-                                     "body":  {
-                                                  "mode":  "raw",
-                                                  "raw":  "{\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
-                                              }
-                                 }
-                 },
-                 {
-                     "name":  "6. Listar actividades (pÃºblico)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/activities"
-                                 }
-                 },
-                 {
-                     "name":  "7. Detalle de actividad (pÃºblico)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}"
-                                 }
-                 },
-                 {
-                     "name":  "8. Inscribirse (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/enroll",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{studentToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "9. Inscribirse duplicado (espera 400)",
-                     "request":  {
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/enroll",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{studentToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "10. Mis inscripciones (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/activities/my-enrollments",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{studentToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "11. Inscritos de la actividad (ORGANIZADOR dueÃ±o)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/enrollments",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{orgToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "12. Crear sesion (ORGANIZADOR dueno)",
-                     "request":  {
-                                     "body":  {
-                                                  "raw":  "{\n  \"sessionDate\": \"2026-12-01\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}",
-                                                  "mode":  "raw"
-                                              },
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/sessions",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    },
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{orgToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "13. Listar sesiones (publico)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/sessions",
-                                     "header":  [
-
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "14. Registrar asistencia (ORGANIZADOR dueno)",
-                     "request":  {
-                                     "body":  {
-                                                  "raw":  "{\n  \"studentId\": 1,\n  \"status\": \"PRESENT\"\n}",
-                                                  "mode":  "raw"
-                                              },
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/activities/{{activityId}}/sessions/{{sessionId}}/attendance",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    },
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{orgToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "15. Elegibilidad (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/certificates/activities/{{activityId}}/eligibility",
-                                     "header":  {
-                                                    "key":  "Authorization",
-                                                    "value":  "Bearer {{studentToken}}"
-                                                }
-                                 }
-                 },
-                 {
-                     "name":  "16. Mis certificados (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/certificates",
-                                     "header":  {
-                                                    "key":  "Authorization",
-                                                    "value":  "Bearer {{studentToken}}"
-                                                }
-                                 }
-                 },
-                 {
-                     "name":  "17. Descargar certificado (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/certificates/{{certificateId}}/download",
-                                     "header":  {
-                                                    "key":  "Authorization",
-                                                    "value":  "Bearer {{studentToken}}"
-                                                }
-                                 }
-                 },
-                 {
-                     "name":  "18. Calificar actividad (ESTUDIANTE)",
-                     "request":  {
-                                     "body":  {
-                                                  "raw":  "{\n  \"activityId\": {{activityId}},\n  \"rating\": 5,\n  \"comment\": \"Excelente actividad\"\n}",
-                                                  "mode":  "raw"
-                                              },
-                                     "method":  "POST",
-                                     "url":  "{{baseUrl}}/reviews",
-                                     "header":  [
-                                                    {
-                                                        "key":  "Content-Type",
-                                                        "value":  "application/json"
-                                                    },
-                                                    {
-                                                        "key":  "Authorization",
-                                                        "value":  "Bearer {{studentToken}}"
-                                                    }
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "19. Resenas publicas (publico)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/reviews/activity/{{activityId}}",
-                                     "header":  [
-
-                                                ]
-                                 }
-                 },
-                 {
-                     "name":  "20. Historial del estudiante (ESTUDIANTE)",
-                     "request":  {
-                                     "method":  "GET",
-                                     "url":  "{{baseUrl}}/history",
-                                     "header":  {
-                                                    "key":  "Authorization",
-                                                    "value":  "Bearer {{studentToken}}"
-                                                }
-                                 }
-                 }
-             ]
+  "info": {
+    "name": "Kooler D2 - API completa (auth, actividades, asistencia, certificados, resenas e historial)",
+    "_postman_id": "kooler-d2-persona-n",
+    "description": "Coleccion D2 del backend Kooler. Cubre las 3 funcionalidades y el flujo completo en orden.\n\nRequisitos: `docker compose up -d` y `npm run start:dev` en `backend/`.\nSeeds demo: organizador@icesi.edu.co y estudiante@icesi.edu.co / Password123!\n\nLos tokens e identificadores se guardan solos: al ejecutar los requests en orden,\n`orgToken`, `studentToken`, `activityId`, `sessionId` y `certificateId` quedan\ndisponibles como variables de coleccion.\n\nPara probar el despliegue cambie `baseUrl` por `{{prodUrl}}` (Render).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "description": "Backend local"
+    },
+    {
+      "key": "orgToken",
+      "value": "",
+      "description": "Se guarda al ejecutar \"2. Login organizador\""
+    },
+    {
+      "key": "studentToken",
+      "value": "",
+      "description": "Se guarda al ejecutar \"5. Login estudiante\""
+    },
+    {
+      "key": "activityId",
+      "value": "1",
+      "description": "Se guarda al ejecutar \"3. Crear actividad\""
+    },
+    {
+      "key": "sessionId",
+      "value": "1",
+      "description": "Se guarda al ejecutar \"12. Crear sesion\""
+    },
+    {
+      "key": "certificateId",
+      "value": "1",
+      "description": "Se guarda al ejecutar \"16. Mis certificados\""
+    },
+    {
+      "key": "prodUrl",
+      "value": "https://kooler-api.onrender.com/api",
+      "description": "Backend desplegado en Render"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Registrar organizador",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Organizadora\",\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ORGANIZADOR\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201,400,409];",
+              "pm.test(\"Registrar organizador: estado esperado 201/400/409\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Login organizador",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"organizador@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Login organizador: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });",
+              "",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  try {",
+              "    const body = pm.response.json();",
+              "    const value = body.accessToken;",
+              "    if (value !== undefined && value !== null && value !== \"\") {",
+              "      pm.collectionVariables.set('orgToken', String(value));",
+              "    }",
+              "  } catch (error) {",
+              "    // La respuesta no era JSON: no se actualiza la variable.",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Crear actividad (ORGANIZADOR)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{orgToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Torneo relámpago de fútbol 5\",\n  \"description\": \"Torneo universitario de bienestar\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 16,\n  \"registrationDeadline\": \"2026-11-19T23:59:59.000Z\",\n  \"isCertifiable\": true,\n  \"activityTypeId\": 1,\n  \"locationId\": 1\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201];",
+              "pm.test(\"Crear actividad: estado esperado 201\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });",
+              "",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  try {",
+              "    const body = pm.response.json();",
+              "    const value = body.id;",
+              "    if (value !== undefined && value !== null && value !== \"\") {",
+              "      pm.collectionVariables.set('activityId', String(value));",
+              "    }",
+              "  } catch (error) {",
+              "    // La respuesta no era JSON: no se actualiza la variable.",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3b. Listar categorias (publico)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activity-types",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Listar categorias: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3c. Listar ubicaciones (publico)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/locations",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Listar ubicaciones: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Registrar estudiante",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Estudiante\",\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\",\n  \"roleName\": \"ESTUDIANTE\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201,400,409];",
+              "pm.test(\"Registrar estudiante: estado esperado 201/400/409\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Login estudiante",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"estudiante@icesi.edu.co\",\n  \"password\": \"Password123!\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Login estudiante: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });",
+              "",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  try {",
+              "    const body = pm.response.json();",
+              "    const value = body.accessToken;",
+              "    if (value !== undefined && value !== null && value !== \"\") {",
+              "      pm.collectionVariables.set('studentToken', String(value));",
+              "    }",
+              "  } catch (error) {",
+              "    // La respuesta no era JSON: no se actualiza la variable.",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Listar actividades (público)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Listar actividades: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Detalle de actividad (público)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Detalle de actividad: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Inscribirse (ESTUDIANTE)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enroll",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Inscribirse: estado esperado 200/201', () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Inscribirse duplicado (espera 400)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enroll",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [400];",
+              "pm.test(\"Inscribirse duplicado: estado esperado 400\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Mis inscripciones (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/my-enrollments",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Mis inscripciones: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Inscritos de la actividad (ORGANIZADOR dueño)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}/enrollments",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{orgToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Inscritos de la actividad: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Crear sesion (ORGANIZADOR dueno)",
+      "request": {
+        "body": {
+          "raw": "{\n  \"sessionDate\": \"2026-12-01\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}",
+          "mode": "raw"
+        },
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/sessions",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{orgToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201];",
+              "pm.test(\"Crear sesion: estado esperado 201\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });",
+              "",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  try {",
+              "    const body = pm.response.json();",
+              "    const value = body.id;",
+              "    if (value !== undefined && value !== null && value !== \"\") {",
+              "      pm.collectionVariables.set('sessionId', String(value));",
+              "    }",
+              "  } catch (error) {",
+              "    // La respuesta no era JSON: no se actualiza la variable.",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Listar sesiones (publico)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}/sessions",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Listar sesiones: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Registrar asistencia (ORGANIZADOR dueno)",
+      "request": {
+        "body": {
+          "raw": "{\n  \"studentId\": 1,\n  \"status\": \"PRESENT\"\n}",
+          "mode": "raw"
+        },
+        "method": "POST",
+        "url": "{{baseUrl}}/activities/{{activityId}}/sessions/{{sessionId}}/attendance",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{orgToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201,400,409];",
+              "pm.test(\"Registrar asistencia: estado esperado 201/400/409\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14b. Leer asistencia de la sesion (ORGANIZADOR dueno)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/activities/{{activityId}}/sessions/{{sessionId}}/attendance",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{orgToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Leer asistencia: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Elegibilidad (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/certificates/activities/{{activityId}}/eligibility",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Elegibilidad: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Mis certificados (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/certificates",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200,404];",
+              "pm.test(\"Mis certificados: estado esperado 200/404\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });",
+              "",
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  try {",
+              "    const body = pm.response.json();",
+              "    const value = Array.isArray(body) && body.length > 0 ? body[0].id : null;",
+              "    if (value !== undefined && value !== null && value !== \"\") {",
+              "      pm.collectionVariables.set('certificateId', String(value));",
+              "    }",
+              "  } catch (error) {",
+              "    // La respuesta no era JSON: no se actualiza la variable.",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Descargar certificado (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/certificates/{{certificateId}}/download",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200,404];",
+              "pm.test(\"Descargar certificado: estado esperado 200/404\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. Calificar actividad (ESTUDIANTE)",
+      "request": {
+        "body": {
+          "raw": "{\n  \"activityId\": {{activityId}},\n  \"rating\": 5,\n  \"comment\": \"Excelente actividad\"\n}",
+          "mode": "raw"
+        },
+        "method": "POST",
+        "url": "{{baseUrl}}/reviews",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [201,400];",
+              "pm.test(\"Calificar actividad: estado esperado 201/400\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19. Resenas publicas (publico)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/reviews/activity/{{activityId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Resenas publicas: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20. Historial del estudiante (ESTUDIANTE)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/history",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{studentToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const expectedStatuses = [200];",
+              "pm.test(\"Historial del estudiante: estado esperado 200\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf(expectedStatuses);",
+              "});",
+              "pm.test('respuesta no vacia', () => { pm.expect(pm.response.responseTime).to.be.below(15000); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
 }

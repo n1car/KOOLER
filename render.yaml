@@ -1,0 +1,53 @@
+# Blueprint de despliegue para Render (https://render.com/docs/blueprint-spec).
+#
+# Crea en un solo paso el backend (imagen Docker del Dockerfile del backend) y
+# la base de datos PostgreSQL administrada. El secreto JWT lo genera Render,
+# por lo que no viaja ningún valor real en el repositorio.
+#
+# Uso: Render Dashboard -> New -> Blueprint -> seleccionar este repositorio.
+
+services:
+  - type: web
+    name: kooler-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: dev
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: DB_HOST
+        fromDatabase:
+          name: kooler-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: kooler-db
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: kooler-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: kooler-db
+          property: password
+      - key: DB_DATABASE
+        fromDatabase:
+          name: kooler-db
+          property: database
+
+databases:
+  - name: kooler-db
+    plan: free
+    databaseName: kooler_db
+    user: postgres

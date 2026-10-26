@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CertificatesModule } from '../certificates/certificates.module';
+import { CatalogModule } from '../catalog/catalog.module';
 import { ActivityFinalizationService } from './activity-finalization.service';
 import { ActivitiesService } from './activities.service';
 import { ActivitiesController } from './activities.controller';
@@ -12,6 +13,7 @@ import { SessionEntity } from './entities/session.entity';
   imports: [
     TypeOrmModule.forFeature([ActivityEntity, EnrollmentEntity, SessionEntity]),
     CertificatesModule,
+    CatalogModule,
   ],
   controllers: [ActivitiesController],
   providers: [ActivitiesService, ActivityFinalizationService],

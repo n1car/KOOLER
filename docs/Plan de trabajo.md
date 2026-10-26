@@ -45,7 +45,8 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
   * Endpoint `GET` `/actividades/:id/inscritos` — solo visible para el organizador dueño[cite: 6].
   * Al menos 1 prueba de servicio[cite: 6].
 * **Frontend:**
-  * Listado con filtros, detalle con inscripción, confirmación, creación/edición (organizador), dashboard organizador[cite: 6].
+  * Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado con filtros + inscripción), Mis Inscripciones, Detalle de actividad, Detalle admin y Crear/editar actividad[cite: 6].
+  * *(Nota 2026-10-17: las pantallas de Registro, Login y Cuenta creada pasan a J, y el panel Mis Actividades del organizador pasa a S, para descargar a N.)*
 
 ---
 
@@ -58,7 +59,7 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
   * Endpoints de calificar, consultar público, vista organizador, historial del estudiante[cite: 6].
   * Al menos 1 prueba de servicio[cite: 6].
 * **Frontend:**
-  * Historial personal, sección de reseñas en detalle de actividad, formulario de calificar, panel organizador[cite: 6].
+  * Registro, Login y Cuenta creada (pantallas de autenticación), Historial personal, sección de reseñas en el detalle de actividad, formulario de calificar (estrellas 1–5 + comentario) y panel de Retroalimentación (vista organizador)[cite: 6].
 * **Nota:** el organizador no puede editar ni eliminar comentarios de estudiantes[cite: 6].
 
 ---
@@ -71,7 +72,7 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
   * Cálculo automático del % de asistencia cumplido al finalizar la actividad[cite: 6].
   * Al menos 1 prueba de servicio[cite: 6].
 * **Frontend:**
-  * Registro de asistencia (organizador), pantalla "mi certificado" (estudiante)[cite: 6].
+  * Panel Mis Actividades (dashboard del organizador), Registro de asistencia (organizador) y pantalla "mi certificado" / Mi Progreso (estudiante)[cite: 6].
 
 ---
 
@@ -105,6 +106,28 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 * [ ] Pantalla principal o dashboard[cite: 6].
 * [ ] Al menos una pantalla representativa de cada funcionalidad[cite: 6].
 * [ ] Correspondencia visible con el prototipo de Figma[cite: 6].
+
+#### Pantallas críticas para D2 (mínimo) vs. extras
+En D2 el frontend puede usar **datos temporales**; lo que se evalúa es que existan las pantallas clave y correspondan al Figma.
+
+| Prioridad | Pantalla | ¿D2 la exige? |
+| :--- | :--- | :--- |
+| **Crítica** | Login | ✅ Sí (autenticación) |
+| **Crítica** | Registro | ✅ Sí (autenticación) |
+| **Crítica** | Home (dashboard del estudiante) | ✅ Sí (dashboard) |
+| **Crítica** | Detalle de actividad + inscripción | ✅ Sí (representativa F1) |
+| **Crítica** | Historial y Valoraciones | ✅ Sí (representativa F2) |
+| **Crítica** | Mi Progreso / Certificado | ✅ Sí (representativa F3) |
+| Recomendada | Inicio / Bienvenida (oscura) | 🟡 Completa el flujo de autenticación |
+| Recomendada | Cuenta creada | 🟡 Cierra el flujo de autenticación |
+| Extra | Mis Inscripciones | ⚪ No exigida (apoya la demo) |
+| Extra | Mis Actividades (dashboard del organizador) | ⚪ No exigida (apoya la demo) |
+| Extra | Detalle admin | ⚪ No exigida (apoya la demo) |
+| Extra | Control de Asistencia | ⚪ No exigida (apoya la demo) |
+| Extra | Retroalimentación | ⚪ No exigida (apoya la demo) |
+| Extra | Crear Actividad | ⚪ No exigida (apoya la demo) |
+
+> El mínimo de D2 son las **6 pantallas críticas** (8 sumando las 2 recomendadas del flujo de autenticación). El resto son extras que sirven para la demostración y adelantan trabajo de D3/DF.
 
 ### Documentación
 * [ ] `README.md` actualizado[cite: 6].
@@ -176,10 +199,12 @@ Cada uno construye su funcionalidad de punta a punta: su entidad, su service, su
 * 🚩 Domingo 12 de octubre: Merge de las 3 ramas. El backend queda cerrado.
 
 **Etapa 2: Frontend Next.js + Postman (13 al 16 de octubre — 4 días)**
-* Layout base y pantallas de autenticación (Login/Registro).
+* Layout base y navegación (pantalla oscura de Bienvenida: Nico).
+* Pantallas de autenticación: Registro, Login y Cuenta creada (Jhon).
 * Pantalla de actividades e inscripción (Nico).
 * Pantalla de reseñas y modal de calificar (Jhon).
 * Pantalla de control de asistencia y certificados (Samuel).
+* Dashboard del organizador — Mis Actividades (Samuel).
 * Colección de Postman armada y probada de punta a punta.
 * 🚩 Jueves 16 de octubre: Merge del frontend.
 

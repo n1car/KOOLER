@@ -58,4 +58,12 @@ export class UpdateActivityDto {
   @IsString()
   @IsOptional()
   imageUrl?: string;
+
+  @IsInt()
+  @IsOptional()
+  activityTypeId?: number;
+
+  @IsInt()
+  @IsOptional()
+  locationId?: number;
 }

@@ -43,7 +43,13 @@ function Invoke-Api {
     $params.ContentType = "application/json"
     $params.Body = ($Body | ConvertTo-Json -Depth 6)
   }
-  return Invoke-RestMethod @params
+  $response = Invoke-RestMethod @params
+  # Invoke-RestMethod devuelve arrays sin enumerar (quirk de PS 5.1):
+  # se enumeran para que @(...) en el llamador produzca un array plano.
+  if ($response -is [System.Array]) {
+    return $response | ForEach-Object { $_ }
+  }
+  return $response
 }
 
 function Get-StatusCode {
@@ -56,7 +62,7 @@ function Get-StatusCode {
     $params.Body = ($Body | ConvertTo-Json -Depth 6)
   }
   try {
-    Invoke-WebRequest @params | Out-Null
+    Invoke-WebRequest @params -UseBasicParsing | Out-Null
     return 200
   } catch {
     return [int]$_.Exception.Response.StatusCode.value__
@@ -67,12 +73,18 @@ Write-Host "== Kooler smoke test ($BaseUrl) ==" -ForegroundColor Cyan
 
 # 0. Disponibilidad del backend
 try {
-  Invoke-WebRequest -Uri "$BaseUrl/activities" -Method Get | Out-Null
+  Invoke-WebRequest -Uri "$BaseUrl/activities" -Method Get -UseBasicParsing | Out-Null
 } catch {
   Write-Host "No se pudo contactar el backend en $BaseUrl." -ForegroundColor Red
   Write-Host "Levanta Postgres (docker compose up -d) y el backend (npm run start)." -ForegroundColor Yellow
   exit 2
 }
+
+# 0b. Health check del servicio y de la base de datos
+Write-Host "`n[0] Salud del servicio"
+$health = Invoke-Api "GET" "/health" $null $null
+Check ($health.status -eq "ok") "Health check del servicio (status=$($health.status))"
+Check ($health.database -eq "up") "Conexion a PostgreSQL (database=$($health.database))"
 
 # 1. Autenticacion
 Write-Host "`n[1] Autenticacion y roles"
@@ -81,6 +93,15 @@ $stu = Invoke-Api "POST" "/auth/login" @{ email = $StudentEmail; password = $Pas
 $ot = $org.accessToken; $st = $stu.accessToken; $stuId = $stu.user.id
 Check ($org.user.role -eq "ORGANIZADOR") "Login organizador (rol=$($org.user.role))"
 Check ($stu.user.role -eq "ESTUDIANTE") "Login estudiante (id=$stuId, rol=$($stu.user.role))"
+
+# 1b. Catalogos
+Write-Host "`n[1b] Catalogos de categoria y ubicacion"
+$types = @(Invoke-Api "GET" "/activity-types" $null $null)
+$locs = @(Invoke-Api "GET" "/locations" $null $null)
+Check ($types.Count -ge 1) "Categorias disponibles ($($types.Count))"
+Check ($locs.Count -ge 1) "Ubicaciones disponibles ($($locs.Count))"
+$typeId = $types[0].id
+$locId = $locs[0].id
 
 # 2. Actividad (F1)
 Write-Host "`n[2] Funcionalidad 1: actividades e inscripciones"
@@ -91,9 +112,12 @@ $act = Invoke-Api "POST" "/activities" @{
   description = "Verificacion automatica"
   date = $date; startTime = "10:00"; endTime = "12:00"
   capacity = 5; registrationDeadline = $deadline; isCertifiable = $true
+  activityTypeId = $typeId; locationId = $locId
 } $ot
 $aid = $act.id
 Check ($act.status -eq "ACTIVE") "Crear actividad (id=$aid, status=$($act.status))"
+Check ($act.activityType.name -eq $types[0].name) "Actividad con categoria ($($act.activityType.name))"
+Check ($act.location.name -eq $locs[0].name) "Actividad con ubicacion ($($act.location.name))"
 $enr = Invoke-Api "POST" "/activities/$aid/enroll" @{} $st
 Check ([bool]$enr.enrollmentId) "Inscribir estudiante (enrollmentId=$($enr.enrollmentId))"
 Check ((Get-StatusCode "POST" "/activities/$aid/enroll" @{} $st) -eq 400) "Inscripcion duplicada rechazada (400)"
@@ -108,10 +132,14 @@ Check ($final.status -eq "FINISHED") "Finalizar actividad"
 $att = Invoke-Api "POST" "/activities/$aid/sessions/$($sess.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $ot
 Check ($att.status -eq "PRESENT") "Registrar asistencia (id=$($att.id))"
 Check ((Get-StatusCode "POST" "/activities/$aid/sessions/$($sess.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $st) -eq 403) "Estudiante no puede registrar asistencia (403)"
+$attList = Invoke-Api "GET" "/activities/$aid/sessions/$($sess.id)/attendance" $null $ot
+Check (@($attList.attendance).Count -ge 1) "Leer asistencia de la sesion ($(@($attList.attendance).Count) registro(s))"
+Check ((Get-StatusCode "GET" "/activities/$aid/sessions/$($sess.id)/attendance" $null $st) -eq 403) "Estudiante no puede leer asistencia (403)"
 $elig = Invoke-Api "GET" "/certificates/activities/$aid/eligibility" $null $st
 Check ($elig.eligible -eq $true) "Elegibilidad de certificado ($($elig.attendancePercentage)%)"
 $certs = @(Invoke-Api "GET" "/certificates" $null $st)
-Check ($certs.Count -ge 1) "Certificado emitido (codigo=$($certs[0].certificateCode))"
+$myCert = $certs | Where-Object { $_.activityId -eq $aid } | Select-Object -First 1
+Check ([bool]$myCert) "Certificado emitido (codigo=$($myCert.certificateCode))"
 
 # 4. Valoraciones e historial (F2)
 Write-Host "`n[4] Funcionalidad 2: resenas e historial"
@@ -128,14 +156,14 @@ Check ((Get-StatusCode "GET" "/history" $null $ot) -eq 403) "Organizador no acce
 Write-Host "`n[5] Descarga de certificado PDF"
 $pdfPath = Join-Path $env:TEMP "kooler-cert-smoke.pdf"
 try {
-  Invoke-WebRequest -Uri "$BaseUrl/certificates/$($certs[0].id)/download" -Headers @{ Authorization = "Bearer $st" } -OutFile $pdfPath
+  Invoke-WebRequest -Uri "$BaseUrl/certificates/$($myCert.id)/download" -Headers @{ Authorization = "Bearer $st" } -OutFile $pdfPath -UseBasicParsing
   $bytes = [System.IO.File]::ReadAllBytes($pdfPath)
   $header = [System.Text.Encoding]::ASCII.GetString($bytes[0..4])
   Check ($header -eq "%PDF-") "PDF valido ($($bytes.Length) bytes)"
 } catch {
   Check $false "Descarga de PDF ($($_.Exception.Message))"
 }
-Check ((Get-StatusCode "GET" "/certificates/$($certs[0].id)/download" $null $ot) -eq 403) "Certificado ajeno bloqueado (403)"
+Check ((Get-StatusCode "GET" "/certificates/$($myCert.id)/download" $null $ot) -eq 403) "Certificado ajeno bloqueado (403)"
 
 Write-Host "`n== Resultado: $script:pass OK, $script:fail FAIL ==" -ForegroundColor Cyan
 if ($script:fail -gt 0) { exit 1 } else { exit 0 }

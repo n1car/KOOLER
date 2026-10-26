@@ -30,6 +30,14 @@ describe('App (e2e)', () => {
       .expect(401);
   });
 
+  it('/api/health responde 200 con la base de datos conectada', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200);
+
+    expect(response.body).toMatchObject({ status: 'ok', database: 'up' });
+  });
+
   afterAll(async () => {
     await app.close();
   });

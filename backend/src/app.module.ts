@@ -5,16 +5,20 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { CatalogModule } from './catalog/catalog.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { HistoryModule } from './history/history.module';
+import { HealthModule } from './health/health.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
@@ -34,11 +38,13 @@ import { HistoryModule } from './history/history.module';
     UsersModule,
     AuthModule,
     ActivitiesModule,
+    CatalogModule,
     AttendanceModule,
     CertificatesModule,
     SeedModule,
     ReviewsModule,
     HistoryModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

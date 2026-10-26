@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
+import { CertificatesService } from '../certificates/certificates.service';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceService } from './attendance.service';
@@ -57,6 +58,9 @@ describe('AttendanceService', () => {
   let service: AttendanceService;
   let usersService: { findById: ReturnType<typeof vi.fn> };
   let activitiesService: { isStudentEnrolled: ReturnType<typeof vi.fn> };
+  let certificatesService: {
+    issueEligibleCertificates: ReturnType<typeof vi.fn>;
+  };
   let sessionRepository: { findOne: ReturnType<typeof vi.fn> };
   let attendanceRepository: {
     create: ReturnType<typeof vi.fn>;
@@ -67,6 +71,15 @@ describe('AttendanceService', () => {
     usersService = { findById: vi.fn() };
     activitiesService = {
       isStudentEnrolled: vi.fn().mockResolvedValue(true),
+    };
+    certificatesService = {
+      issueEligibleCertificates: vi.fn().mockResolvedValue({
+        activityId: 10,
+        eligibleStudents: 0,
+        issuedCertificates: 0,
+        existingCertificates: 0,
+        failedStudents: 0,
+      }),
     };
     sessionRepository = { findOne: vi.fn() };
     attendanceRepository = {
@@ -79,6 +92,7 @@ describe('AttendanceService', () => {
         AttendanceService,
         { provide: UsersService, useValue: usersService },
         { provide: ActivitiesService, useValue: activitiesService },
+        { provide: CertificatesService, useValue: certificatesService },
         {
           provide: getRepositoryToken(SessionEntity),
           useValue: sessionRepository,

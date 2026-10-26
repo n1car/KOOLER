@@ -13,6 +13,8 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * [`docs/Arquitectura inicial.md`](./docs/Arquitectura%20inicial.md) — Diagrama y decisiones técnicas.
 * [`docs/Funcionalidades.md`](./docs/Funcionalidades.md) — Detalle de las 3 funcionalidades.
 * [`docs/Plan de trabajo.md`](./docs/Plan%20de%20trabajo.md) — Reparto de tareas y cronograma.
+* [`docs/Modulos de diseño.md`](./docs/Modulos%20de%20diseño.md) — Tokens de diseño, pantallas, estados y reglas de UI del frontend (Figma "BU").
+* [`docs/Problematica.md`](./docs/Problematica.md) — Problemática y justificación del proyecto.
 * [`docs/Taller y rubrica del proyecto.md`](./docs/Taller%20y%20rubrica%20del%20proyecto.md) — Criterios de evaluación oficiales.
 
 ---
@@ -29,13 +31,19 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
 * **Persona N (Nico) — Rama: `feature/actividades`:**
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
   * Funcionalidad 1: Gestión de actividades (`ActivityEntity`) e inscripciones (`EnrollmentEntity`).
+  * Catálogos de apoyo: categorías (`ActivityTypeEntity`) y ubicaciones (`LocationEntity`) exigidos por RF03/RF06.
+  * **Frontend:** Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado + filtros + inscripción), Mis Inscripciones, Detalle de actividad, Detalle admin y Crear/editar actividad.
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Reseñas y calificaciones (`ReviewEntity`).
   * Endpoints públicos de lectura de reseñas y creación por estudiantes que hayan participado.
   * REGLA: El organizador NO puede editar ni eliminar reseñas de estudiantes.
+  * **Frontend:** **Registro, Login y Cuenta creada** (pantallas de autenticación asignadas a J para descargar a N), Historial personal, Valoraciones (5 estrellas + comentario) y Retroalimentación (vista organizador).
 * **Persona S (Samuel) — Rama: `feature/certificados`:**
   * Funcionalidad 3: Control de asistencia (`AttendanceEntity`) y certificados (`CertificateEntity`).
   * Cálculo del porcentaje de asistencia y emisión de código único de certificado.
+  * **Frontend:** panel **Mis Actividades** (dashboard del organizador), Control de Asistencia (organizador) y Mi Progreso / Mi Certificado (estudiante).
+
+> **Nota de reparto frontend (acordado 2026-10-17):** las pantallas de **Registro, Login y Cuenta creada** pasan de N a **J** porque N quedó muy cargado. El **panel Mis Actividades del organizador** pasa de N a **S**. La pantalla de **Inicio/Bienvenida (oscura)** permanece con **N** (es su puerta de entrada al flujo de actividades).
 
 ---
 
@@ -95,6 +103,12 @@ Para asegurar un historial de Git limpio, legible y profesional ante la revisió
    * Al agregar un nuevo módulo (`ReviewsModule`, `CertificatesModule`), agrégalo al arreglo `imports` sin eliminar los módulos existentes.
 4. **NO subir secretos:**
    * NUNCA hardcodear contraseñas ni llaves en el código. Usar `ConfigService.get(...)` y documentar nuevas variables en `.env.example`.
+5. **Catálogos y decisiones de alcance fijadas:**
+   * `LOCATION` (`id_location`, `name`, `building`) y `ACTIVITY_TYPE` (`id_type`, `name`, `requires_enrollment`) son parte del modelo oficial. Se consultan con `GET /api/activity-types` y `GET /api/locations`; `ACTIVITY` se relaciona con ambos de forma opcional (`activityTypeId`, `locationId`).
+   * **Imágenes de actividad:** solo por URL (`ACTIVITY.image_url`). **NO** implementar subida de archivos binarios.
+   * **Certificados:** el PDF se genera automáticamente en el backend (`pdfkit`); **NO** existe (ni debe agregarse) campo para subir una plantilla de certificado.
+   * **Plataforma del frontend:** Next.js web mobile-first (la palabra "móvil" en `docs/Módulos de diseño.md` se interpreta como diseño mobile-first responsivo; RNF03 exige uso desde celular y computador).
+   * **Lock pesimista:** en consultas con bloqueo (`pessimistic_write`) usar `loadEagerRelations: false` para evitar `FOR UPDATE` sobre `LEFT JOIN` (error Postgres `0A000`).
 
 ---
 
@@ -103,8 +117,10 @@ Cada vez que un agente de IA cree o modifique un endpoint o entidad, **TIENE LA 
 1. **Actualizar `README.md`:**
    * Agregar la nueva entidad en el Modelo de Datos.
    * Documentar el nuevo endpoint (Método HTTP, Ruta, Rol requerido y qué hace).
-2. **Actualizar `AI_USAGE.md`:**
-   * Añadir una entrada con el integrante, tarea realizada y verificación (exigido por la rúbrica de D2).
+2. **Actualizar `AI_USAGE.md` (formato básico OBLIGATORIO para todos los integrantes y ramas):**
+   * Cada entrada va en el formato `## Tarea breve (Integrante)` seguida de **máximo 3 viñetas**: **Herramienta**, **Uso** (una sola línea con el apoyo puntual) y **Verificación** (comandos en verde).
+   * Registrar **solo el apoyo puntual y concreto**; prohibido detallar la implementación completa, listar cada archivo, pegar prompts largos o dar a entender que la IA hizo todo el trabajo.
+   * No volver al formato extenso: si una entrada supera las 3 viñetas o ~4 líneas, debe acortarse.
 3. **Verificar antes de hacer commit:**
    * Ejecutar `npm run build` (debe compilar con 0 errores).
    * Ejecutar `npm test` (todas las pruebas deben pasar).
