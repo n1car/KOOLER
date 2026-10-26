@@ -1,74 +1,92 @@
-Aquí tienes el contenido reescrito en formato Markdown listo para añadir a tu archivo `README.md`:
-
-```markdown
-# Arquitectura inicial (7.6)
+# Arquitectura de Kooler
 
 ## 6.1 Diagrama de arquitectura
-La arquitectura inicial del sistema se plantea mediante una separación entre frontend, backend y base de datos[cite: 3]. El frontend será desarrollado con **Next.js** y se comunicará mediante HTTP con una API desarrollada en **NestJS**[cite: 3]. El backend gestionará la lógica de negocio y utilizará **TypeORM** para acceder a la base de datos **PostgreSQL**[cite: 3]. **Docker** será utilizado para facilitar la configuración y ejecución de los servicios del proyecto[cite: 3].
 
+El frontend Next.js presenta la interfaz web y consume la API REST de NestJS. NestJS aplica las reglas de negocio y usa TypeORM para persistir la información en PostgreSQL. Docker Compose define los servicios `backend` y `postgres`.
 
+```mermaid
+flowchart LR
+    User[Usuario] --> Web[Frontend web<br/>Next.js]
+    Web -->|HTTP / REST| API[API<br/>NestJS]
+    API -->|TypeORM| DB[(PostgreSQL)]
+    Compose[Docker Compose] -. ejecuta .-> API
+    Compose -. ejecuta .-> DB
 ```
 
-Usuario ──> Frontend (Next.js) ──<HTTP/REST>──> Backend API (NestJS) ──(TypeORM)──> PostgreSQL
+### Modelo de datos relevante para las funcionalidades
 
+```mermaid
+erDiagram
+    ROLE ||--o{ USER : asigna
+    USER ||--o{ ACTIVITY : organiza
+    ACTIVITY_TYPE o|--o{ ACTIVITY : clasifica
+    LOCATION o|--o{ ACTIVITY : ubica
+    USER ||--o{ ENROLLMENT : realiza
+    ACTIVITY ||--o{ ENROLLMENT : recibe
+    ACTIVITY ||--o{ SESSION : contiene
+    USER ||--o{ ATTENDANCE : registra
+    SESSION ||--o{ ATTENDANCE : recibe
+    USER ||--o{ REVIEW : escribe
+    ACTIVITY ||--o{ REVIEW : recibe
+    USER ||--o{ CERTIFICATE : obtiene
+    ACTIVITY ||--o{ CERTIFICATE : acredita
 ```
 
-No se contemplan servicios externos adicionales en la arquitectura inicial, ya que las funcionalidades principales del sistema pueden ser gestionadas por el frontend, backend y base de datos[cite: 3].
-
----
+`SESSION` pertenece a una actividad. `ATTENDANCE` relaciona a un usuario con una sesión y tiene unicidad por `(id_user, id_session)`. `CERTIFICATE` relaciona a un usuario con una actividad y es único por `(id_user, id_activity)`.
 
 ## 6.2 Stack tecnológico
-* **Frontend:** Next.js — Desarrollo de la interfaz de usuario, páginas y navegación de la aplicación[cite: 3].
-* **Backend:** NestJS — Desarrollo de la API y gestión de la lógica de negocio[cite: 3].
-* **ORM:** TypeORM — Gestión de entidades y conexión con la base de datos[cite: 3].
-* **Base de datos:** PostgreSQL — Almacenamiento de la información del sistema[cite: 3].
-* **Contenedores:** Docker — Configuración y ejecución del entorno de desarrollo[cite: 3].
-* **Pruebas de API:** Postman — Prueba y validación de los endpoints del backend[cite: 3].
 
----
+* **Frontend:** Next.js y React, con rutas App Router y estilos Tailwind CSS.
+* **Backend:** NestJS con API REST.
+* **Persistencia:** PostgreSQL mediante TypeORM.
+* **Autenticación y autorización:** JWT, Passport y guards de roles.
+* **Ejecución de servicios:** Docker Compose.
 
-## 6.3 Organización preliminar de módulos del backend
-El backend se organizará en módulos de acuerdo con las principales funcionalidades del sistema[cite: 3]:
+## 6.3 Módulos implementados del backend
 
-* **Users:** gestión de usuarios y roles[cite: 3].
-* **Activities:** creación, consulta, actualización y gestión de actividades[cite: 3].
-* **Activity Types:** clasificación de las actividades[cite: 3].
-* **Locations:** gestión de las ubicaciones[cite: 3].
-* **Enrollments:** registro y gestión de inscripciones[cite: 3].
-* **Attendance:** registro y consulta de asistencia[cite: 3].
-* **Reviews:** gestión de valoraciones de las actividades[cite: 3].
-* **Certificates:** generación y consulta de certificados de participación[cite: 3].
+Los siguientes módulos están registrados en `AppModule`:
 
-Esta organización permite separar las responsabilidades del sistema y facilita el mantenimiento y evolución del backend[cite: 3].
+* **AuthModule:** registro, inicio de sesión y perfil autenticado.
+* **UsersModule:** servicios de usuarios utilizados por los demás módulos.
+* **ActivitiesModule:** actividades, inscripciones y sesiones; incluye la finalización programada de actividades.
+* **CatalogModule:** lectura de tipos de actividad y ubicaciones.
+* **AttendanceModule:** registro y consulta de asistencia por sesión.
+* **CertificatesModule:** consulta de elegibilidad, emisión y descarga de certificados PDF.
+* **ReviewsModule:** creación y consulta de reseñas.
+* **HistoryModule:** historial de actividades del estudiante.
+* **HealthModule:** comprobación de salud de la API.
+* **SeedModule:** creación de roles y usuarios de demostración al iniciar la aplicación.
 
----
+La configuración de TypeORM se realiza en `AppModule`. Los guards JWT y de roles y el interceptor de logging son componentes compartidos, no módulos funcionales independientes.
 
-## 6.4 Rutas principales del frontend
-* `/login` — Inicio de sesión[cite: 3].
-* `/activities` — Consulta de actividades disponibles[cite: 3].
-* `/activities/[id]` — Visualización del detalle de una actividad[cite: 3].
-* `/my-enrollments` — Consulta de inscripciones del estudiante[cite: 3].
-* `/attendance` — Consulta de asistencia[cite: 3].
-* `/reviews` — Registro y consulta de valoraciones[cite: 3].
-* `/organizer/activities` — Gestión de actividades del organizador[cite: 3].
-* `/organizer/activities/new` — Creación de actividades[cite: 3].
-* `/certificates` — Consulta de certificados de participación[cite: 3].
-* `/certificates/[id]` — Visualización y descarga de un certificado[cite: 3].
+## 6.4 Rutas principales
 
----
+### Frontend
 
-## 6.5 Decisiones técnicas iniciales y justificación
-* **Next.js:** se utilizará para desarrollar el frontend y organizar las páginas, componentes y rutas de la aplicación[cite: 3].
-* **NestJS:** se utilizará para construir el backend debido a su estructura modular, permitiendo separar las diferentes funcionalidades del sistema[cite: 3].
-* **PostgreSQL:** se selecciona como sistema gestor de base de datos por tratarse de una base de datos relacional adecuada para manejar las relaciones entre usuarios, actividades, inscripciones, asistencia y valoraciones[cite: 3].
-* **TypeORM:** permitirá conectar el backend con PostgreSQL y trabajar con las entidades definidas en el modelo de datos[cite: 3].
-* **Docker:** permitirá mantener un entorno de desarrollo consistente y facilitar la ejecución de los diferentes componentes del proyecto[cite: 3].
-* **API REST:** se utilizará como medio de comunicación entre Next.js y NestJS, manteniendo separadas la interfaz de usuario y la lógica de negocio[cite: 3].
-* **Postman:** se utilizará para comprobar el funcionamiento de los endpoints del backend antes y durante la integración con el frontend[cite: 3].
+Las rutas siguientes corresponden a páginas presentes en `frontend/src/app`:
 
----
+* `/` — bienvenida.
+* `/login`, `/register` y `/account-created` — flujo visual de autenticación.
+* `/home`, `/my-enrollments`, `/progress` y `/history` — vistas del estudiante.
+* `/activities/[id]` — detalle de actividad.
+* `/organizer/activities` y `/organizer/activities/new` — panel y creación de actividades.
+* `/organizer/activities/[id]`, `/organizer/activities/[id]/attendance` y `/organizer/activities/[id]/feedback` — detalle, asistencia y retroalimentación del organizador.
 
-## 6.6 Flujo general de la arquitectura
-El usuario interactúa con la aplicación mediante el frontend desarrollado en Next.js[cite: 3]. Las solicitudes relacionadas con las funcionalidades del sistema son enviadas al backend NestJS mediante una API REST[cite: 3]. NestJS procesa las solicitudes y aplica la lógica de negocio correspondiente, utilizando TypeORM para consultar o modificar la información almacenada en PostgreSQL[cite: 3]. Docker proporciona el entorno para ejecutar y mantener los componentes del proyecto de forma organizada[cite: 3].
+El frontend utiliza actualmente datos locales en `frontend/src/lib/mock.ts` y todavía no consume la API.
 
-```
+### API
+
+La aplicación añade el prefijo global `/api`. Entre sus rutas implementadas están:
+
+* `/api/auth/register`, `/api/auth/login` y `/api/auth/profile` — registro, login y perfil.
+* `/api/activities`, `/api/activities/:id`, `/api/activities/my-enrollments`, `/api/activities/:id/enroll`, `/api/activities/:id/enrollments` y `/api/activities/:id/sessions` — actividades, inscripciones y sesiones.
+* `/api/activity-types` y `/api/locations` — catálogos públicos.
+* `/api/activities/:activityId/sessions/:sessionId/attendance` — consulta y registro de asistencia por sesión.
+* `/api/certificates`, `/api/certificates/activities/:activityId/eligibility` y `/api/certificates/:certificateId/download` — certificados, elegibilidad y descarga.
+* `/api/reviews` y `/api/reviews/activity/:activityId` — creación y consulta de reseñas; `/api/reviews/organizer/activity/:activityId` — retroalimentación del organizador.
+* `/api/history` — historial del estudiante.
+* `/api/health` — estado de la API.
+
+## 6.5 Persistencia y ejecución
+
+TypeORM registra las entidades de los módulos y se conecta a PostgreSQL mediante las variables `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` y `DB_DATABASE`. `backend/compose.yaml` define PostgreSQL y el backend; dentro de Compose, el backend usa el servicio `postgres` como host de base de datos.
