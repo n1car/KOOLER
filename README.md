@@ -161,41 +161,59 @@ El repositorio maneja un flujo de 3 niveles para proteger la estabilidad del pro
    * Jhon: `feature/valoraciones`
    * Samuel: `feature/certificados`
 
-### 🛠️ Guía Rápida para Jhon y Samuel al Clonar el Repositorio
+### 🚀 Inicio desde cero (desarrollo local)
 
-1. **Clonar, cambiarse a `dev` y sacar su rama de trabajo:**
+#### Requisitos previos
+
+* Git para clonar el repositorio.
+* Docker Desktop con Docker Compose v2 para iniciar PostgreSQL y el backend.
+* Node.js y npm para ejecutar el frontend o las pruebas localmente. El backend dentro del contenedor usa Node.js 20.
+
+#### Configurar e iniciar PostgreSQL y el backend
+
+1. Clona el repositorio y entra en la carpeta del backend:
    ```bash
    git clone https://github.com/n1car/KOOLER.git
-   cd KOOLER
-   
-   # Cambiarse a la rama dev (base común)
-   git checkout dev
-   
-   # Si eres Jhon (Persona J):
-   git checkout -b feature/valoraciones
-   
-   # Si eres Samuel (Persona S):
-   git checkout -b feature/certificados
+   cd KOOLER/backend
    ```
-   *(Al terminar avances, cada integrante hace merge o PR hacia `dev`, NUNCA directo a `main`)*.
-
-2. **Levantar la base de datos (Docker Desktop debe estar abierto):**
+2. Crea la configuración local a partir del ejemplo y reemplaza `JWT_SECRET` por un valor aleatorio propio de al menos 32 caracteres. No compartas ni subas el archivo `.env`:
    ```bash
-   cd backend
-   docker compose up -d
+   cp .env.example .env
    ```
-
-3. **Instalar dependencias y encender el backend:**
+   `backend/.env.example` contiene un secreto de ejemplo que la aplicación rechaza; debes reemplazarlo antes de iniciar Compose. En esta configuración Compose toma `JWT_SECRET` del entorno o de ese archivo `.env`; las variables `DB_*` del servicio se definen en `compose.yaml`.
+3. Construye e inicia los servicios:
    ```bash
-   cd backend
-   npm install
-   npm run start:dev
+   docker compose up --build -d
    ```
-   El backend iniciará en: `http://localhost:3000/api`
+   Compose inicia los servicios `postgres` y `backend`. La API queda en `http://localhost:3000/api` y PostgreSQL se publica en `localhost:5433`.
+4. Comprueba el estado de los contenedores y de la API:
+   ```bash
+   docker compose ps
+   curl http://localhost:3000/api/health
+   ```
+   La respuesta correcta de salud incluye `"status":"ok"` y `"database":"up"`. Si necesitas revisar el arranque del backend:
+   ```bash
+   docker compose logs backend
+   ```
 
-4. **Credenciales Demo de Fábrica (creadas automáticamente por Seed):**
-   * **Estudiante:** `estudiante@icesi.edu.co` | `Password123!`
-   * **Organizador:** `organizador@icesi.edu.co` | `Password123!`
+Al iniciar NestJS, `SeedService` se ejecuta automáticamente y agrega los roles, catálogos y usuarios demo que aún no existan. No hay que ejecutar un comando de seed separado. Las credenciales de demostración definidas en el seed son:
+
+* **Estudiante:** `estudiante@icesi.edu.co` / `Password123!`
+* **Organizador:** `organizador@icesi.edu.co` / `Password123!`
+
+Son credenciales para desarrollo local; no las uses en un entorno compartido o de producción.
+
+#### Iniciar el frontend
+
+El frontend es independiente del Compose del backend y actualmente usa datos locales de demostración, no consume la API. En otra terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Abre `http://localhost:3001`.
 
 ---
 
