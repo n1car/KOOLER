@@ -88,7 +88,7 @@ erDiagram
     ATTENDANCE {
         int id_attendance PK
         int id_user FK
-        int id_activity FK
+        int id_session FK
         datetime registration_date
         string status
     }
@@ -136,7 +136,7 @@ erDiagram
 * `ENROLLMENT.id_activity` ➔ `ACTIVITY.id_activity`
 * `SESSION.id_activity` ➔ `ACTIVITY.id_activity`
 * `ATTENDANCE.id_user` ➔ `USER.id_user`
-* `ATTENDANCE.id_activity` ➔ `ACTIVITY.id_activity`
+* `ATTENDANCE.id_session` ➔ `SESSION.id_session`
 * `REVIEW.id_user` ➔ `USER.id_user`
 * `REVIEW.id_activity` ➔ `ACTIVITY.id_activity`
 * `CERTIFICATE.id_user` ➔ `USER.id_user`
@@ -154,9 +154,9 @@ erDiagram
 2. **Capacidad máxima:** El número de inscritos no puede superar el campo `capacity` establecido para la actividad.
 3. **Estado de actividad para inscripción:** Solo las actividades en estado `ACTIVE` permiten nuevas inscripciones.
 4. **Fecha límite de inscripción:** No se permiten inscripciones después de `registration_deadline`.
-5. **Asistencia única:** Un usuario no puede registrar asistencia más de una vez para la misma actividad (`UNIQUE(id_user, id_activity)` en `ATTENDANCE`).
+5. **Asistencia única por sesión:** Un usuario no puede registrar más de una asistencia para la misma sesión (`UNIQUE(id_user, id_session)` en `ATTENDANCE`).
 6. **Certificado único:** Un estudiante solo puede tener un certificado por actividad.
-7. **Emisión de certificados:** Solo se genera certificado cuando la actividad ha finalizado (`FINISHED`) y el estudiante cumple con la asistencia requerida. Cada certificado tiene un código único generado automáticamente (`certificate_code`).
+7. **Elegibilidad para certificados:** La actividad debe estar finalizada (`FINISHED`), ser certificable y tener al menos una sesión. El porcentaje se calcula como sesiones con asistencia `PRESENT` del estudiante divididas por el total de sesiones de la actividad; se requiere al menos 80 %. Las sesiones sin asistencia registrada y las marcadas `ABSENT` cuentan en el total, pero no en las sesiones presentes. Cada certificado tiene un código único generado automáticamente (`certificate_code`).
 8. **Estados de actividad permitidos:** `ACTIVE`, `CANCELLED`, `FINISHED`.
 9. **Propiedad de recursos:** Un organizador solo puede modificar o cancelar las actividades que él mismo creó (`id_organizer == user.id`).
 10. ⚠️ **Retroalimentación oficial D1 sobre Reseñas y Comentarios:**
@@ -238,7 +238,7 @@ erDiagram
 | :--- | :--- | :--- | :--- |
 | `id_attendance` | `int` | **PK** | Identificador único del registro de asistencia. |
 | `id_user` | `int` | **FK** | Usuario asistente (`USER.id_user`). |
-| `id_activity` | `int` | **FK** | Actividad asistida (`ACTIVITY.id_activity`). |
+| `id_session` | `int` | **FK** | Sesión a la que corresponde la asistencia (`SESSION.id_session`). |
 | `registration_date` | `datetime` | | Fecha y hora en que se registró la asistencia. |
 | `status` | `string` | | Estado de asistencia (ej: `PRESENT`, `ABSENT`). |
 
@@ -268,4 +268,4 @@ erDiagram
 ## 4.5 Soporte de las Funcionalidades Principales
 1. **Funcionalidad 1 (Gestión y Participación):** Soportada por `ACTIVITY`, `ACTIVITY_TYPE`, `LOCATION` y `ENROLLMENT`. Permite al organizador crear actividades y a los estudiantes consultar cupos e inscribirse con control de concurrencia.
 2. **Funcionalidad 2 (Historial, Valoración y Comentarios Públicos):** Soportada por `REVIEW`. Permite a los estudiantes que asistieron calificar del 1 al 5 y dejar comentarios visibles para toda la comunidad universitaria tras finalizar el evento.
-3. **Funcionalidad 3 (Certificación por Asistencia):** Soportada por `ATTENDANCE` y `CERTIFICATE`. Calcula si el estudiante cumplió con la asistencia requerida y emite un certificado con código único verificable.
+3. **Funcionalidad 3 (Certificación por Asistencia):** Soportada por `SESSION`, `ATTENDANCE` y `CERTIFICATE`. Calcula la elegibilidad según las asistencias `PRESENT` por sesión y emite un certificado con código único verificable cuando se cumplen las reglas definidas.
