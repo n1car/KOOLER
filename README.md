@@ -93,6 +93,19 @@ npm run dev        # http://localhost:3001
 * Verificación: `npm run lint` (0 errores) y `npm run build` (type-check en verde).
 
 
+### 🧪 Pruebas de la API con Postman
+
+```bash
+cd backend
+npx newman run Kooler-D2.postman_collection.json
+```
+
+* La colección (`backend/Kooler-D2.postman_collection.json`) tiene 23 requests en orden de flujo y 46 aserciones.
+* Los tokens y los IDs (`orgToken`, `studentToken`, `activityId`, `sessionId`, `certificateId`) se guardan **automáticamente** al ejecutar los requests de login y creación; no hay que copiarlos a mano.
+* `baseUrl` apunta a `http://localhost:3000/api`. Para probar el despliegue, cámbielo a `{{prodUrl}}`.
+* Requiere el backend en ejecución y `docker compose up -d`.
+
+
 ### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
 * Integración punta a punta de todos los flujos sin datos falsos.
 * Pruebas completas de regresión y concurrencia.
