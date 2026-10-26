@@ -7,7 +7,7 @@ El modelo de base de datos define cómo se almacenará y relacionará la informa
 
 ## 4.1 Diagrama Entidad-Relación (ERD)
 
-El modelo está compuesto por **nueve entidades principales**: `ROLE`, `USER`, `ACTIVITY`, `ACTIVITY_TYPE`, `LOCATION`, `ENROLLMENT`, `ATTENDANCE`, `REVIEW` y `CERTIFICATE`.
+El modelo está compuesto por **diez entidades principales**: `ROLE`, `USER`, `ACTIVITY`, `ACTIVITY_TYPE`, `LOCATION`, `ENROLLMENT`, `SESSION`, `ATTENDANCE`, `REVIEW` y `CERTIFICATE`.
 
 ```mermaid
 erDiagram
@@ -22,7 +22,8 @@ erDiagram
     ACTIVITY_TYPE ||--o{ ACTIVITY : "clasifica"
 
     ACTIVITY ||--o{ ENROLLMENT : "recibe"
-    ACTIVITY ||--o{ ATTENDANCE : "controla"
+    ACTIVITY ||--o{ SESSION : "se organiza en"
+    SESSION ||--o{ ATTENDANCE : "registra"
     ACTIVITY ||--o{ REVIEW : "recibe valoraciones"
     ACTIVITY ||--o{ CERTIFICATE : "certifica"
 
@@ -75,6 +76,15 @@ erDiagram
         datetime enrollment_date
     }
 
+    SESSION {
+        int id_session PK
+        int id_activity FK
+        date session_date
+        string start_time
+        string end_time
+        datetime created_at
+    }
+
     ATTENDANCE {
         int id_attendance PK
         int id_user FK
@@ -112,6 +122,7 @@ erDiagram
 * `ACTIVITY_TYPE.id_type`
 * `ACTIVITY.id_activity`
 * `ENROLLMENT.id_enrollment`
+* `SESSION.id_session`
 * `ATTENDANCE.id_attendance`
 * `REVIEW.id_review`
 * `CERTIFICATE.id_certificate`
@@ -123,6 +134,7 @@ erDiagram
 * `ACTIVITY.id_location` ➔ `LOCATION.id_location`
 * `ENROLLMENT.id_user` ➔ `USER.id_user`
 * `ENROLLMENT.id_activity` ➔ `ACTIVITY.id_activity`
+* `SESSION.id_activity` ➔ `ACTIVITY.id_activity`
 * `ATTENDANCE.id_user` ➔ `USER.id_user`
 * `ATTENDANCE.id_activity` ➔ `ACTIVITY.id_activity`
 * `REVIEW.id_user` ➔ `USER.id_user`
@@ -211,7 +223,17 @@ erDiagram
 | `id_activity` | `int` | **FK** | Actividad a la que se inscribe (`ACTIVITY.id_activity`). |
 | `enrollment_date` | `datetime` | | Fecha y hora exacta de la inscripción. |
 
-### 7. Entidad: `ATTENDANCE`
+### 7. Entidad: `SESSION`
+| Campo | Tipo | Clave | Descripción |
+| :--- | :--- | :--- | :--- |
+| `id_session` | `int` | **PK** | Identificador único de la sesión. |
+| `id_activity` | `int` | **FK** | Actividad a la que pertenece la sesión (`ACTIVITY.id_activity`). |
+| `session_date` | `date` | | Fecha de la sesión. |
+| `start_time` | `string` | | Hora de inicio; admite valores nulos. |
+| `end_time` | `string` | | Hora de finalización; admite valores nulos. |
+| `created_at` | `datetime` | | Fecha y hora de creación del registro. |
+
+### 8. Entidad: `ATTENDANCE`
 | Campo | Tipo | Clave | Descripción |
 | :--- | :--- | :--- | :--- |
 | `id_attendance` | `int` | **PK** | Identificador único del registro de asistencia. |
@@ -220,7 +242,7 @@ erDiagram
 | `registration_date` | `datetime` | | Fecha y hora en que se registró la asistencia. |
 | `status` | `string` | | Estado de asistencia (ej: `PRESENT`, `ABSENT`). |
 
-### 8. Entidad: `REVIEW` *(Actualizada con retroalimentación D1)*
+### 9. Entidad: `REVIEW` *(Actualizada con retroalimentación D1)*
 | Campo | Tipo | Clave | Descripción |
 | :--- | :--- | :--- | :--- |
 | `id_review` | `int` | **PK** | Identificador único de la valoración. |
@@ -232,7 +254,7 @@ erDiagram
 
 > 📢 **Regla de visualización y permisos:** Esta entidad es visible públicamente para cualquier estudiante que consulte la actividad. Los organizadores pueden consultar el promedio y leer los comentarios, pero **no tienen permisos para modificarlos ni borrarlos**.
 
-### 9. Entidad: `CERTIFICATE`
+### 10. Entidad: `CERTIFICATE`
 | Campo | Tipo | Clave | Descripción |
 | :--- | :--- | :--- | :--- |
 | `id_certificate` | `int` | **PK** | Identificador único del certificado. |
