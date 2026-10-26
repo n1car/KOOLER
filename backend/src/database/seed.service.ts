@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -12,6 +13,7 @@ export class SeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SeedService.name);
 
   constructor(
+    private readonly configService: ConfigService,
     @InjectRepository(RoleEntity)
     private readonly roleRepo: Repository<RoleEntity>,
     @InjectRepository(UserEntity)
@@ -24,7 +26,9 @@ export class SeedService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     await this.seedRoles();
-    await this.seedDemoUsers();
+    if (this.configService.get<string>('NODE_ENV') !== 'production') {
+      await this.seedDemoUsers();
+    }
     await this.seedActivityTypes();
     await this.seedLocations();
   }
