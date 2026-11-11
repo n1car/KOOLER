@@ -25,6 +25,7 @@ import {
 
 function useCloseOnRoute(pathname: string) {
   const [open, setOpen] = useState(false);
+  // Evita dejar desplegado el menú de perfil al navegar a otra pantalla.
   useEffect(() => setOpen(false), [pathname]);
   return [open, setOpen] as const;
 }

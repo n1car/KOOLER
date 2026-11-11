@@ -148,6 +148,7 @@ describe('CertificatesService', () => {
     attendanceRepository.find.mockResolvedValue(attendances);
   };
 
+  // La descarga se limita al propietario del certificado y devuelve un PDF real.
   it('devuelve certificados del estudiante actual ordenados por fecha', async () => {
     const certificates = [createCertificate()];
     certificateRepository.find.mockResolvedValue(certificates);
@@ -210,6 +211,7 @@ describe('CertificatesService', () => {
     );
   });
 
+  // El porcentaje se calcula sobre sesiones, no sobre cantidad de marcaciones.
   it('considera elegible la asistencia exactamente del 80 por ciento', async () => {
     const sessions = createSessions(5);
     mockStudentEligibility(sessions, [
@@ -297,6 +299,7 @@ describe('CertificatesService', () => {
     expect(attendanceRepository.find).not.toHaveBeenCalled();
   });
 
+  // La emisión solo procesa actividades certificables ya finalizadas con sesiones.
   it.each(['ACTIVE', 'CANCELLED'] as const)(
     'no considera elegible una actividad %s',
     async (status) => {
@@ -447,6 +450,7 @@ describe('CertificatesService', () => {
     expect(certificateRepository.save).toHaveBeenCalledTimes(1);
   });
 
+  // Las colisiones de código se reintentan; un error de guardado no debe tumbar el lote.
   it('reanuda con otro código si la restricción única detecta una colisión de código', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
     sessionRepository.find.mockResolvedValue(createSessions(1));

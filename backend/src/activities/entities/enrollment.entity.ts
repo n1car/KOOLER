@@ -10,6 +10,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 import { ActivityEntity } from './activity.entity';
 
 @Entity('enrollments')
+// La restricción también evita inscripciones duplicadas bajo concurrencia.
 @Unique('UQ_enrollment_user_activity', ['user', 'activity'])
 export class EnrollmentEntity {
   @PrimaryGeneratedColumn({ name: 'id_enrollment' })

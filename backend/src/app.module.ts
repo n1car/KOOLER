@@ -11,11 +11,14 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { SeedModule } from './database/seed.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { HistoryModule } from './history/history.module';
+import { HealthModule } from './health/health.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
@@ -29,6 +32,7 @@ import { HistoryModule } from './history/history.module';
         password: configService.get<string>('DB_PASSWORD') ?? 'postgres',
         database: configService.get<string>('DB_DATABASE') ?? 'kooler_db',
         autoLoadEntities: true,
+        // TypeORM aplica los cambios de entidades al esquema al iniciar.
         synchronize: true, // Modo desarrollo, igual que en clase
       }),
     }),
@@ -41,6 +45,7 @@ import { HistoryModule } from './history/history.module';
     SeedModule,
     ReviewsModule,
     HistoryModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

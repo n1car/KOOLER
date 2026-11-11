@@ -260,6 +260,7 @@ export class CertificatesService {
     sessions: SessionEntity[],
     attendances: AttendanceEntity[],
   ): CertificateEligibility {
+    // Contar sesiones únicas evita duplicar el porcentaje si llegan registros repetidos.
     const sessionIds = new Set(sessions.map((session) => session.id));
     const presentSessionIds = new Set(
       attendances
@@ -335,6 +336,7 @@ export class CertificatesService {
           );
         }
 
+        // Si otra petición ya lo emitió, se reutiliza; si chocó el código, se reintenta.
         const concurrentlyCreated = await this.certificateRepository.findOne({
           where: {
             user: { id: studentId },

@@ -19,6 +19,7 @@ describe('App (e2e)', () => {
     await app.init();
   });
 
+  // Smoke test con AppModule real: valida bootstrap, seed y conexión local a PostgreSQL.
   it('/api (GET) responde sin tumbar el bootstrap', () => {
     return request(app.getHttpServer()).get('/api').expect(404);
   });
@@ -28,6 +29,14 @@ describe('App (e2e)', () => {
       .post('/api/auth/login')
       .send({ email: 'nadie@icesi.edu.co', password: 'wrong' })
       .expect(401);
+  });
+
+  it('/api/health responde 200 con la base de datos conectada', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200);
+
+    expect(response.body).toMatchObject({ status: 'ok', database: 'up' });
   });
 
   afterAll(async () => {

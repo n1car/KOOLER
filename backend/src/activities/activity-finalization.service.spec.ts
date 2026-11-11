@@ -71,6 +71,7 @@ describe('ActivityFinalizationService', () => {
     );
   });
 
+  // Las actividades canceladas y las que aún no terminan no deben avanzar al flujo de emisión.
   it('does not issue certificates for cancelled activities', async () => {
     activityRepository.query
       .mockResolvedValueOnce([])
@@ -95,6 +96,7 @@ describe('ActivityFinalizationService', () => {
     expect(certificatesService.issueEligibleCertificates).not.toHaveBeenCalled();
   });
 
+  // Los ciclos siguientes también sirven para recuperar emisiones que fallaron antes.
   it('reprocesses finished activities on repeated cycles for safe issuance retries', async () => {
     activityRepository.query
       .mockResolvedValueOnce([])

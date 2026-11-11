@@ -27,6 +27,8 @@ export class ActivityFinalizationService {
 
     this.isRunning = true;
     try {
+      // La zona horaria institucional evita depender de la zona del servidor;
+      // SKIP LOCKED permite que varias instancias procesen filas distintas.
       await this.activityRepository.query(
         `WITH candidates AS (
            SELECT id_activity

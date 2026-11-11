@@ -6,6 +6,7 @@ export const ACTIVITY_TYPE_COLORS: Record<string, string> = {
 };
 
 export function activityTypeColor(name?: string | null): string {
+  // Los catálogos pueden devolver categorías en plural; los tokens usan singular.
   const key = (name ?? "").toLowerCase().replace(/s$/, "");
   return ACTIVITY_TYPE_COLORS[key] ?? "#6D77F3";
 }

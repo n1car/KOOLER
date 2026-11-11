@@ -11,6 +11,7 @@ import { SessionEntity } from '../../activities/entities/session.entity';
 import { UserEntity } from '../../users/entities/user.entity';
 
 @Entity('attendances')
+// Una sola marcación por estudiante y sesión, incluso ante peticiones simultáneas.
 @Unique('UQ_attendance_user_session', ['user', 'session'])
 export class AttendanceEntity {
   @PrimaryGeneratedColumn({ name: 'id_attendance' })

@@ -19,6 +19,7 @@ const student = { id: 1 };
 const dto = { activityId: 10, rating: 4, comment: 'Buena' };
 
 describe('ReviewsService.create', () => {
+  // La reseña requiere actividad válida y evidencia de asistencia del estudiante.
   it('lanza NotFound si la actividad no existe', async () => {
     const { service, activityRepo } = setup();
     activityRepo.findOne.mockResolvedValue(null);
@@ -55,6 +56,7 @@ describe('ReviewsService.create', () => {
     expect(reviewRepo.save).toHaveBeenCalledOnce();
   });
 
+  // Un doble envío queda traducido al conflicto definido por la unicidad en BD.
   it('traduce la violación de UNIQUE a Conflict (doble envío)', async () => {
     const { service, activityRepo, attendanceRepo, reviewRepo } = setup();
     activityRepo.findOne.mockResolvedValue({ id: 10, status: 'FINISHED' });

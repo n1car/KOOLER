@@ -17,6 +17,7 @@ function makeService(activity: any, rows: any[] = []) {
 }
 
 describe('ReviewsService: organizador y privacidad', () => {
+  // La lectura de retroalimentación queda restringida al organizador propietario.
   it('rechaza a un organizador que no es dueño', async () => {
     const service = makeService({ id: 10, organizer: { id: 99 } });
     await expect(service.findForOrganizer(1, 10)).rejects.toBeInstanceOf(ForbiddenException);

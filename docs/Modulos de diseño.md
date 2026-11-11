@@ -55,10 +55,10 @@
 * **Pantalla 4: Pantalla de Cuenta Creada (Confirmación)**
   * **Fondo:** **Claro** (`#FFFFFF` / `#F8F9FA`).
   * **Estructura visual:**
-    * *Centro de Pantalla:* 
+    * *Centro de Pantalla:*
       * *Contenedor de Icono (Hero gráfico de éxito):* Elemento central o contenedor circular con un icono de confirmación/éxito en tono verde institucional (`#34C759`).
       * *Título:* "Cuenta creada" (Texto oscuro de alto contraste).
-    * *Botón Inferior:* 
+    * *Botón Inferior:*
       * Botón de acción principal de ancho completo ("Ir a iniciar sesión").
       * *Acción de código:* Redireccionar automáticamente al usuario directo a la **Pantalla 3 (Login)**.
 
@@ -124,10 +124,10 @@
     * *Metadatos:* Fecha, hora, ubicación, cupos máximos y descripción detallada de la actividad.
     * *Indicador de Certificación:* Mensaje destacado en el detalle que especifica claramente **"Esta actividad está certificada"** (si aplica).
     * *Botones de Acción Principales (Condicionales según el estado):*
-      1. *Si la actividad está Activa:* 
+      1. *Si la actividad está Activa:*
          * Botón de **Asistencia** (lleva directamente a la *Pantalla 3: Control de Asistencia*).
          * Botón de **Finalizar actividad** (permite cerrar el evento).
-      2. *Si la actividad fue Finalizada o Cancelada:* 
+      2. *Si la actividad fue Finalizada o Cancelada:*
          * El botón cambia automáticamente a **"Ver retroalimentación"**, el cual redirige a la *Pantalla 4*.
          * *Nota de Lógica:* Si la actividad fue cancelada y no hay calificaciones, se mostrará la pantalla de "Sin calificaciones aún".
     * *Sección de Inscritos:* Lista desplegable o resumen con los nombres de los usuarios inscritos y la fecha de registro.

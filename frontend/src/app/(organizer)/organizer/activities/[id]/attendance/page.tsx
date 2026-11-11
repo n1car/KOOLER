@@ -25,6 +25,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     if (!sessionId) return;
+    // Cada sesión mantiene sus propias marcaciones dentro del conjunto de datos demo.
     const records = mockAttendance[`${id}:${sessionId}`] ?? [];
     setStatuses(
       Object.fromEntries(records.map((record) => [record.studentId, record.status])),
@@ -94,6 +95,9 @@ export default function AttendancePage() {
                     <span className="truncate text-xs text-muted">
                       {student.email}
                     </span>
+                    {!recorded && (
+                      <span className="text-xs text-muted">Sin registrar</span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <ToggleButton
