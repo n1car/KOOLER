@@ -3,11 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Input, Select, cn } from "@/components/ui";
+import { Alert, Button, Input, Select, cn } from "@/components/ui";
+import { ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import type { RoleName } from "@/lib/types";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -20,9 +25,28 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    router.push("/account-created");
+    setError("");
+    setSubmitting(true);
+    try {
+      await register({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        roleName: form.roleName,
+      });
+      router.push("/account-created");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -36,9 +60,12 @@ export default function RegisterPage() {
         </header>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && <Alert>{error}</Alert>}
+
           <Input
             label="Nombres"
             placeholder="Nombres completos"
+            autoComplete="given-name"
             value={form.firstName}
             onChange={(e) => update("firstName", e.target.value)}
             required
@@ -46,6 +73,7 @@ export default function RegisterPage() {
           <Input
             label="Apellidos"
             placeholder="Apellidos completos"
+            autoComplete="family-name"
             value={form.lastName}
             onChange={(e) => update("lastName", e.target.value)}
             required
@@ -54,6 +82,7 @@ export default function RegisterPage() {
             label="Correo institucional"
             type="email"
             placeholder="usuario@icesi.edu.co"
+            autoComplete="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
             required
@@ -62,6 +91,7 @@ export default function RegisterPage() {
             label="Contraseña"
             type="password"
             placeholder="••••••••"
+            autoComplete="new-password"
             minLength={6}
             value={form.password}
             onChange={(e) => update("password", e.target.value)}
@@ -76,7 +106,7 @@ export default function RegisterPage() {
             <option value="ORGANIZADOR">Organizador</option>
           </Select>
 
-          <Button type="submit" fullWidth>
+          <Button type="submit" fullWidth loading={submitting}>
             Registrarse
           </Button>
         </form>

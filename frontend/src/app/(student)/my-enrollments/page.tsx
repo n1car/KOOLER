@@ -1,17 +1,47 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ActivityCard } from "@/components/ActivityCard";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui";
 import { BookmarkIcon } from "@/components/icons";
-import { mockActivities, mockEnrolledIds } from "@/lib/mock";
+import { api, ApiError } from "@/lib/api";
+import type { EnrollmentSummary } from "@/lib/types";
 
 export default function MyEnrollmentsPage() {
-  const enrolledActivities = mockActivities.filter((activity) =>
-    mockEnrolledIds.has(activity.id),
-  );
+  const [enrollments, setEnrollments] = useState<EnrollmentSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (enrolledActivities.length === 0) {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setEnrollments(await api.activities.myEnrollments());
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudieron cargar tus inscripciones.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  if (loading) {
+    return <LoadingState label="Cargando inscripciones..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} onRetry={load} />;
+  }
+
+  if (enrollments.length === 0) {
     return (
       <EmptyState
         icon={<BookmarkIcon width={36} height={36} />}
@@ -39,8 +69,19 @@ export default function MyEnrollmentsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-5">
-        {enrolledActivities.map((activity) => (
-          <ActivityCard key={activity.id} activity={activity} enrolled />
+        {enrollments.map(({ enrollmentId, activity }) => (
+          <ActivityCard
+            key={enrollmentId}
+            activity={{
+              id: activity.id,
+              name: activity.name,
+              imageUrl: activity.imageUrl,
+              activityType: activity.category
+                ? { name: activity.category }
+                : null,
+            }}
+            enrolled
+          />
         ))}
       </div>
     </>

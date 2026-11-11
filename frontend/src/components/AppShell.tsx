@@ -10,7 +10,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { mockOrganizer, mockStudent } from "@/lib/mock";
+import { useAuth } from "@/lib/auth";
 import type { AuthUser } from "@/lib/types";
 import { Avatar, cn } from "./ui";
 import {
@@ -50,6 +50,7 @@ function ProfileMenu({
   className?: string;
 }) {
   const router = useRouter();
+  const { logout } = useAuth();
   const [open, setOpen] = useCloseOnRoute(pathname);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -77,7 +78,10 @@ function ProfileMenu({
         <div className="absolute left-0 top-12 z-30 w-44 overflow-hidden rounded-card border border-border bg-white shadow-lg">
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => {
+              logout();
+              router.replace("/login");
+            }}
             className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-danger active:bg-surface-2"
           >
             <LogoutIcon width={18} height={18} />
@@ -222,6 +226,9 @@ export function StudentShell({
   fullBleed?: boolean;
 }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   return (
     <AppContainer>
@@ -244,10 +251,10 @@ export function StudentShell({
             unoptimized
             className="hidden h-auto w-full lg:block"
           />
-          <ShellHeader user={mockStudent} overlay className="lg:hidden" />
+          <ShellHeader user={user} overlay className="lg:hidden" />
           {hideNav ? null : (
             <DesktopNav
-              user={mockStudent}
+              user={user}
               items={studentNav}
               pathname={pathname}
               overlay
@@ -256,10 +263,10 @@ export function StudentShell({
         </div>
       ) : (
         <>
-          <ShellHeader user={mockStudent} className="lg:hidden" />
+          <ShellHeader user={user} className="lg:hidden" />
           {hideNav ? null : (
             <DesktopNav
-              user={mockStudent}
+              user={user}
               items={studentNav}
               pathname={pathname}
             />
@@ -324,6 +331,9 @@ export function OrganizerShell({
   fullBleed?: boolean;
 }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   return (
     <AppContainer>
@@ -346,10 +356,10 @@ export function OrganizerShell({
             unoptimized
             className="hidden h-auto w-full lg:block"
           />
-          <ShellHeader user={mockOrganizer} overlay className="lg:hidden" />
+          <ShellHeader user={user} overlay className="lg:hidden" />
           {hideNav ? null : (
             <DesktopNav
-              user={mockOrganizer}
+              user={user}
               items={organizerNav}
               pathname={pathname}
               exact
@@ -359,10 +369,10 @@ export function OrganizerShell({
         </div>
       ) : (
         <>
-          <ShellHeader user={mockOrganizer} className="lg:hidden" />
+          <ShellHeader user={user} className="lg:hidden" />
           {hideNav ? null : (
             <DesktopNav
-              user={mockOrganizer}
+              user={user}
               items={organizerNav}
               pathname={pathname}
               exact

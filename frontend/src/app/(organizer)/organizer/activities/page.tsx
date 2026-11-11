@@ -1,14 +1,46 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { EmptyState, StatusBadge } from "@/components/ui";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  StatusBadge,
+} from "@/components/ui";
 import { PlusIcon } from "@/components/icons";
 import { categoryEmoji } from "@/lib/category";
 import { formatDate, formatTimeRange } from "@/lib/format";
-import { mockActivities } from "@/lib/mock";
+import { useAuth } from "@/lib/auth";
+import { api, ApiError } from "@/lib/api";
+import type { Activity } from "@/lib/types";
 
 export default function OrganizerActivitiesPage() {
-  const activities = mockActivities;
+  const { user } = useAuth();
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const list = await api.activities.list();
+      setActivities(list.filter((item) => item.organizer.id === user?.id));
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudieron cargar tus actividades.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const metrics = {
     active: activities.filter((a) => a.status === "ACTIVE").length,
@@ -26,7 +58,11 @@ export default function OrganizerActivitiesPage() {
         <Metric label="Inscritos" value={metrics.enrolled} tone="text-success" />
       </div>
 
-      {activities.length === 0 ? (
+      {loading ? (
+        <LoadingState label="Cargando tus actividades..." />
+      ) : error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : activities.length === 0 ? (
         <EmptyState
           icon={<PlusIcon width={36} height={36} />}
           title="Aún no has creado actividades"

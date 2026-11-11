@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Input, Select, Textarea } from "@/components/ui";
-import { mockActivityTypes, mockLocations } from "@/lib/mock";
+import { api, ApiError } from "@/lib/api";
+import type { ActivityType, Location } from "@/lib/types";
 
 export default function CreateActivityPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [catalogError, setCatalogError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [multipleSessions, setMultipleSessions] = useState(false);
+  const [types, setTypes] = useState<ActivityType[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -25,23 +30,94 @@ export default function CreateActivityPage() {
     minAttendancePercentage: "80",
   });
 
+  useEffect(() => {
+    let active = true;
+    Promise.all([api.catalog.activityTypes(), api.catalog.locations()])
+      .then(([typeList, locationList]) => {
+        if (!active) return;
+        setTypes(typeList);
+        setLocations(locationList);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setCatalogError(
+          err instanceof ApiError
+            ? err.message
+            : "No se pudieron cargar las categorías y ubicaciones.",
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    setError("");
+
     if (form.startTime && form.endTime && form.endTime <= form.startTime) {
       setError("La hora de fin debe ser posterior a la hora de inicio.");
       return;
     }
-    router.push("/organizer/activities");
+
+    const deadline = new Date(form.registrationDeadline);
+    if (Number.isNaN(deadline.getTime())) {
+      setError("La fecha límite de inscripción no es válida.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const created = await api.activities.create({
+        name: form.name.trim(),
+        description: form.description.trim(),
+        date: form.date,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        capacity: Number(form.capacity),
+        registrationDeadline: deadline.toISOString(),
+        isCertifiable: form.isCertifiable,
+        minAttendancePercentage: Number(form.minAttendancePercentage),
+        ...(form.imageUrl.trim() ? { imageUrl: form.imageUrl.trim() } : {}),
+        ...(form.activityTypeId
+          ? { activityTypeId: Number(form.activityTypeId) }
+          : {}),
+        ...(form.locationId ? { locationId: Number(form.locationId) } : {}),
+      });
+
+      if (!multipleSessions) {
+        try {
+          await api.activities.createSession(created.id, {
+            sessionDate: form.date,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          });
+        } catch {
+          // La actividad ya fue creada; la sesión puede agregarse desde el detalle.
+        }
+      }
+
+      router.push(`/organizer/activities/${created.id}`);
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo crear la actividad. Inténtalo de nuevo.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <h2 className="text-xl font-bold text-foreground">Crea tu nueva actividad</h2>
       {error && <Alert>{error}</Alert>}
+      {catalogError && <Alert tone="info">{catalogError}</Alert>}
 
       <Card className="flex flex-col gap-4">
         <Input
@@ -72,7 +148,7 @@ export default function CreateActivityPage() {
             onChange={(e) => update("activityTypeId", e.target.value)}
           >
             <option value="">Sin categoría</option>
-            {mockActivityTypes.map((type) => (
+            {types.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.name}
               </option>
@@ -93,7 +169,7 @@ export default function CreateActivityPage() {
           onChange={(e) => update("locationId", e.target.value)}
         >
           <option value="">Sin ubicación</option>
-          {mockLocations.map((location) => (
+          {locations.map((location) => (
             <option key={location.id} value={location.id}>
               {location.name}
               {location.building ? ` — ${location.building}` : ""}
@@ -200,7 +276,7 @@ export default function CreateActivityPage() {
         >
           Cancelar
         </Button>
-        <Button type="submit" fullWidth>
+        <Button type="submit" fullWidth loading={saving}>
           Crear actividad
         </Button>
       </div>

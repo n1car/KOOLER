@@ -310,6 +310,36 @@ export function EmptyState({
   );
 }
 
+/* --------------------------- Loading / Error -------------------------- */
+
+export function LoadingState({ label = "Cargando..." }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-card border border-dashed border-border bg-surface px-6 py-12 text-center">
+      <Spinner className="h-7 w-7 text-primary" />
+      <p className="text-sm font-medium text-muted">{label}</p>
+    </div>
+  );
+}
+
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-card border border-danger/30 bg-danger/5 px-6 py-10 text-center">
+      <p className="text-sm font-semibold text-danger">{message}</p>
+      {onRetry && (
+        <Button variant="outline" onClick={onRetry}>
+          Reintentar
+        </Button>
+      )}
+    </div>
+  );
+}
+
 /* ------------------------------ Spinner ------------------------------- */
 
 export function Spinner({ className }: { className?: string }) {

@@ -1,28 +1,67 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityCard } from "@/components/ActivityCard";
-import { cn, EmptyState, Select } from "@/components/ui";
+import {
+  cn,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  Select,
+} from "@/components/ui";
 import { FilterIcon, SearchIcon } from "@/components/icons";
-import { mockActivities, mockActivityTypes, mockEnrolledIds } from "@/lib/mock";
+import { api, ApiError } from "@/lib/api";
+import type { Activity, ActivityType } from "@/lib/types";
 
 const PAGE_SIZE = 6;
 
 export default function HomePage() {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [types, setTypes] = useState<ActivityType[]>([]);
+  const [enrolledIds, setEnrolledIds] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [list, catalog, enrollments] = await Promise.all([
+        api.activities.list(),
+        api.catalog.activityTypes(),
+        api.activities.myEnrollments(),
+      ]);
+      setActivities(list.filter((activity) => activity.status !== "CANCELLED"));
+      setTypes(catalog);
+      setEnrolledIds(new Set(enrollments.map((item) => item.activity.id)));
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudieron cargar las actividades.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return mockActivities.filter((activity) => {
+    return activities.filter((activity) => {
       const matchesTerm = !term || activity.name.toLowerCase().includes(term);
       const matchesType =
         !typeFilter || activity.activityType?.id === Number(typeFilter);
       return matchesTerm && matchesType;
     });
-  }, [search, typeFilter]);
+  }, [activities, search, typeFilter]);
 
   const visible = filtered.slice(0, visibleCount);
 
@@ -63,7 +102,7 @@ export default function HomePage() {
           }}
         >
           <option value="">Todas las categorías</option>
-          {mockActivityTypes.map((type) => (
+          {types.map((type) => (
             <option key={type.id} value={type.id}>
               {type.name}
             </option>
@@ -76,7 +115,11 @@ export default function HomePage() {
         <p className="text-sm text-muted">Encuentra, inscríbete y participa</p>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <LoadingState label="Cargando actividades..." />
+      ) : error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : filtered.length === 0 ? (
         <EmptyState
           title="No hay actividades disponibles"
           description="Prueba con otra búsqueda o cambia el filtro de categoría."
@@ -88,7 +131,7 @@ export default function HomePage() {
               <ActivityCard
                 key={activity.id}
                 activity={activity}
-                enrolled={mockEnrolledIds.has(activity.id)}
+                enrolled={enrolledIds.has(activity.id)}
               />
             ))}
           </div>

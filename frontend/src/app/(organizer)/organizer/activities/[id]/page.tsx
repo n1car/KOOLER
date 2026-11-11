@@ -1,59 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Alert, Badge, Button, Card, Input, StatusBadge } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  ErrorState,
+  Input,
+  LoadingState,
+  StatusBadge,
+} from "@/components/ui";
 import { CertificateIcon } from "@/components/icons";
 import { formatDate, formatDateLong, formatTimeRange } from "@/lib/format";
-import { findActivity, mockRoster, mockSessions } from "@/lib/mock";
-import type { Session } from "@/lib/types";
+import { api, ApiError } from "@/lib/api";
+import type { Activity, ActivityEnrollments, Session } from "@/lib/types";
 
 export default function OrganizerActivityDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
-  const activity = findActivity(id);
-  const roster = mockRoster[id] ?? null;
 
-  const [status, setStatus] = useState(activity?.status ?? "ACTIVE");
-  const [sessions, setSessions] = useState<Session[]>(mockSessions[id] ?? []);
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [roster, setRoster] = useState<ActivityEnrollments | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
   const [sessionForm, setSessionForm] = useState({
     sessionDate: "",
     startTime: "",
     endTime: "",
   });
-  const [notice, setNotice] = useState("");
 
-  if (!activity) return <Alert>Actividad no encontrada.</Alert>;
+  const load = useCallback(async () => {
+    if (!Number.isFinite(id)) {
+      setError("Actividad no encontrada.");
+      setLoading(false);
+      return;
+    }
 
-  const isActive = status === "ACTIVE";
+    setLoading(true);
+    setError("");
+    try {
+      const [detail, sessionList, enrollmentList] = await Promise.all([
+        api.activities.get(id),
+        api.activities.sessions(id),
+        api.activities.enrollments(id),
+      ]);
+      setActivity(detail);
+      setSessions(sessionList);
+      setRoster(enrollmentList);
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo cargar la actividad.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-  function finishActivity() {
-    setStatus("FINISHED");
-    setNotice("Actividad finalizada. Ya puedes registrar asistencia.");
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function finishActivity() {
+    if (!activity || busy) return;
+    setBusy(true);
+    setNotice("");
+    setError("");
+    try {
+      await api.activities.update(id, { status: "FINISHED" });
+      setActivity((prev) => (prev ? { ...prev, status: "FINISHED" } : prev));
+      setNotice("Actividad finalizada. Ya puedes registrar asistencia.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo finalizar la actividad.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function addSession(event: React.FormEvent) {
+  async function addSession(event: React.FormEvent) {
     event.preventDefault();
-    if (!sessionForm.sessionDate) return;
-    setSessions((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        activityId: id,
+    if (!sessionForm.sessionDate || busy) return;
+    setBusy(true);
+    setNotice("");
+    setError("");
+    try {
+      await api.activities.createSession(id, {
         sessionDate: sessionForm.sessionDate,
-        startTime: sessionForm.startTime || null,
-        endTime: sessionForm.endTime || null,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setSessionForm({ sessionDate: "", startTime: "", endTime: "" });
-    setNotice("Sesión creada correctamente.");
+        ...(sessionForm.startTime ? { startTime: sessionForm.startTime } : {}),
+        ...(sessionForm.endTime ? { endTime: sessionForm.endTime } : {}),
+      });
+      setSessions(await api.activities.sessions(id));
+      setSessionForm({ sessionDate: "", startTime: "", endTime: "" });
+      setNotice("Sesión creada correctamente.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo crear la sesión.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
+
+  if (loading) {
+    return <LoadingState label="Cargando actividad..." />;
+  }
+
+  if (error && !activity) {
+    return <ErrorState message={error} onRetry={load} />;
+  }
+
+  if (!activity) {
+    return <Alert>Actividad no encontrada.</Alert>;
+  }
+
+  const isActive = activity.status === "ACTIVE";
 
   return (
     <div className="flex flex-col gap-4">
       {notice && <Alert tone="success">{notice}</Alert>}
+      {error && <Alert>{error}</Alert>}
 
       <div className="relative flex h-44 items-end overflow-hidden rounded-card bg-gradient-to-br from-primary to-blue-400 p-5 text-white">
         {activity.imageUrl && (
@@ -66,7 +144,7 @@ export default function OrganizerActivityDetailPage() {
         )}
         <div className="relative z-10 flex w-full items-end justify-between gap-2">
           <h1 className="text-xl font-bold drop-shadow">{activity.name}</h1>
-          <StatusBadge status={status} />
+          <StatusBadge status={activity.status} />
         </div>
       </div>
 
@@ -100,7 +178,12 @@ export default function OrganizerActivityDetailPage() {
           >
             Control de asistencia
           </Link>
-          <Button variant="outline" fullWidth onClick={finishActivity}>
+          <Button
+            variant="outline"
+            fullWidth
+            loading={busy}
+            onClick={finishActivity}
+          >
             Finalizar actividad
           </Button>
         </div>
@@ -150,6 +233,7 @@ export default function OrganizerActivityDetailPage() {
             onChange={(e) =>
               setSessionForm((prev) => ({ ...prev, sessionDate: e.target.value }))
             }
+            required
           />
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -169,7 +253,7 @@ export default function OrganizerActivityDetailPage() {
               }
             />
           </div>
-          <Button type="submit" variant="secondary" fullWidth>
+          <Button type="submit" variant="secondary" fullWidth loading={busy}>
             Agregar sesión
           </Button>
         </form>

@@ -267,6 +267,9 @@ La API utiliza el prefijo `/api`.
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad. |
 | `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |
 | `GET` | `/api/activities/:id/enrollments` | Organizador autorizado | Consulta las inscripciones de una actividad propia. |
+| `GET` | `/api/activities/my-enrollments` | Estudiante | Consulta las inscripciones del estudiante autenticado. |
+| `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
+| `POST` | `/api/activities/:id/sessions` | Organizador autorizado | Crea una sesión de la actividad. |
 
 Los permisos, validaciones y condiciones específicas se aplican desde el backend.
 

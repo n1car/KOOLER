@@ -43,6 +43,14 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 
 ---
 
+## Integración de F1 y sesión JWT en el frontend (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en el cliente API, el contexto de autenticación y la conexión de las pantallas de actividades.
+- **Verificación:** `npm run lint` y `npm run build` (frontend) y `npm run build` + `npm test` (backend, 78 pruebas) en verde.
+
+---
+
 ## Compromiso del equipo
 
 - Todo resultado generado con IA fue revisado y comprendido por quien lo integró.

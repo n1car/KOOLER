@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { BookmarkIcon } from "./icons";
 import { activityTypeColor } from "@/lib/category";
-import type { Activity } from "@/lib/types";
+export interface ActivityCardData {
+  id: number;
+  name: string;
+  imageUrl?: string | null;
+  activityType?: { name: string } | null;
+}
 
 export function ActivityCard({
   activity,
   enrolled = false,
 }: {
-  activity: Activity;
+  activity: ActivityCardData;
   enrolled?: boolean;
 }) {
   const color = activityTypeColor(activity.activityType?.name);
