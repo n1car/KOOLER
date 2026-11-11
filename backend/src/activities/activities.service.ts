@@ -42,6 +42,30 @@ export class ActivitiesService {
     return now >= end;
   }
 
+  // Evita exponer el hash de contraseña del organizador en respuestas públicas.
+  private toPublicOrganizer(organizer: UserEntity) {
+    return {
+      id: organizer.id,
+      firstName: organizer.firstName,
+      lastName: organizer.lastName,
+      email: organizer.email,
+      status: organizer.status,
+    };
+  }
+
+  // La sesión carga su actividad (y el organizador) de forma eager; se
+  // devuelve solo lo necesario para no filtrar datos del usuario.
+  private toPublicSession(session: SessionEntity) {
+    return {
+      id: session.id,
+      activityId: session.activity?.id,
+      sessionDate: session.sessionDate,
+      startTime: session.startTime ?? null,
+      endTime: session.endTime ?? null,
+      createdAt: session.createdAt,
+    };
+  }
+
   // 1. Crear actividad (Solo Organizador)
   async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
     const { activityTypeId, locationId, ...rest } = createDto;
@@ -94,6 +118,7 @@ export class ActivitiesService {
 
       return {
         ...data,
+        organizer: this.toPublicOrganizer(act.organizer),
         status,
         enrolledCount,
         availableSpots,
@@ -123,6 +148,7 @@ export class ActivitiesService {
 
     return {
       ...data,
+      organizer: this.toPublicOrganizer(activity.organizer),
       status: activity.status,
       enrolledCount,
       availableSpots,
@@ -350,7 +376,7 @@ export class ActivitiesService {
     activityId: number,
     dto: CreateSessionDto,
     user: UserEntity,
-  ): Promise<SessionEntity> {
+  ) {
     const activity = await this.activityRepo.findOne({
       where: { id: activityId },
       relations: { organizer: true },
@@ -371,21 +397,24 @@ export class ActivitiesService {
       endTime: dto.endTime,
     });
 
-    return this.sessionRepo.save(session);
+    const saved = await this.sessionRepo.save(session);
+    return this.toPublicSession(saved);
   }
 
   // 10. Listar las sesiones de una actividad (público).
-  async getSessions(activityId: number): Promise<SessionEntity[]> {
+  async getSessions(activityId: number) {
     const activity = await this.activityRepo.findOne({ where: { id: activityId } });
 
     if (!activity) {
       throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
     }
 
-    return this.sessionRepo.find({
+    const sessions = await this.sessionRepo.find({
       where: { activity: { id: activityId } },
       order: { sessionDate: 'ASC', startTime: 'ASC' },
     });
+
+    return sessions.map((session) => this.toPublicSession(session));
   }
 
   // 11. Verificar si un estudiante está inscrito en una actividad.
