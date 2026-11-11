@@ -83,21 +83,149 @@ Todo commit debe seguir el formato Conventional Commits:
   * Pantallas representativas con **datos temporales** (`src/lib/mock.ts`): listado con búsqueda/filtro e inscripción, mis inscripciones, progreso con elegibilidad y certificado, historial con valoración de 5 estrellas; panel del organizador con métricas, detalle, control de asistencia, retroalimentación y formulario de creación.
   * Alcance D2: pantallas que corresponden al prototipo de Figma y son navegables; **sin** conexión al backend ni sesión real (eso corresponde a D3), como permite la rúbrica (datos temporales).
 
-### 🖥️ Frontend — Ejecución local
+### 🖥️ Frontend — Ejecución local (D3)
 ```bash
-cd frontend
+# 1. Backend y base de datos
+cd backend
+docker compose up -d
 npm install
-npm run dev        # http://localhost:3001
+npm run start:dev        # http://localhost:3000/api
+
+# 2. Frontend
+cd ../frontend
+npm install
+npm run dev              # http://localhost:3001
 ```
-* No requiere el backend ni variables de entorno: el prototipo de D2 usa datos temporales locales.
+* Variables: copiar `frontend/.env.example` a `frontend/.env.local` y ajustar `NEXT_PUBLIC_API_URL` si el backend no está en `http://localhost:3000/api`.
+* El frontend consume el backend real: requiere Docker y el backend encendidos.
 * Verificación: `npm run lint` (0 errores) y `npm run build` (type-check en verde).
 
 
-### 📌 Entrega D3 y Entrega Final (DF — 20%+ de la Nota)
+### 📌 Entrega D3 — Frontend Conectado al Backend (10% de la Nota)
 * Integración punta a punta de todos los flujos sin datos falsos.
 * Pruebas completas de regresión y concurrencia.
 * Frontend, Backend y BD desplegados en la nube.
 * Sustentación oral individual: cada estudiante debe dominar y poder explicar cualquier línea de código.
+
+---
+
+## 👥 Plan D3 — Reparto detallado por integrante
+
+**Base de partida:** `dev` ya contiene el backend completo (F1, F2 y F3) y el prototipo visual del frontend. En D3 cada integrante conecta sus pantallas al backend real, termina su diseño y cubre los estados de interfaz.
+
+**Objetivo de la entrega:** que el frontend consuma el backend con sesión real, permisos por rol, manejo de errores y al menos **2 de las 3 funcionalidades de punta a punta**.
+
+### Fase 0 — Infraestructura compartida (bloquea a todos)
+Responsable: **N**, con revisión de J y S.
+
+* Cliente HTTP único (`frontend/src/lib/api.ts`) con `NEXT_PUBLIC_API_URL`.
+* Manejo del token: guardar, enviar `Authorization: Bearer` y limpiar al cerrar sesión.
+* `AuthContext` + hook `useAuth` con usuario y rol.
+* Guardas de ruta por rol y redirección en 401/403.
+* Componentes reutilizables de carga, error, vacío y éxito.
+* Cierre de sesión visible en los shells de estudiante y organizador.
+* Variables documentadas en `frontend/.env.example`.
+
+### Persona N (Nico) — Infraestructura + Funcionalidad 1
+
+**Pantallas a cargo:** Bienvenida, Home del estudiante, Detalle de actividad, Mis Inscripciones, Detalle admin y Crear actividad.
+
+**Tareas:**
+* Completar la Fase 0 (API client, auth context, guards, estados).
+* Home: listado real con búsqueda, filtro por categoría, cupos y estado.
+* Detalle: datos reales de la actividad, sesiones y organizador.
+* Inscripción: `POST /api/activities/:id/enroll`; manejar 400 por duplicado, cupo agotado, plazo vencido o actividad no activa.
+* Mis Inscripciones: `GET /api/activities/my-enrollments`.
+* Panel del organizador: filtrar sus actividades, métricas reales de activas/finalizadas/inscritos.
+* Crear actividad: formulario conectado, catálogos reales y validación de errores del backend.
+* Detalle admin: sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+
+**Endpoints que consume:** `/api/auth`, `/api/activities`, `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
+
+**Archivos clave:** `frontend/src/lib/api.ts`, `frontend/src/lib/auth.tsx`, `frontend/src/components/RequireRole.tsx`, `frontend/src/components/AppShell.tsx`, `frontend/src/app/(student)/home/page.tsx`, `frontend/src/app/(student)/my-enrollments/page.tsx`, `frontend/src/app/activities/[id]/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/new/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/[id]/page.tsx`.
+
+**Criterios de aceptación:**
+* Un estudiante se inscribe y ve la actividad en Mis Inscripciones sin recargar datos falsos.
+* El organizador crea una actividad y la ve en su panel.
+* Los errores del backend se muestran en pantalla (cupo, duplicado, plazo).
+* `npm run lint` y `npm run build` en verde.
+
+### Persona J (Jhon) — Autenticación + Funcionalidad 2
+
+**Pantallas a cargo:** Login, Registro, Cuenta creada, Historial, Valoraciones y Retroalimentación.
+
+**Tareas:**
+* Login y Registro conectados a `/api/auth/login` y `/api/auth/register`.
+* Guardar la sesión y redirigir según el rol (estudiante u organizador).
+* Cierre de sesión y protección de rutas.
+* Historial real: `GET /api/history`.
+* Valoraciones: crear reseña con `POST /api/reviews` (5 estrellas + comentario).
+* Manejar 400 por rango inválido y 409 por reseña duplicada.
+* Retroalimentación del organizador: `GET /api/reviews/organizer/activity/:activityId` (solo lectura).
+* Comentarios públicos en el detalle: `GET /api/reviews/activity/:activityId`.
+
+**Endpoints que consume:** `/api/auth/login`, `/api/auth/register`, `/api/auth/profile`, `/api/reviews`, `/api/reviews/activity/:activityId`, `/api/reviews/organizer/activity/:activityId`, `/api/history`.
+
+**Archivos clave:** `frontend/src/app/login/page.tsx`, `frontend/src/app/register/page.tsx`, `frontend/src/app/account-created/page.tsx`, `frontend/src/app/(student)/history/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/[id]/feedback/page.tsx`.
+
+**Criterios de aceptación:**
+* Login y logout funcionan de extremo a extremo con token real.
+* Un organizador no puede calificar y un estudiante sí.
+* El historial y las reseñas provienen del backend.
+* Errores de autenticación y autorización visibles en la interfaz.
+
+### Persona S (Samuel) — Funcionalidad 3 + Despliegue
+
+**Pantallas a cargo:** Panel Mis Actividades, Control de Asistencia y Mi Progreso / Mi Certificado.
+
+**Tareas:**
+* Panel del organizador con actividades, sesiones e inscritos reales.
+* Control de Asistencia: crear sesión, registrar `PRESENT`/`ABSENT` y leer la asistencia de la sesión.
+* Mi Progreso: `GET /api/certificates/activities/:activityId/eligibility`.
+* Mis Certificados: `GET /api/certificates` y descarga del PDF.
+* Desplegar backend y base de datos con URL pública y variables de entorno.
+* Verificar CORS y que el frontend apunte al backend desplegado.
+* Ejecutar el smoke en producción.
+
+**Endpoints que consume:** `/api/activities/:id/sessions`, `/api/activities/:id/sessions/:sessionId/attendance`, `/api/certificates`, `/api/certificates/activities/:activityId/eligibility`, `/api/certificates/:certificateId/download`.
+
+**Archivos clave:** `frontend/src/app/(organizer)/organizer/activities/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/[id]/attendance/page.tsx`, `frontend/src/app/(student)/progress/page.tsx`, `backend/compose.yaml`, `backend/scripts/smoke.ps1`.
+
+**Criterios de aceptación:**
+* El organizador registra asistencia y el estudiante ve su elegibilidad.
+* El certificado se descarga como PDF.
+* Backend y BD accesibles por URL pública.
+* `npm run smoke` en verde contra el ambiente desplegado.
+
+### Flujos mínimos de D3
+
+| Flujo | Meta |
+| :--- | :--- |
+| Autenticación y autorización | Obligatorio de punta a punta (J) |
+| F1 — Actividades e inscripciones | Obligatorio de punta a punta (N) |
+| F3 — Asistencia y certificados | Obligatorio de punta a punta (S) |
+| F2 — Reseñas e historial | Pantallas + plan; integrar si el tiempo alcanza (J) |
+
+### Orden de trabajo y dependencias
+
+1. N entrega la Fase 0 (API client, auth context, guards y estados).
+2. J integra login/registro y deja el token funcionando.
+3. En paralelo: N integra F1, S integra F3 y J integra F2.
+4. S publica backend y BD; todos apuntan a la URL pública.
+5. Pruebas manuales por flujo, README de integración y ensayo de sustentación.
+
+### Pruebas y evidencias de D3
+
+* Casos de prueba manuales por funcionalidad.
+* Colección Postman actualizada.
+* `npm run lint`, `npm run build`, `npm test` y `npm run test:e2e` en verde.
+* README con instrucciones de integración y registro de decisiones.
+* URL de demostración del frontend y del backend.
+* Planning actualizado y Figma si el diseño cambió.
+
+### Límite de commits para D3
+
+* Máximo **15 commits por persona** (recomendado 8–12), agrupando cambios lógicos completos.
 
 ---
 
