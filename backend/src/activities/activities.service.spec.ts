@@ -254,6 +254,42 @@ describe('ActivitiesService (Persona N)', () => {
     expect(atEnd[0].status).toBe('FINISHED');
   });
 
+  it('compares same-day, next-day, and previous-day activities in Bogota local time', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:20:00.000Z'));
+    activityRepo.find.mockResolvedValue([
+      {
+        ...mockActivity,
+        date: '2026-11-12',
+        startTime: '04:00',
+        endTime: '05:00',
+        enrollments: [],
+      },
+      {
+        ...mockActivity,
+        date: '2026-11-13',
+        startTime: '12:00',
+        endTime: '20:00',
+        enrollments: [],
+      },
+      {
+        ...mockActivity,
+        date: '2026-11-11',
+        startTime: '23:00',
+        endTime: '23:59',
+        enrollments: [],
+      },
+    ] as ActivityEntity[]);
+
+    const activities = await service.findAll();
+
+    expect(activities.map(({ status }) => status)).toEqual([
+      'ACTIVE',
+      'ACTIVE',
+      'FINISHED',
+    ]);
+  });
+
   it('keeps end-time comparisons independent of the server timezone', async () => {
     vi.useFakeTimers();
     const activity = {
