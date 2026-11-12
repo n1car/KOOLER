@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { describe, beforeEach, it, expect, vi } from 'vitest';
+import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
@@ -34,6 +34,10 @@ describe('ActivitiesService (Persona N)', () => {
     organizer: mockOrganizer,
     enrollments: [],
   } as unknown as ActivityEntity;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(async () => {
     activityRepo = {
@@ -158,6 +162,73 @@ describe('ActivitiesService (Persona N)', () => {
 
     await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
     expect(pastActivity.status).toBe('FINISHED');
+  });
+
+  it('uses the Bogota end time for listing and changes status only at the boundary', async () => {
+    vi.useFakeTimers();
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-12',
+      endTime: '06:00',
+      enrollments: [],
+    } as unknown as ActivityEntity;
+    activityRepo.find.mockResolvedValue([activity]);
+
+    vi.setSystemTime(new Date('2026-11-12T10:59:59.999Z'));
+    const beforeEnd = await service.findAll();
+    expect(beforeEnd[0].status).toBe('ACTIVE');
+
+    vi.setSystemTime(new Date('2026-11-12T11:00:00.000Z'));
+    const atEnd = await service.findAll();
+    expect(atEnd[0].status).toBe('FINISHED');
+  });
+
+  it('persists detail finalization at the Bogota end time, not before', async () => {
+    vi.useFakeTimers();
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-12',
+      endTime: '06:00',
+      enrollments: [],
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+
+    vi.setSystemTime(new Date('2026-11-12T10:59:59.999Z'));
+    const beforeEnd = await service.findOne(10);
+    expect(beforeEnd.status).toBe('ACTIVE');
+    expect(activityRepo.save).not.toHaveBeenCalled();
+
+    vi.setSystemTime(new Date('2026-11-12T11:00:00.000Z'));
+    const atEnd = await service.findOne(10);
+    expect(atEnd.status).toBe('FINISHED');
+    expect(activityRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'FINISHED' }),
+    );
+  });
+
+  it('allows enrollment before the Bogota end time and rejects it at the boundary', async () => {
+    vi.useFakeTimers();
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-12',
+      endTime: '06:00',
+      registrationDeadline: new Date('2026-11-12T12:00:00.000Z'),
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+    enrollmentRepo.findOne.mockResolvedValue(null);
+    enrollmentRepo.count.mockResolvedValue(0);
+
+    vi.setSystemTime(new Date('2026-11-12T10:59:59.999Z'));
+    await expect(service.enroll(10, mockStudent)).resolves.toMatchObject({
+      message: 'Inscripción realizada exitosamente',
+    });
+    expect(activity.status).toBe('ACTIVE');
+
+    vi.setSystemTime(new Date('2026-11-12T11:00:00.000Z'));
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(activity.status).toBe('FINISHED');
   });
 
   // isStudentEnrolled: integrado desde la Funcionalidad 3 (Persona S) para que

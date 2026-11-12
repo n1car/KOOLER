@@ -16,6 +16,19 @@ import { FilterActivitiesDto } from './dto/filter-activities.dto';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CatalogService } from '../catalog/catalog.service';
 
+const ACTIVITY_TIME_ZONE = 'America/Bogota';
+const ACTIVITY_LOCAL_TIME_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ACTIVITY_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  fractionalSecondDigits: 3,
+  hourCycle: 'h23',
+});
+
 @Injectable()
 export class ActivitiesService {
   constructor(
@@ -36,10 +49,38 @@ export class ActivitiesService {
   // RF09: una actividad pasa a FINISHED cuando ya pasó su horario.
   // Se evalúa por fecha+hora de fin para no depender de un cron en D2.
   private isPastEnd(activity: ActivityEntity, now: Date = new Date()): boolean {
-    if (!activity.date || !activity.endTime) return false;
-    const end = new Date(`${activity.date}T${activity.endTime}`);
-    if (Number.isNaN(end.getTime())) return false;
-    return now >= end;
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(activity.date);
+    const timeMatch =
+      /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(activity.endTime);
+    if (!dateMatch || !timeMatch) return false;
+
+    const [, yearValue, monthValue, dayValue] = dateMatch;
+    const year = Number(yearValue);
+    const month = Number(monthValue);
+    const day = Number(dayValue);
+    const calendarDate = new Date(Date.UTC(year, month - 1, day));
+    if (
+      calendarDate.getUTCFullYear() !== year ||
+      calendarDate.getUTCMonth() !== month - 1 ||
+      calendarDate.getUTCDate() !== day
+    ) {
+      return false;
+    }
+
+    const [, hour, minute, second = '00'] = timeMatch;
+    const localEnd = `${activity.date}T${hour}:${minute}:${second}.000`;
+    const localNowParts = Object.fromEntries(
+      ACTIVITY_LOCAL_TIME_FORMATTER.formatToParts(now).map(({ type, value }) => [
+        type,
+        value,
+      ]),
+    );
+    const localNow =
+      `${localNowParts.year}-${localNowParts.month}-${localNowParts.day}` +
+      `T${localNowParts.hour}:${localNowParts.minute}:${localNowParts.second}` +
+      `.${localNowParts.fractionalSecond}`;
+
+    return localNow >= localEnd;
   }
 
   // Evita exponer el hash de contraseña del organizador en respuestas públicas.
