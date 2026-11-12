@@ -53,11 +53,14 @@ describe('ActivityFinalizationService', () => {
     expect(updateQuery).toContain(
       "WHEN end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$'",
     );
+    expect(updateQuery).toContain('THEN (date + end_time::time)');
     expect(updateQuery).toContain(
-      'THEN ((date + end_time::time) AT TIME ZONE $1)',
+      '<= (CURRENT_TIMESTAMP AT TIME ZONE $1)',
+    );
+    expect(updateQuery).not.toContain(
+      '((date + end_time::time) AT TIME ZONE $1) <= CURRENT_TIMESTAMP',
     );
     expect(updateQuery).toContain('ELSE FALSE');
-    expect(updateQuery).toContain('<= CURRENT_TIMESTAMP');
     expect(updateQuery).toContain('ORDER BY id_activity');
     expect(updateQuery).toContain('LIMIT $2');
     expect(updateQuery).toContain('FOR UPDATE SKIP LOCKED');
@@ -92,7 +95,9 @@ describe('ActivityFinalizationService', () => {
     await service.finalizeExpiredActivities();
 
     const updateQuery = activityRepository.query.mock.calls[0][0];
-    expect(updateQuery).toContain('<= CURRENT_TIMESTAMP');
+    expect(updateQuery).toContain(
+      '<= (CURRENT_TIMESTAMP AT TIME ZONE $1)',
+    );
     expect(certificatesService.issueEligibleCertificates).not.toHaveBeenCalled();
   });
 

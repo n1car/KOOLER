@@ -42,8 +42,8 @@ export class ActivityFinalizationService {
            WHERE status = 'ACTIVE'
              AND CASE
                WHEN end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$'
-                 THEN ((date + end_time::time) AT TIME ZONE $1)
-                   <= CURRENT_TIMESTAMP
+                 THEN (date + end_time::time)
+                   <= (CURRENT_TIMESTAMP AT TIME ZONE $1)
                ELSE FALSE
              END
            ORDER BY id_activity
@@ -57,14 +57,22 @@ export class ActivityFinalizationService {
            AND activity.status = 'ACTIVE'
          RETURNING activity.id_activity, activity.date, activity.end_time,
                    CURRENT_TIMESTAMP AS database_now,
-                   CURRENT_TIMESTAMP AT TIME ZONE $1 AS colombia_now`,
+                   to_char(CURRENT_TIMESTAMP AT TIME ZONE $1,
+                     'YYYY-MM-DD HH24:MI:SS.US') AS colombia_now,
+                   to_char(activity.date + activity.end_time::time,
+                     'YYYY-MM-DD HH24:MI:SS') AS activity_end_local,
+                   (activity.date + activity.end_time::time)
+                     <= (CURRENT_TIMESTAMP AT TIME ZONE $1)
+                     AS cron_would_finalize`,
         [ACTIVITY_TIME_ZONE, ACTIVITY_BATCH_SIZE],
       )) as Array<{
         id_activity: number;
         date: string;
         end_time: string;
         database_now: Date | string;
-        colombia_now: Date | string;
+        colombia_now: string;
+        activity_end_local: string;
+        cron_would_finalize: boolean;
       }>;
 
       for (const activity of transitionedActivities) {
@@ -80,6 +88,8 @@ export class ActivityFinalizationService {
             endTime: activity.end_time,
             databaseNow: activity.database_now,
             databaseColombiaNow: activity.colombia_now,
+            activityEndLocal: activity.activity_end_local,
+            cronWouldFinalize: activity.cron_would_finalize,
             utcNow: now.toISOString(),
             colombiaNow: COLOMBIA_TIME_FORMATTER.format(now),
             processTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
