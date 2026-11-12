@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Alert,
   Badge,
@@ -20,6 +20,7 @@ import type { Activity, ActivityEnrollments, Session } from "@/lib/types";
 
 export default function OrganizerActivityDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = Number(params.id);
 
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -29,6 +30,8 @@ export default function OrganizerActivityDetailPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [sessionForm, setSessionForm] = useState({
     sessionDate: "",
     startTime: "",
@@ -82,6 +85,26 @@ export default function OrganizerActivityDetailPage() {
         err instanceof ApiError
           ? err.message
           : "No se pudo finalizar la actividad.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteActivity() {
+    if (!activity || busy) return;
+    setBusy(true);
+    setDeleteError("");
+    try {
+      await api.activities.deletePermanently(id);
+      router.replace(
+        `/organizer/activities?deleted=${encodeURIComponent(activity.name)}`,
+      );
+    } catch (err) {
+      setDeleteError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo eliminar la actividad. Inténtalo de nuevo.",
       );
     } finally {
       setBusy(false);
@@ -197,6 +220,17 @@ export default function OrganizerActivityDetailPage() {
             Ver retroalimentación
           </Link>
         )}
+        <Button
+          variant="danger"
+          fullWidth
+          disabled={busy}
+          onClick={() => {
+            setDeleteError("");
+            setDeleteDialogOpen(true);
+          }}
+        >
+          Eliminar actividad
+        </Button>
       </div>
 
       <Card className="flex flex-col gap-3">
@@ -292,6 +326,66 @@ export default function OrganizerActivityDetailPage() {
           </ul>
         )}
       </Card>
+
+      {deleteDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/60 p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !busy) {
+              setDeleteDialogOpen(false);
+            }
+          }}
+        >
+          <section
+            aria-labelledby="delete-activity-title"
+            aria-describedby="delete-activity-description"
+            aria-modal="true"
+            className="w-full max-w-md rounded-card border border-danger/20 bg-white p-6 shadow-2xl"
+            role="alertdialog"
+          >
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-danger">
+              Acción irreversible
+            </p>
+            <h2
+              className="text-lg font-bold text-foreground"
+              id="delete-activity-title"
+            >
+              ¿Eliminar “{activity.name}”?
+            </h2>
+            <p
+              className="mt-3 text-sm leading-relaxed text-muted"
+              id="delete-activity-description"
+            >
+              La actividad se borrará permanentemente. No se puede deshacer.
+              Para proteger el historial, el sistema rechazará la eliminación
+              si existen sesiones, inscripciones, asistencias, reseñas o
+              certificados asociados.
+            </p>
+            {deleteError && (
+              <div className="mt-4">
+                <Alert>{deleteError}</Alert>
+              </div>
+            )}
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                autoFocus
+                disabled={busy}
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Conservar actividad
+              </Button>
+              <Button
+                loading={busy}
+                variant="danger"
+                onClick={deleteActivity}
+              >
+                Eliminar definitivamente
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

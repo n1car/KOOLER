@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  Alert,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -20,6 +21,7 @@ export default function OrganizerActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,6 +44,16 @@ export default function OrganizerActivitiesPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const deletedName = new URLSearchParams(window.location.search).get(
+      "deleted",
+    );
+    if (!deletedName) return;
+
+    setNotice(`“${deletedName}” se eliminó correctamente.`);
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, []);
+
   const metrics = {
     active: activities.filter((a) => a.status === "ACTIVE").length,
     finished: activities.filter((a) => a.status === "FINISHED").length,
@@ -51,6 +63,7 @@ export default function OrganizerActivitiesPage() {
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-xl font-bold text-foreground">Mis actividades</h2>
+      {notice && <Alert tone="success">{notice}</Alert>}
 
       <div className="grid grid-cols-3 gap-3">
         <Metric label="Activas" value={metrics.active} tone="text-primary" />

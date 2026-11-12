@@ -80,3 +80,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - Todo resultado generado con IA fue revisado y comprendido por quien lo integró.
 - No se compartieron contraseñas, tokens ni secretos con ninguna herramienta.
 - Cada integrante puede explicar y modificar el código que aparece en el repositorio.
+
+## Eliminación segura de actividades (Samuel)
+
+- **Herramienta:** GitHub Copilot.
+- **Uso:** apoyo puntual en el endpoint protegido y la confirmación de borrado permanente.
+- **Verificación:** `npm test`, `npm run lint`, `npm run build` y `npx tsc --noEmit -p tsconfig.build.json` (en verde).

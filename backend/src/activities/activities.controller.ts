@@ -88,6 +88,17 @@ export class ActivitiesController {
     return this.activitiesService.update(id, updateDto, organizer);
   }
 
+  // El borrado definitivo es distinto de DELETE /:id, que conserva la cancelación.
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ORGANIZADOR')
+  @Delete(':id/permanent')
+  async deletePermanently(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() organizer: UserEntity,
+  ) {
+    return this.activitiesService.deletePermanently(id, organizer);
+  }
+
   // 6. Cancelar actividad (Solo Organizador Dueño)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ORGANIZADOR')

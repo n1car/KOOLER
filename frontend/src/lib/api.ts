@@ -304,6 +304,11 @@ export const api = {
       request<Activity>("/activities", { method: "POST", body: payload }),
     update: (id: number, payload: UpdateActivityPayload) =>
       request<Activity>(`/activities/${id}`, { method: "PATCH", body: payload }),
+    deletePermanently: (id: number) =>
+      request<{ id: number; message: string }>(
+        `/activities/${id}/permanent`,
+        { method: "DELETE" },
+      ),
     enrollments: (id: number) =>
       request<ActivityEnrollments>(`/activities/${id}/enrollments`),
     sessions: (id: number) => request<Session[]>(`/activities/${id}/sessions`),

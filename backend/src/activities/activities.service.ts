@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -29,6 +30,24 @@ const ACTIVITY_LOCAL_TIME_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   fractionalSecondDigits: 3,
   hourCycle: 'h23',
 });
+
+function isForeignKeyViolation(error: unknown): boolean {
+  if (
+    typeof error !== 'object' ||
+    error === null ||
+    !('driverError' in error)
+  ) {
+    return false;
+  }
+
+  const { driverError } = error;
+  return (
+    typeof driverError === 'object' &&
+    driverError !== null &&
+    'code' in driverError &&
+    String(driverError.code) === '23503'
+  );
+}
 
 @Injectable()
 export class ActivitiesService {
@@ -367,6 +386,83 @@ export class ActivitiesService {
       id: activity.id,
       status: activity.status,
     };
+  }
+
+  async deletePermanently(id: number, user: UserEntity) {
+    return this.dataSource.transaction(async (manager) => {
+      const [activity] = (await manager.query(
+        `SELECT id_organizer
+         FROM activities
+         WHERE id_activity = $1
+         FOR UPDATE`,
+        [id],
+      )) as Array<{ id_organizer: number | string }>;
+
+      if (!activity) {
+        throw new NotFoundException(`Actividad con ID ${id} no encontrada`);
+      }
+
+      if (Number(activity.id_organizer) !== user.id) {
+        throw new ForbiddenException(
+          'Solo el organizador responsable puede eliminar esta actividad',
+        );
+      }
+
+      const [relations] = (await manager.query(
+        `SELECT
+           (SELECT COUNT(*) FROM sessions WHERE id_activity = $1) AS sessions,
+           (SELECT COUNT(*) FROM enrollments WHERE id_activity = $1) AS enrollments,
+           (SELECT COUNT(*)
+            FROM attendances attendance
+            INNER JOIN sessions session
+              ON session.id_session = attendance.id_session
+            WHERE session.id_activity = $1) AS attendances,
+           (SELECT COUNT(*) FROM review WHERE id_activity = $1) AS reviews,
+           (SELECT COUNT(*) FROM certificates WHERE id_activity = $1) AS certificates`,
+        [id],
+      )) as Array<{
+        sessions: number | string;
+        enrollments: number | string;
+        attendances: number | string;
+        reviews: number | string;
+        certificates: number | string;
+      }>;
+
+      const blockers = [
+        { label: 'sesiones', count: Number(relations.sessions) },
+        { label: 'inscripciones', count: Number(relations.enrollments) },
+        { label: 'asistencias', count: Number(relations.attendances) },
+        { label: 'reseñas', count: Number(relations.reviews) },
+        { label: 'certificados', count: Number(relations.certificates) },
+      ]
+        .filter(({ count }) => count > 0)
+        .map(({ label, count }) => `${count} ${label}`);
+
+      if (blockers.length > 0) {
+        throw new ConflictException(
+          `No se puede eliminar la actividad porque tiene registros asociados: ${blockers.join(', ')}. No se eliminó ningún dato relacionado.`,
+        );
+      }
+
+      try {
+        await manager.query(
+          'DELETE FROM activities WHERE id_activity = $1',
+          [id],
+        );
+      } catch (error) {
+        if (isForeignKeyViolation(error)) {
+          throw new ConflictException(
+            'No se puede eliminar la actividad porque existen registros relacionados. No se eliminó ningún dato.',
+          );
+        }
+        throw error;
+      }
+
+      return {
+        id,
+        message: 'Actividad eliminada permanentemente.',
+      };
+    });
   }
 
   // 6. Inscribir estudiante a actividad (Reglas estrictas de negocio)

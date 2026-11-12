@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
@@ -16,6 +21,7 @@ describe('ActivitiesService (Persona N)', () => {
   let enrollmentRepo: any;
   let sessionRepo: any;
   let dataSource: any;
+  let transactionQuery: ReturnType<typeof vi.fn>;
   const catalogService = {
     findActivityTypeById: vi.fn(),
     findLocationById: vi.fn(),
@@ -60,12 +66,14 @@ describe('ActivitiesService (Persona N)', () => {
       save: vi.fn().mockImplementation((session) => Promise.resolve({ id: 7, ...session })),
       find: vi.fn(),
     };
+    transactionQuery = vi.fn();
 
     // La inscripción corre en transacción: el manager entrega los mismos
     // repositorios mockeados para mantener los tests sin BD real.
     dataSource = {
       transaction: vi.fn().mockImplementation(async (cb: any) =>
         cb({
+          query: transactionQuery,
           getRepository: (entity: any) =>
             entity === ActivityEntity ? activityRepo : enrollmentRepo,
         }),
@@ -116,6 +124,97 @@ describe('ActivitiesService (Persona N)', () => {
     activityRepo.findOne.mockResolvedValue(mockActivity);
 
     await expect(service.cancel(10, mockOtherUser)).rejects.toThrow(ForbiddenException);
+  });
+
+  it('elimina una actividad propia sin registros relacionados', async () => {
+    transactionQuery
+      .mockResolvedValueOnce([{ id_organizer: 1 }])
+      .mockResolvedValueOnce([
+        {
+          sessions: '0',
+          enrollments: '0',
+          attendances: '0',
+          reviews: '0',
+          certificates: '0',
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      service.deletePermanently(10, mockOrganizer),
+    ).resolves.toEqual({
+      id: 10,
+      message: 'Actividad eliminada permanentemente.',
+    });
+    expect(transactionQuery).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('FOR UPDATE'),
+      [10],
+    );
+    expect(transactionQuery).toHaveBeenNthCalledWith(
+      3,
+      'DELETE FROM activities WHERE id_activity = $1',
+      [10],
+    );
+  });
+
+  it('rechaza eliminar una actividad que pertenece a otro organizador', async () => {
+    transactionQuery.mockResolvedValueOnce([{ id_organizer: 99 }]);
+
+    await expect(
+      service.deletePermanently(10, mockOrganizer),
+    ).rejects.toThrow(ForbiddenException);
+    expect(transactionQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('rechaza eliminar una actividad inexistente', async () => {
+    transactionQuery.mockResolvedValueOnce([]);
+
+    await expect(
+      service.deletePermanently(404, mockOrganizer),
+    ).rejects.toThrow(NotFoundException);
+    expect(transactionQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('conserva actividades con sesiones, inscripciones o certificados asociados', async () => {
+    transactionQuery
+      .mockResolvedValueOnce([{ id_organizer: 1 }])
+      .mockResolvedValueOnce([
+        {
+          sessions: '1',
+          enrollments: '2',
+          attendances: '1',
+          reviews: '0',
+          certificates: '1',
+        },
+      ]);
+
+    await expect(
+      service.deletePermanently(10, mockOrganizer),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('certificados'),
+      status: 409,
+    });
+    expect(transactionQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it('traduce una restricción de clave foránea en un conflicto seguro', async () => {
+    transactionQuery
+      .mockResolvedValueOnce([{ id_organizer: 1 }])
+      .mockResolvedValueOnce([
+        {
+          sessions: '0',
+          enrollments: '0',
+          attendances: '0',
+          reviews: '0',
+          certificates: '0',
+        },
+      ])
+      .mockRejectedValueOnce({ driverError: { code: '23503' } });
+
+    await expect(
+      service.deletePermanently(10, mockOrganizer),
+    ).rejects.toThrow(ConflictException);
   });
 
   // Estos casos protegen los límites de cupo y la inscripción única.
