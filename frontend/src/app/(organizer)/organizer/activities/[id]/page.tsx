@@ -170,14 +170,16 @@ export default function OrganizerActivityDetailPage() {
         </p>
       </Card>
 
-      {isActive ? (
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
+        {(isActive || activity.status === "FINISHED") && (
           <Link
             href={`/organizer/activities/${id}/attendance`}
             className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
           >
             Control de asistencia
           </Link>
+        )}
+        {isActive && (
           <Button
             variant="outline"
             fullWidth
@@ -186,15 +188,16 @@ export default function OrganizerActivityDetailPage() {
           >
             Finalizar actividad
           </Button>
-        </div>
-      ) : (
-        <Link
-          href={`/organizer/activities/${id}/feedback`}
-          className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
-        >
-          Ver retroalimentación
-        </Link>
-      )}
+        )}
+        {!isActive && (
+          <Link
+            href={`/organizer/activities/${id}/feedback`}
+            className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
+          >
+            Ver retroalimentación
+          </Link>
+        )}
+      </div>
 
       <Card className="flex flex-col gap-3">
         <h2 className="text-sm font-bold text-foreground">Sesiones</h2>
