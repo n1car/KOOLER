@@ -3,12 +3,19 @@ import type {
   ActivityEnrollments,
   ActivityStatus,
   ActivityType,
+  AttendanceStatus,
   AuthUser,
+  Certificate,
+  CreatedReview,
+  Eligibility,
   EnrollmentSummary,
+  HistoryItem,
   Location,
+  RecordedAttendance,
   ReviewSummary,
   RoleName,
   Session,
+  SessionAttendance,
 } from "./types";
 
 const API_URL = (
@@ -140,6 +147,59 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 }
 
+async function requestBlob(
+  path: string,
+): Promise<{ blob: Blob; fileName: string | null }> {
+  const headers: Record<string, string> = { Accept: "application/pdf" };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { headers });
+  } catch {
+    throw new ApiError(
+      "No se pudo conectar con el servidor. Verifica que el backend esté encendido.",
+      0,
+    );
+  }
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json")
+      ? await response.json().catch(() => null)
+      : await response.text().catch(() => null);
+    if (response.status === 401) {
+      clearStoredSession();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("kooler:unauthorized"));
+      }
+    }
+    throw new ApiError(
+      extractMessage(payload) ?? "No se pudo descargar el archivo.",
+      response.status,
+      payload,
+    );
+  }
+
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="?([^"]+)"?/i.exec(disposition);
+  return { blob: await response.blob(), fileName: match?.[1] ?? null };
+}
+
+async function downloadFile(path: string): Promise<void> {
+  const { blob, fileName } = await requestBlob(path);
+  if (typeof window === "undefined") return;
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName ?? "certificado.pdf";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 function query(params: Record<string, string | number | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -186,6 +246,17 @@ export interface CreateSessionPayload {
   sessionDate: string;
   startTime?: string;
   endTime?: string;
+}
+
+export interface CreateReviewPayload {
+  activityId: number;
+  rating: number;
+  comment?: string;
+}
+
+export interface RecordAttendancePayload {
+  studentId: number;
+  status: AttendanceStatus;
 }
 
 export interface EnrollResponse {
@@ -246,8 +317,40 @@ export const api = {
     activityTypes: () => request<ActivityType[]>("/activity-types"),
     locations: () => request<Location[]>("/locations"),
   },
+  history: {
+    list: () => request<HistoryItem[]>("/history"),
+  },
   reviews: {
     byActivity: (activityId: number) =>
       request<ReviewSummary>(`/reviews/activity/${activityId}`),
+    create: (payload: CreateReviewPayload) =>
+      request<CreatedReview>("/reviews", {
+        method: "POST",
+        body: payload,
+      }),
+    organizer: (activityId: number) =>
+      request<ReviewSummary>(`/reviews/organizer/activity/${activityId}`),
+  },
+  attendance: {
+    get: (activityId: number, sessionId: number) =>
+      request<SessionAttendance>(
+        `/activities/${activityId}/sessions/${sessionId}/attendance`,
+      ),
+    record: (
+      activityId: number,
+      sessionId: number,
+      payload: RecordAttendancePayload,
+    ) =>
+      request<RecordedAttendance>(
+        `/activities/${activityId}/sessions/${sessionId}/attendance`,
+        { method: "POST", body: payload },
+      ),
+  },
+  certificates: {
+    list: () => request<Certificate[]>("/certificates"),
+    eligibility: (activityId: number) =>
+      request<Eligibility>(`/certificates/activities/${activityId}/eligibility`),
+    download: (certificateId: number) =>
+      downloadFile(`/certificates/${certificateId}/download`),
   },
 };

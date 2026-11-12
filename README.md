@@ -125,6 +125,35 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 
 **Objetivo de la entrega:** que el frontend consuma el backend con sesión real, permisos por rol, manejo de errores y al menos **2 de las 3 funcionalidades de punta a punta**.
 
+### Estado D3 y faltantes (actualizado 2026-11-11)
+
+| Integrante | Funcionalidad | Backend | Frontend | Estado D3 |
+| :--- | :--- | :--- | :--- | :--- |
+| **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear/editar actividad. | **F1 completo de punta a punta**; Fase 0, cliente API de F2/F3 y despliegue completos. |
+| **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador (endpoints listos y probados). | Login, Registro y Cuenta creada integrados; lectura pública de reseñas en el detalle integrada; Historial, crear Valoración y Retroalimentación aún usan `mock.ts`. | **Auth completo**; F2 parcial (lectura pública lista, escritura/historial pendientes). |
+| **S (Samuel)** | F3 | Asistencia por sesión, cálculo de porcentaje y certificados PDF (endpoints listos y probados). | Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado aún usan `mock.ts`. | **F3 backend completo**; F3 frontend parcial (panel listo, asistencia/progreso/certificado pendientes). |
+
+**Bloqueante para D3 (mínimo 2 de 3 funcionalidades de punta a punta):**
+
+* [ ] **J:** conectar F2 en el frontend: `GET /api/history`, `POST /api/reviews`, `GET /api/reviews/organizer/activity/:activityId` (la lectura pública del detalle ya está integrada).
+* [ ] **S:** conectar F3 en el frontend: asistencia (`GET/POST /api/activities/:id/sessions/:sessionId/attendance`), elegibilidad (`GET /api/certificates/activities/:activityId/eligibility`), certificados (`GET /api/certificates`) y descarga del PDF.
+* [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados agregados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
+* [ ] Cerrar **al menos una** de las dos integraciones para cumplir D3; para DF se necesitan las dos.
+
+**Checklist de rúbrica D3:**
+
+* [x] El frontend consume el backend real (F1 y autenticación).
+* [x] Inicio y cierre de sesión integrados; token enviado en las peticiones.
+* [x] Rutas protegidas por rol (`RequireRole`) y manejo de 401/403.
+* [x] Hook personalizado (`useAuth`) en uso.
+* [ ] Dos funcionalidades principales de punta a punta (hoy solo F1).
+* [ ] Estados de carga, error, vacío y éxito auditados en F2/F3 al integrarlas.
+* [ ] Casos de prueba manuales documentados y ejecutados.
+* [ ] Planning y Figma actualizados si el diseño cambió.
+* [ ] Registro de problemas y decisiones de D3.
+* [x] Backend desplegado y estable (`kooler-api-neon` + Neon).
+* [x] Frontend desplegado (`kooler-web-neon`).
+
 ### Fase 0 — Infraestructura compartida (bloquea a todos)
 
 Responsable: **N**, con revisión de J y S.
@@ -139,7 +168,7 @@ Responsable: **N**, con revisión de J y S.
 
 ### Persona N (Nico) — Infraestructura + Funcionalidad 1
 
-**Estado:** completado en `dev` (Fase 0 + F1).
+**Estado:** completado en `dev` (Fase 0 + F1 + cliente API de F2/F3 + despliegue Neon/Render).
 
 **Pantallas a cargo:** Bienvenida, Home del estudiante, Detalle de actividad, Mis Inscripciones, Detalle admin y Crear actividad.
 
@@ -153,6 +182,7 @@ Responsable: **N**, con revisión de J y S.
 * Panel del organizador: filtrar sus actividades, métricas reales de activas/finalizadas/inscritos.
 * Crear actividad: formulario conectado, catálogos reales y validación de errores del backend.
 * Detalle admin: sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+* Despliegue: backend `kooler-api-neon` y frontend `kooler-web-neon` en Render, con Neon y verificación de health/CORS.
 
 **Endpoints que consume:** `/api/auth`, `/api/activities`, `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
 
@@ -166,6 +196,8 @@ Responsable: **N**, con revisión de J y S.
 * `npm run lint` y `npm run build` en verde.
 
 ### Persona J (Jhon) — Autenticación + Funcionalidad 2
+
+**Estado:** autenticación completa; F2 backend completo; lectura pública de reseñas integrada; Historial, creación de Valoraciones y Retroalimentación pendientes (usan `mock.ts`).
 
 **Pantallas a cargo:** Login, Registro, Cuenta creada, Historial, Valoraciones y Retroalimentación.
 
@@ -191,7 +223,9 @@ Responsable: **N**, con revisión de J y S.
 * El historial y las reseñas provienen del backend.
 * Errores de autenticación y autorización visibles en la interfaz.
 
-### Persona S (Samuel) — Funcionalidad 3 + Despliegue
+### Persona S (Samuel) — Funcionalidad 3 + smoke de despliegue
+
+**Estado:** F3 backend completo; Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado pendientes (usan `mock.ts`).
 
 **Pantallas a cargo:** Panel Mis Actividades, Control de Asistencia y Mi Progreso / Mi Certificado.
 
@@ -201,9 +235,8 @@ Responsable: **N**, con revisión de J y S.
 * Control de Asistencia: crear sesión, registrar `PRESENT`/`ABSENT` y leer la asistencia de la sesión.
 * Mi Progreso: `GET /api/certificates/activities/:activityId/eligibility`.
 * Mis Certificados: `GET /api/certificates` y descarga del PDF.
-* Desplegar backend y base de datos con URL pública y variables de entorno.
-* Verificar CORS y que el frontend apunte al backend desplegado.
-* Ejecutar el smoke en producción.
+* Verificar el despliegue de `kooler-api-neon` y `kooler-web-neon` (hecho por N) y que el frontend apunte al backend desplegado.
+* Ejecutar el smoke en producción y revisar CORS.
 
 **Endpoints que consume:** `/api/activities/:id/sessions`, `/api/activities/:id/sessions/:sessionId/attendance`, `/api/certificates`, `/api/certificates/activities/:activityId/eligibility`, `/api/certificates/:certificateId/download`.
 
@@ -237,27 +270,49 @@ Responsable: **N**, con revisión de J y S.
 
 | Flujo | Meta |
 | :--- | :--- |
-| Autenticación y autorización | Obligatorio de punta a punta (J) |
-| F1 — Actividades e inscripciones | Obligatorio de punta a punta (N) |
-| F3 — Asistencia y certificados | Obligatorio de punta a punta (S) |
-| F2 — Reseñas e historial | Pantallas + plan; integrar si el tiempo alcanza (J) |
+| Autenticación y autorización | Obligatorio de punta a punta (J) — **completo** |
+| F1 — Actividades e inscripciones | Obligatorio de punta a punta (N) — **completo** |
+| F3 — Asistencia y certificados | Obligatorio de punta a punta (S) — **pendiente de integrar frontend** |
+| F2 — Reseñas e historial | Pantallas + plan; integrar si el tiempo alcanza (J) — **pendiente de integrar frontend** |
 
 ### Orden de trabajo y dependencias
 
-1. N entrega la Fase 0 (API client, auth context, guards y estados).
-2. J integra login/registro y deja el token funcionando.
-3. En paralelo: N integra F1, S integra F3 y J integra F2.
-4. S publica backend y BD; todos apuntan a la URL pública.
-5. Pruebas manuales por flujo, README de integración y ensayo de sustentación.
+1. N entrega la Fase 0 (API client, auth context, guards y estados). **Hecho.**
+2. J integra login/registro y deja el token funcionando. **Hecho.**
+3. En paralelo: N integra F1, S integra F3 y J integra F2. **F1 hecho; F2/F3 pendientes en frontend.**
+4. N publica backend, frontend y BD en Render/Neon; todos apuntan a la URL pública. **Hecho.**
+5. Pruebas manuales por flujo, README de integración y ensayo de sustentación. **Pendiente.**
 
 ### Pruebas y evidencias de D3
 
-* Casos de prueba manuales por funcionalidad.
+**Casos de prueba manuales:**
+
+| Flujo | Pasos | Resultado esperado | Responsable |
+| :--- | :--- | :--- | :--- |
+| Login/logout | Entrar como estudiante, cerrar sesión y volver a entrar. | Token real, redirección por rol y sesión limpiada. | J |
+| Ruta protegida | Abrir `/organizer/activities` como estudiante. | Redirección o 403 visible; el backend también rechaza. | N/J |
+| F1 — Inscripción | Buscar actividad, abrir detalle e inscribirse. | Inscripción creada y visible en Mis Inscripciones. | N |
+| F1 — Organizador | Crear actividad, verla en el panel y finalizarla. | Actividad persistida y estado actualizado. | N |
+| F2 — Historial y reseña | Abrir Historial, calificar con estrellas y comentario. | Reseña creada, promedio actualizado y comentario público. | J |
+| F2 — Retroalimentación | Abrir feedback como organizador. | Solo lectura, sin opciones de editar/eliminar. | J |
+| F3 — Asistencia | Crear sesión, marcar PRESENT/ABSENT y consultar. | Asistencia persistida por sesión. | S |
+| F3 — Certificado | Ver progreso, elegibilidad y descargar PDF. | Porcentaje correcto y PDF descargable. | S |
+
+**Evidencias:**
+
 * Colección Postman actualizada.
 * `npm run lint`, `npm run build`, `npm test` y `npm run test:e2e` en verde.
 * README con instrucciones de integración y registro de decisiones.
-* URL de demostración del frontend y del backend.
+* URLs: backend `https://kooler-api-neon.onrender.com`, frontend `https://kooler-web-neon.onrender.com`.
+* Smoke E2E de producción: **27/27 OK** contra `https://kooler-api-neon.onrender.com/api` (F1, F2 y F3); rutas del frontend en 200 y bundle con `NEXT_PUBLIC_API_URL` correcta.
 * Planning actualizado y Figma si el diseño cambió.
+
+**Problemas y decisiones de D3:**
+
+* **Neon + `synchronize`:** se usa `DATABASE_URL_UNPOOLED` (conexión directa) para evitar problemas de PgBouncer al crear el esquema.
+* **Render free:** el primer request tras inactividad tarda ~50 s; el frontend usa `npm install --include=dev` para que el build tenga TypeScript/Tailwind.
+* **Dos cuentas de Render:** el servicio del equipo sigue en la cuenta de Samuel (`kooler-api`); la demo de Nico usa `kooler-api-neon` y `kooler-web-neon`.
+* **Datos mock:** Historial, Valoraciones, Retroalimentación, Asistencia y Progreso todavía leen `frontend/src/lib/mock.ts`; la capa API ya expone los métodos, pero falta que J y S conecten sus pantallas. Es el principal pendiente de D3.
 
 ### Límite de commits para D3
 

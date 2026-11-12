@@ -51,6 +51,14 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 
 ---
 
+## Cliente API de F2/F3 (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual para exponer en `frontend/src/lib/api.ts` los métodos y tipos de historial, reseñas, asistencia y certificados.
+- **Verificación:** `npm run lint` y `npm run build` (frontend) en verde; smoke E2E de producción 27/27.
+
+---
+
 ## Conexión de Render y Neon (Nico)
 
 - **Herramienta:** OpenCode.

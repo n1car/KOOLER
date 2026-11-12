@@ -112,6 +112,15 @@ export interface ReviewSummary {
   items: ReviewItem[];
 }
 
+export interface CreatedReview {
+  id: number;
+  idUser: number;
+  idActivity: number;
+  rating: number;
+  comment: string | null;
+  date: string;
+}
+
 export interface HistoryItem {
   activityId: number;
   name: string;
@@ -147,6 +156,21 @@ export interface AttendanceRecord {
   studentId: number;
   firstName: string;
   lastName: string;
+  status: AttendanceStatus;
+  registrationDate: string;
+}
+
+export interface SessionAttendance {
+  activityId: number;
+  sessionId: number;
+  attendance: AttendanceRecord[];
+}
+
+export interface RecordedAttendance {
+  id: number;
+  studentId: number;
+  activityId: number;
+  sessionId: number;
   status: AttendanceStatus;
   registrationDate: string;
 }
