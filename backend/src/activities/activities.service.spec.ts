@@ -91,15 +91,18 @@ describe('ActivitiesService (Persona N)', () => {
   });
 
   it('debe crear una actividad asignando el organizador y estado ACTIVE', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T08:54:23.083Z'));
+
     const result = await service.create(
       {
         name: 'Torneo de Ping Pong',
         description: 'Torneo universitario',
-        date: '2026-10-20',
-        startTime: '10:00',
-        endTime: '12:00',
+        date: '2026-11-12',
+        startTime: '04:00',
+        endTime: '05:00',
         capacity: 16,
-        registrationDeadline: '2026-10-19T23:59:59Z',
+        registrationDeadline: '2026-11-13T04:59:59Z',
       },
       mockOrganizer,
     );
@@ -150,6 +153,74 @@ describe('ActivitiesService (Persona N)', () => {
     );
   });
 
+  it('does not allow manually finishing an activity before its Bogota end time', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:30:00.000Z'));
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-12',
+      startTime: '04:00',
+      endTime: '05:00',
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+
+    await expect(
+      service.update(10, { status: 'FINISHED' }, mockOrganizer),
+    ).rejects.toThrow(BadRequestException);
+    expect(activityRepo.save).not.toHaveBeenCalled();
+
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+    await expect(
+      service.update(10, { status: 'FINISHED' }, mockOrganizer),
+    ).resolves.toMatchObject({ status: 'FINISHED' });
+  });
+
+  it('keeps a started activity active until its end time and repairs an early FINISHED status', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:30:00.000Z'));
+    const activity = {
+      ...mockActivity,
+      status: 'FINISHED',
+      date: '2026-11-12',
+      startTime: '04:00',
+      endTime: '05:00',
+      registrationDeadline: new Date('2026-11-12T10:30:00.000Z'),
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+    enrollmentRepo.findOne.mockResolvedValue(null);
+    enrollmentRepo.count.mockResolvedValue(0);
+
+    const detail = await service.findOne(10);
+    expect(detail.status).toBe('ACTIVE');
+    expect(activityRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'ACTIVE' }),
+    );
+
+    await expect(service.enroll(10, mockStudent)).resolves.toMatchObject({
+      message: 'Inscripción realizada exitosamente',
+    });
+    expect(activity.status).toBe('ACTIVE');
+  });
+
+  it('finalizes activities from previous Colombia-local dates', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T08:00:00.000Z'));
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-11',
+      endTime: '23:59',
+      enrollments: [],
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+
+    await expect(service.findOne(10)).resolves.toMatchObject({
+      status: 'FINISHED',
+    });
+    expect(activityRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'FINISHED' }),
+    );
+  });
+
   // RF09 cubre el caso en que la hora ya terminó aunque el estado aún siga ACTIVE.
   it('debe tratar como finalizada (RF09) una actividad con horario ya pasado', async () => {
     const pastActivity = {
@@ -181,6 +252,38 @@ describe('ActivitiesService (Persona N)', () => {
     vi.setSystemTime(new Date('2026-11-12T11:00:00.000Z'));
     const atEnd = await service.findAll();
     expect(atEnd[0].status).toBe('FINISHED');
+  });
+
+  it('keeps end-time comparisons independent of the server timezone', async () => {
+    vi.useFakeTimers();
+    const activity = {
+      ...mockActivity,
+      date: '2026-11-12',
+      endTime: '05:00',
+      enrollments: [],
+    } as unknown as ActivityEntity;
+    activityRepo.find.mockResolvedValue([activity]);
+    const originalTimezone = process.env.TZ;
+    const statuses: string[] = [];
+
+    try {
+      for (const timezone of ['UTC', 'Asia/Tokyo']) {
+        process.env.TZ = timezone;
+        vi.setSystemTime(new Date('2026-11-12T09:59:59.999Z'));
+        statuses.push((await service.findAll())[0].status);
+
+        vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+        statuses.push((await service.findAll())[0].status);
+      }
+    } finally {
+      if (originalTimezone === undefined) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = originalTimezone;
+      }
+    }
+
+    expect(statuses).toEqual(['ACTIVE', 'FINISHED', 'ACTIVE', 'FINISHED']);
   });
 
   it('persists detail finalization at the Bogota end time, not before', async () => {

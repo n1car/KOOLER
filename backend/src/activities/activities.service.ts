@@ -48,11 +48,11 @@ export class ActivitiesService {
 
   // RF09: una actividad pasa a FINISHED cuando ya pasó su horario.
   // Se evalúa por fecha+hora de fin para no depender de un cron en D2.
-  private isPastEnd(activity: ActivityEntity, now: Date = new Date()): boolean {
+  private getLocalEnd(activity: Pick<ActivityEntity, 'date' | 'endTime'>): string | null {
     const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(activity.date);
     const timeMatch =
       /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(activity.endTime);
-    if (!dateMatch || !timeMatch) return false;
+    if (!dateMatch || !timeMatch) return null;
 
     const [, yearValue, monthValue, dayValue] = dateMatch;
     const year = Number(yearValue);
@@ -64,11 +64,20 @@ export class ActivitiesService {
       calendarDate.getUTCMonth() !== month - 1 ||
       calendarDate.getUTCDate() !== day
     ) {
-      return false;
+      return null;
     }
 
     const [, hour, minute, second = '00'] = timeMatch;
-    const localEnd = `${activity.date}T${hour}:${minute}:${second}.000`;
+    return `${activity.date}T${hour}:${minute}:${second}.000`;
+  }
+
+  private isPastEnd(
+    activity: Pick<ActivityEntity, 'date' | 'endTime'>,
+    now: Date = new Date(),
+  ): boolean {
+    const localEnd = this.getLocalEnd(activity);
+    if (!localEnd) return false;
+
     const localNowParts = Object.fromEntries(
       ACTIVITY_LOCAL_TIME_FORMATTER.formatToParts(now).map(({ type, value }) => [
         type,
@@ -81,6 +90,15 @@ export class ActivitiesService {
       `.${localNowParts.fractionalSecond}`;
 
     return localNow >= localEnd;
+  }
+
+  private statusForSchedule(
+    activity: Pick<ActivityEntity, 'date' | 'endTime'>,
+    currentStatus: ActivityEntity['status'],
+  ): ActivityEntity['status'] {
+    if (currentStatus === 'CANCELLED') return currentStatus;
+    if (!this.getLocalEnd(activity)) return currentStatus;
+    return this.isPastEnd(activity) ? 'FINISHED' : 'ACTIVE';
   }
 
   // Evita exponer el hash de contraseña del organizador en respuestas públicas.
@@ -154,7 +172,7 @@ export class ActivitiesService {
       const enrolledCount = act.enrollments ? act.enrollments.length : 0;
       const availableSpots = Math.max(0, act.capacity - enrolledCount);
       // RF09: reflejar FINISHED aunque el cron aún no haya persistido el cambio.
-      const status = act.status === 'ACTIVE' && this.isPastEnd(act) ? 'FINISHED' : act.status;
+      const status = this.statusForSchedule(act, act.status);
       const { enrollments: _ignored, ...data } = act;
 
       return {
@@ -180,9 +198,10 @@ export class ActivitiesService {
 
     const enrolledCount = activity.enrollments ? activity.enrollments.length : 0;
     const availableSpots = Math.max(0, activity.capacity - enrolledCount);
-    // RF09: persistir la transición ACTIVE -> FINISHED al consultar el detalle.
-    if (activity.status === 'ACTIVE' && this.isPastEnd(activity)) {
-      activity.status = 'FINISHED';
+    // Reconcile legacy statuses against Colombia-local end time.
+    const status = this.statusForSchedule(activity, activity.status);
+    if (activity.status !== status) {
+      activity.status = status;
       await this.activityRepo.save(activity);
     }
     const { enrollments: _ignored, ...data } = activity;
@@ -190,7 +209,7 @@ export class ActivitiesService {
     return {
       ...data,
       organizer: this.toPublicOrganizer(activity.organizer),
-      status: activity.status,
+      status,
       enrolledCount,
       availableSpots,
     };
@@ -213,6 +232,18 @@ export class ActivitiesService {
     }
 
     const { activityTypeId, locationId, registrationDeadline, ...rest } = updateDto;
+
+    if (rest.status === 'FINISHED') {
+      const scheduledEnd = {
+        date: rest.date ?? activity.date,
+        endTime: rest.endTime ?? activity.endTime,
+      };
+      if (!this.isPastEnd(scheduledEnd)) {
+        throw new BadRequestException(
+          'No se puede finalizar la actividad antes de su hora de finalización en Colombia',
+        );
+      }
+    }
 
     // Regla de negocio: no reducir el cupo por debajo de los ya inscritos.
     if (rest.capacity !== undefined) {
@@ -288,10 +319,10 @@ export class ActivitiesService {
         throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
       }
 
-      // RF09: si ya pasó el horario, tratarla como finalizada aunque el
-      // estado persistido siga en ACTIVE.
-      if (activity.status === 'ACTIVE' && this.isPastEnd(activity)) {
-        activity.status = 'FINISHED';
+      // Reconcile legacy statuses before applying the enrollment rules.
+      const status = this.statusForSchedule(activity, activity.status);
+      if (activity.status !== status) {
+        activity.status = status;
         await activityRepo.save(activity);
       }
 
