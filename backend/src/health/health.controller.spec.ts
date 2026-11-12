@@ -10,10 +10,20 @@ function buildController(query: () => Promise<unknown>) {
 describe('HealthController', () => {
   // La ruta solo informa disponibilidad completa si la consulta a PostgreSQL responde.
   it('reporta estado ok cuando la base de datos responde', async () => {
-    const controller = buildController(vi.fn().mockResolvedValue([{ ok: 1 }]));
+    const query = vi.fn().mockResolvedValue([
+      {
+        database_name: 'kooler_test',
+        database_time_zone: 'UTC',
+        database_now: new Date('2026-11-12T09:30:00.000Z'),
+      },
+    ]);
+    const controller = buildController(query);
 
     const result = await controller.check();
 
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining('current_database()'),
+    );
     expect(result.status).toBe('ok');
     expect(result.database).toBe('up');
     expect(result.uptimeSeconds).toBeGreaterThanOrEqual(0);

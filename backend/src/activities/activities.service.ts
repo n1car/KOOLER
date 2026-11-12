@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -31,6 +32,8 @@ const ACTIVITY_LOCAL_TIME_FORMATTER = new Intl.DateTimeFormat('en-CA', {
 
 @Injectable()
 export class ActivitiesService {
+  private readonly logger = new Logger(ActivitiesService.name);
+
   constructor(
     @InjectRepository(ActivityEntity)
     private readonly activityRepo: Repository<ActivityEntity>,
@@ -45,6 +48,30 @@ export class ActivitiesService {
 
     private readonly dataSource: DataSource,
   ) {}
+
+  private traceStatus(
+    origin: string,
+    activity: Pick<ActivityEntity, 'id' | 'date' | 'endTime'>,
+    previousStatus: ActivityEntity['status'] | null,
+    nextStatus: ActivityEntity['status'],
+    outcome: 'persisted' | 'response-only' | 'rejected',
+  ): void {
+    const now = new Date();
+    this.logger.warn(
+      `[STATUS_TRACE] ${JSON.stringify({
+        origin,
+        outcome,
+        activityId: activity.id,
+        previousStatus,
+        nextStatus,
+        date: activity.date,
+        endTime: activity.endTime,
+        utcNow: now.toISOString(),
+        colombiaNow: ACTIVITY_LOCAL_TIME_FORMATTER.format(now),
+        processTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })}`,
+    );
+  }
 
   // RF09: una actividad pasa a FINISHED cuando ya pasó su horario.
   // Se evalúa por fecha+hora de fin para no depender de un cron en D2.
@@ -143,7 +170,9 @@ export class ActivitiesService {
       activity.location = await this.catalogService.findLocationById(locationId);
     }
 
-    return this.activityRepo.save(activity);
+    const saved = await this.activityRepo.save(activity);
+    this.traceStatus('ActivitiesService.create', saved, null, saved.status, 'persisted');
+    return saved;
   }
 
   // 2. Listar actividades con filtros y cupos calculados
@@ -173,6 +202,15 @@ export class ActivitiesService {
       const availableSpots = Math.max(0, act.capacity - enrolledCount);
       // RF09: reflejar FINISHED aunque el cron aún no haya persistido el cambio.
       const status = this.statusForSchedule(act, act.status);
+      if (status !== act.status) {
+        this.traceStatus(
+          'ActivitiesService.findAll',
+          act,
+          act.status,
+          status,
+          'response-only',
+        );
+      }
       const { enrollments: _ignored, ...data } = act;
 
       return {
@@ -201,6 +239,13 @@ export class ActivitiesService {
     // Reconcile legacy statuses against Colombia-local end time.
     const status = this.statusForSchedule(activity, activity.status);
     if (activity.status !== status) {
+      this.traceStatus(
+        'ActivitiesService.findOne',
+        activity,
+        activity.status,
+        status,
+        'persisted',
+      );
       activity.status = status;
       await this.activityRepo.save(activity);
     }
@@ -239,6 +284,13 @@ export class ActivitiesService {
         endTime: rest.endTime ?? activity.endTime,
       };
       if (!this.isPastEnd(scheduledEnd)) {
+        this.traceStatus(
+          'ActivitiesService.update',
+          activity,
+          activity.status,
+          'FINISHED',
+          'rejected',
+        );
         throw new BadRequestException(
           'No se puede finalizar la actividad antes de su hora de finalización en Colombia',
         );
@@ -269,7 +321,17 @@ export class ActivitiesService {
       activity.location = await this.catalogService.findLocationById(locationId);
     }
 
+    const previousStatus = activity.status;
     Object.assign(activity, rest);
+    if (activity.status !== previousStatus) {
+      this.traceStatus(
+        'ActivitiesService.update',
+        activity,
+        previousStatus,
+        activity.status,
+        'persisted',
+      );
+    }
     return this.activityRepo.save(activity);
   }
 
@@ -289,7 +351,15 @@ export class ActivitiesService {
       throw new ForbiddenException('Solo el organizador responsable puede cancelar esta actividad');
     }
 
+    const previousStatus = activity.status;
     activity.status = 'CANCELLED';
+    this.traceStatus(
+      'ActivitiesService.cancel',
+      activity,
+      previousStatus,
+      activity.status,
+      'persisted',
+    );
     await this.activityRepo.save(activity);
 
     return {
@@ -322,6 +392,13 @@ export class ActivitiesService {
       // Reconcile legacy statuses before applying the enrollment rules.
       const status = this.statusForSchedule(activity, activity.status);
       if (activity.status !== status) {
+        this.traceStatus(
+          'ActivitiesService.enroll',
+          activity,
+          activity.status,
+          status,
+          'persisted',
+        );
         activity.status = status;
         await activityRepo.save(activity);
       }

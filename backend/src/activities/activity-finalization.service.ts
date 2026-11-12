@@ -7,6 +7,12 @@ import { ActivityEntity } from './entities/activity.entity';
 
 const ACTIVITY_TIME_ZONE = 'America/Bogota';
 const ACTIVITY_BATCH_SIZE = 50;
+const COLOMBIA_TIME_FORMATTER = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: ACTIVITY_TIME_ZONE,
+  dateStyle: 'short',
+  timeStyle: 'medium',
+  hourCycle: 'h23',
+});
 
 @Injectable()
 export class ActivityFinalizationService {
@@ -29,7 +35,7 @@ export class ActivityFinalizationService {
     try {
       // La zona horaria institucional evita depender de la zona del servidor;
       // SKIP LOCKED permite que varias instancias procesen filas distintas.
-      await this.activityRepository.query(
+      const transitionedActivities = (await this.activityRepository.query(
         `WITH candidates AS (
            SELECT id_activity
            FROM activities
@@ -49,9 +55,37 @@ export class ActivityFinalizationService {
          FROM candidates
          WHERE activity.id_activity = candidates.id_activity
            AND activity.status = 'ACTIVE'
-         RETURNING activity.id_activity`,
+         RETURNING activity.id_activity, activity.date, activity.end_time,
+                   CURRENT_TIMESTAMP AS database_now,
+                   CURRENT_TIMESTAMP AT TIME ZONE $1 AS colombia_now`,
         [ACTIVITY_TIME_ZONE, ACTIVITY_BATCH_SIZE],
-      );
+      )) as Array<{
+        id_activity: number;
+        date: string;
+        end_time: string;
+        database_now: Date | string;
+        colombia_now: Date | string;
+      }>;
+
+      for (const activity of transitionedActivities) {
+        const now = new Date();
+        this.logger.warn(
+          `[STATUS_TRACE] ${JSON.stringify({
+            origin: 'ActivityFinalizationService.finalizeExpiredActivities',
+            outcome: 'persisted',
+            activityId: activity.id_activity,
+            previousStatus: 'ACTIVE',
+            nextStatus: 'FINISHED',
+            date: activity.date,
+            endTime: activity.end_time,
+            databaseNow: activity.database_now,
+            databaseColombiaNow: activity.colombia_now,
+            utcNow: now.toISOString(),
+            colombiaNow: COLOMBIA_TIME_FORMATTER.format(now),
+            processTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          })}`,
+        );
+      }
 
       let offset = 0;
       while (true) {
