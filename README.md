@@ -218,15 +218,18 @@ Responsable: **N**, con revisión de J y S.
 
 ### Despliegue — Render + Neon
 
-**Código listo en `dev`:** soporte de `DATABASE_URL`/`DATABASE_URL_UNPOOLED` y `DB_SSL` en `app.module.ts`, validación en `env.validation.ts`, `.env.example` documentado y `render.yaml` preparado para Neon.
+**Estado actual (cuenta de Nico):**
 
-**Pendiente en los paneles (S):**
+* Backend: `kooler-api-neon` → `https://kooler-api-neon.onrender.com`
+* Frontend: `kooler-web-neon` → `https://kooler-web-neon.onrender.com`
+* Base de datos: Neon (branch `production`), conectada con `DATABASE_URL_UNPOOLED`.
+* El servicio anterior `kooler-api` (cuenta de Samuel) sigue existiendo; esta configuración es independiente.
 
-1. Autenticarse con `neon login` y ejecutar `neon deploy` para provisionar y escribir `.env.local` en la raíz.
-2. En Render → servicio `kooler-api` → *Environment*, pegar `DATABASE_URL_UNPOOLED` (URL directa de Neon) y `DB_SSL=true`.
-3. Eliminar o desvincular la base `kooler-db` de Render (ya no se usa).
-4. Redesplegar y verificar `https://kooler-api.onrender.com/api/health`.
-5. Probar registro/login real. En producción no se crean usuarios demo.
+**Verificación:**
+
+1. `GET https://kooler-api-neon.onrender.com/api/health` debe responder `database: up`.
+2. `GET https://kooler-web-neon.onrender.com/` debe responder 200.
+3. Probar registro/login real. En producción no se crean usuarios demo.
 
 **Notas:** el backend prefiere `DATABASE_URL_UNPOOLED` porque ejecuta `synchronize` al iniciar; `DATABASE_URL` (pooled) queda como alternativa. `synchronize: true` crea las tablas al primer arranque y el seed crea roles/catálogos.
 
@@ -312,17 +315,17 @@ El backend soporta `DATABASE_URL`/`DATABASE_URL_UNPOOLED` y lee `../.env.local` 
 3. `npm run start:dev` en `backend/`: TypeORM usa la URL directa (`DATABASE_URL_UNPOOLED`) y crea el esquema con `synchronize`.
 4. Verifica `GET http://localhost:3000/api/health` y prueba login/registro.
 
-### Backend en Render
+### Backend y frontend en Render
 
-El blueprint `render.yaml` publica el servicio `kooler-api` y espera la URL de Neon.
+El blueprint `render.yaml` publica `kooler-api-neon` y `kooler-web-neon` en la región Ohio y espera la URL de Neon.
 
-1. En Render → servicio `kooler-api` → *Environment*, define `DATABASE_URL_UNPOOLED` con la URL directa de Neon y `DB_SSL=true`.
+1. En Render → servicio `kooler-api-neon` → *Environment*, define `DATABASE_URL_UNPOOLED` con la URL directa de Neon y `DB_SSL=true`.
 2. **Redespliegue:** *Manual Deploy* → *Deploy latest commit*. En los logs debe aparecer `Nest application successfully started`.
-3. **Verificación:** `GET https://kooler-api.onrender.com/api/health` y un registro/login real.
+3. **Verificación:** `GET https://kooler-api-neon.onrender.com/api/health` y un registro/login real.
 
 > `synchronize: true` crea el esquema en el primer arranque y el seed crea roles y catálogos. En `NODE_ENV=production` no se crean usuarios demo: regístralos con `POST /api/auth/register` o desde el frontend.
 
-El frontend debe definir `NEXT_PUBLIC_API_URL=https://kooler-api.onrender.com/api`. El estado del backend puede consultarse en `https://kooler-api.onrender.com/api/health`.
+El frontend `kooler-web-neon` define `NEXT_PUBLIC_API_URL=https://kooler-api-neon.onrender.com/api`. El estado del backend puede consultarse en `https://kooler-api-neon.onrender.com/api/health`.
 
 ## Documentación adicional
 

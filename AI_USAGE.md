@@ -59,6 +59,14 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 
 ---
 
+## Despliegue en Render de backend y frontend (Nico)
+
+- **Herramienta:** Render CLI + OpenCode.
+- **Uso:** apoyo puntual para crear `kooler-api-neon` y `kooler-web-neon` en la cuenta de Nico y verificar health/build.
+- **Verificación:** `render deploys list` en `live`, `GET /api/health` → `database: up` y `GET /` → 200.
+
+---
+
 ## Compromiso del equipo
 
 - Todo resultado generado con IA fue revisado y comprendido por quien lo integró.

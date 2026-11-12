@@ -38,7 +38,7 @@
     },
     {
       "key": "prodUrl",
-      "value": "https://kooler-api.onrender.com/api",
+      "value": "https://kooler-api-neon.onrender.com/api",
       "description": "Backend desplegado en Render"
     }
   ],

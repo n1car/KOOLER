@@ -8,10 +8,10 @@
 
 services:
   - type: web
-    name: kooler-api
+    name: kooler-api-neon
     runtime: docker
     plan: free
-    region: oregon
+    region: ohio
     branch: dev
     rootDir: backend
     dockerfilePath: ./Dockerfile
@@ -31,3 +31,20 @@ services:
         sync: false
       - key: DB_SSL
         value: "true"
+
+  - type: web
+    name: kooler-web-neon
+    runtime: node
+    plan: free
+    region: ohio
+    branch: dev
+    rootDir: frontend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npx next start -p $PORT
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_API_URL
+        value: https://kooler-api-neon.onrender.com/api
