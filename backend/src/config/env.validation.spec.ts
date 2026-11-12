@@ -11,10 +11,32 @@ const validEnv = {
   PORT: '3000',
 };
 
+const validEnvWithUrl = {
+  JWT_SECRET: 'un_secreto_suficientemente_largo_1234567890',
+  DATABASE_URL: 'postgresql://user:pass@host/db?sslmode=require',
+  PORT: '3000',
+};
+
 describe('validateEnv', () => {
-  // PORT es opcional, pero las variables de conexión y el secreto JWT no.
+  // PORT es opcional; JWT_SECRET y la conexión (DB_* o DATABASE_URL) no.
   it('acepta una configuración completa y válida', () => {
     expect(validateEnv({ ...validEnv })).toMatchObject(validEnv);
+  });
+
+  it('acepta DATABASE_URL sin las variables DB_*', () => {
+    expect(validateEnv({ ...validEnvWithUrl })).toMatchObject(validEnvWithUrl);
+  });
+
+  it('rechaza DATABASE_URL con un esquema que no es PostgreSQL', () => {
+    expect(() =>
+      validateEnv({ ...validEnvWithUrl, DATABASE_URL: 'mysql://host/db' }),
+    ).toThrow(/URL de PostgreSQL/);
+  });
+
+  it('rechaza DB_SSL con un valor distinto de true/false', () => {
+    expect(() => validateEnv({ ...validEnv, DB_SSL: 'quizas' })).toThrow(
+      /DB_SSL debe ser true o false/,
+    );
   });
 
   it('rechaza cuando falta una variable obligatoria', () => {

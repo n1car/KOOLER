@@ -51,6 +51,14 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 
 ---
 
+## Conexión de Render y Neon (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en `neon init/deploy`, soporte de `DATABASE_URL`/`DATABASE_URL_UNPOOLED` y verificación con smoke test.
+- **Verificación:** `npm run build` (backend y frontend), `npm test` (81 pruebas), `npm run lint` y smoke E2E 27/27 contra Neon.
+
+---
+
 ## Compromiso del equipo
 
 - Todo resultado generado con IA fue revisado y comprendido por quien lo integró.

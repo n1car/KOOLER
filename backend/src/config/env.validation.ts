@@ -6,13 +6,21 @@
  * peticiones con valores por defecto silenciosos.
  */
 
-export const REQUIRED_ENV_VARIABLES = [
-  'JWT_SECRET',
+export const REQUIRED_ENV_VARIABLES = ['JWT_SECRET'] as const;
+
+/** Variables de conexión usadas cuando no se define DATABASE_URL. */
+export const DB_ENV_VARIABLES = [
   'DB_HOST',
   'DB_PORT',
   'DB_USERNAME',
   'DB_PASSWORD',
   'DB_DATABASE',
+] as const;
+
+/** Neon entrega estas URLs; se prefiere la directa para synchronize. */
+export const DATABASE_URL_VARIABLES = [
+  'DATABASE_URL_UNPOOLED',
+  'DATABASE_URL',
 ] as const;
 
 /** Valores de ejemplo que nunca deben llegar a un ambiente real. */
@@ -30,7 +38,7 @@ function isBlank(value: unknown): boolean {
 
 /**
  * Se ejecuta dentro de `ConfigModule.forRoot({ validate })`, por lo que recibe
- * la unión de `process.env` y el archivo `.env`.
+ * la unión de `process.env` y los archivos `.env`/`.env.local`.
  */
 export function validateEnv(
   config: Record<string, unknown>,
@@ -40,6 +48,21 @@ export function validateEnv(
   const missing = REQUIRED_ENV_VARIABLES.filter((key) => isBlank(config[key]));
   if (missing.length > 0) {
     errors.push(`Faltan variables obligatorias: ${missing.join(', ')}`);
+  }
+
+  const databaseUrl = DATABASE_URL_VARIABLES.map((key) => config[key]).find(
+    (value) => !isBlank(value),
+  );
+  if (databaseUrl === undefined) {
+    const missingDb = DB_ENV_VARIABLES.filter((key) => isBlank(config[key]));
+    if (missingDb.length > 0) {
+      errors.push(
+        `Faltan variables de base de datos: ${missingDb.join(', ')} ` +
+          '(o defina DATABASE_URL)',
+      );
+    }
+  } else if (!/^postgres(ql)?:\/\//i.test(String(databaseUrl).trim())) {
+    errors.push('DATABASE_URL debe ser una URL de PostgreSQL');
   }
 
   const jwtSecret = config.JWT_SECRET;
@@ -57,6 +80,15 @@ export function validateEnv(
 
   if (!isBlank(config.DB_PORT) && !NUMERIC_PATTERN.test(String(config.DB_PORT).trim())) {
     errors.push('DB_PORT debe ser numérico');
+  }
+
+  if (
+    !isBlank(config.DB_SSL) &&
+    !['true', 'false', '1', '0'].includes(
+      String(config.DB_SSL).trim().toLowerCase(),
+    )
+  ) {
+    errors.push('DB_SSL debe ser true o false');
   }
 
   if (!isBlank(config.PORT) && !NUMERIC_PATTERN.test(String(config.PORT).trim())) {
