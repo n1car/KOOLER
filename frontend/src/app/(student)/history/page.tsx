@@ -131,21 +131,21 @@ export default function HistoryPage() {
               key={certificate.id}
               className="flex flex-col gap-3"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-3">
+              <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-3 md:flex-1">
                   <CertificateIcon
                     width={22}
                     height={22}
                     className="shrink-0 text-primary"
                   />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-foreground">
                       Certificado de actividad #{certificate.activityId}
                     </h4>
                     <p className="text-xs text-muted">
                       Emitido el {formatDateTime(certificate.issueDate)}
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="break-all text-xs text-muted">
                       Código: {certificate.certificateCode}
                     </p>
                   </div>
@@ -153,7 +153,7 @@ export default function HistoryPage() {
                 <Button
                   variant="outline"
                   fullWidth
-                  className="sm:w-auto"
+                  className="w-full md:w-auto md:shrink-0"
                   loading={downloadingCertificateId === certificate.id}
                   disabled={downloadingCertificateId !== null}
                   onClick={() => void downloadCertificate(certificate.id)}
