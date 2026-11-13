@@ -26,6 +26,51 @@ export const CERTIFICATE_PDF_DOCUMENT_FACTORY = Symbol(
 type CertificatePdfDocumentFactory = (
   options: ConstructorParameters<typeof PDFDocument>[0],
 ) => InstanceType<typeof PDFDocument>;
+type CertificatePdfDocument = InstanceType<typeof PDFDocument>;
+
+const CERTIFICATE_COLORS = {
+  ivory: '#FBFAF6',
+  navy: '#102A43',
+  blue: '#245B83',
+  gold: '#B89555',
+  ink: '#273746',
+  muted: '#667786',
+  white: '#FFFFFF',
+};
+
+function drawFittedText(
+  document: CertificatePdfDocument,
+  text: string,
+  options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    font: string;
+    maxFontSize: number;
+    minFontSize: number;
+    color: string;
+  },
+): void {
+  let fontSize = options.maxFontSize;
+  document.font(options.font);
+  while (fontSize > options.minFontSize) {
+    document.fontSize(fontSize);
+    if (document.heightOfString(text, { width: options.width }) <= options.height) {
+      break;
+    }
+    fontSize -= 1;
+  }
+
+  document
+    .fontSize(fontSize)
+    .fillColor(options.color)
+    .text(text, options.x, options.y, {
+      width: options.width,
+      align: 'center',
+      lineGap: 2,
+    });
+}
 
 export type EligibilityReason =
   | 'ACTIVITY_NOT_FINISHED'
@@ -86,7 +131,7 @@ export class CertificatesService {
   ): Promise<{ content: Buffer; fileName: string }> {
     const certificate = await this.certificateRepository.findOne({
       where: { id: certificateId, user: { id: studentId } },
-      relations: { activity: true, user: true },
+      relations: { activity: { organizer: true }, user: true },
     });
     if (!certificate) {
       throw new NotFoundException('Certificado no encontrado');
@@ -99,6 +144,9 @@ export class CertificatesService {
         content: await this.renderCertificatePdf({
           studentName,
           activityName: certificate.activity.name,
+          organizerName:
+            `${certificate.activity.organizer.firstName} ${certificate.activity.organizer.lastName}`.trim(),
+          activityDate: certificate.activity.date,
           certificateCode: certificate.certificateCode,
           issueDate: certificate.issueDate,
         }),
@@ -390,44 +438,200 @@ export class CertificatesService {
   private renderCertificatePdf(data: {
     studentName: string;
     activityName: string;
+    organizerName: string;
+    activityDate: string;
     certificateCode: string;
     issueDate: Date;
   }): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const document = this.createPdfDocument({ size: 'A4', margin: 56 });
+      const document = this.createPdfDocument({
+        size: 'A4',
+        layout: 'landscape',
+        margin: 0,
+      });
       const chunks: Buffer[] = [];
 
       document.on('data', (chunk: Buffer) => chunks.push(chunk));
       document.on('error', reject);
       document.on('end', () => resolve(Buffer.concat(chunks)));
 
+      const { width, height } = document.page;
+      const center = width / 2;
+      const dateOnly = new Date(`${data.activityDate}T12:00:00.000Z`);
+      const activityDate = new Intl.DateTimeFormat('es-CO', {
+        dateStyle: 'long',
+        timeZone: 'UTC',
+      }).format(dateOnly);
+      const issueDate = new Intl.DateTimeFormat('es-CO', {
+        dateStyle: 'long',
+        timeZone: 'America/Bogota',
+      }).format(data.issueDate);
+
+      document.rect(0, 0, width, height).fill(CERTIFICATE_COLORS.ivory);
       document
-        .fontSize(24)
-        .text('Certificado de participacion', { align: 'center' })
-        .moveDown(2)
-        .fontSize(14)
-        .text('Se certifica que', { align: 'center' })
-        .moveDown()
-        .fontSize(20)
-        .text(data.studentName, { align: 'center' })
-        .moveDown()
-        .fontSize(14)
-        .text('participo en', { align: 'center' })
-        .moveDown()
-        .fontSize(18)
-        .text(data.activityName, { align: 'center' })
-        .moveDown(2)
-        .fontSize(11)
-        .text(`Codigo de certificado: ${data.certificateCode}`, {
+        .lineWidth(1.5)
+        .strokeColor(CERTIFICATE_COLORS.navy)
+        .rect(20, 20, width - 40, height - 40)
+        .stroke();
+      document
+        .lineWidth(0.7)
+        .strokeColor(CERTIFICATE_COLORS.gold)
+        .rect(27, 27, width - 54, height - 54)
+        .stroke();
+
+      document
+        .circle(center, 67, 20)
+        .fill(CERTIFICATE_COLORS.navy);
+      document
+        .circle(center, 67, 15)
+        .lineWidth(1)
+        .strokeColor(CERTIFICATE_COLORS.gold)
+        .stroke();
+      document
+        .font('Times-Bold')
+        .fontSize(21)
+        .fillColor(CERTIFICATE_COLORS.white)
+        .text('K', center - 10, 54, { width: 20, align: 'center' });
+      document
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .fillColor(CERTIFICATE_COLORS.navy)
+        .text('KOOLER', center - 50, 92, { width: 100, align: 'center' });
+
+      document
+        .font('Helvetica-Bold')
+        .fontSize(19)
+        .fillColor(CERTIFICATE_COLORS.navy)
+        .text('CERTIFICADO DE PARTICIPACIÓN', 68, 119, {
+          width: width - 136,
           align: 'center',
+          characterSpacing: 1.5,
+        });
+      document
+        .moveTo(center - 100, 150)
+        .lineTo(center + 100, 150)
+        .lineWidth(1.2)
+        .strokeColor(CERTIFICATE_COLORS.gold)
+        .stroke();
+
+      document
+        .font('Times-Roman')
+        .fontSize(13)
+        .fillColor(CERTIFICATE_COLORS.muted)
+        .text('Se otorga el presente certificado a', 68, 169, {
+          width: width - 136,
+          align: 'center',
+        });
+      drawFittedText(document, data.studentName, {
+        x: 70,
+        y: 193,
+        width: width - 140,
+        height: 54,
+        font: 'Times-Bold',
+        maxFontSize: 34,
+        minFontSize: 13,
+        color: CERTIFICATE_COLORS.blue,
+      });
+      document
+        .font('Times-Roman')
+        .fontSize(13)
+        .fillColor(CERTIFICATE_COLORS.muted)
+        .text('por su participación en', 68, 255, {
+          width: width - 136,
+          align: 'center',
+        });
+      drawFittedText(document, data.activityName, {
+        x: 85,
+        y: 278,
+        width: width - 170,
+        height: 64,
+        font: 'Times-Bold',
+        maxFontSize: 25,
+        minFontSize: 12,
+        color: CERTIFICATE_COLORS.navy,
+      });
+
+      const detailsTop = 377;
+      const detailWidth = 205;
+      const detailColumns = [
+        { x: 74, label: 'ORGANIZADOR', value: data.organizerName },
+        { x: center - detailWidth / 2, label: 'FECHA DE REALIZACIÓN', value: activityDate },
+        { x: width - 74 - detailWidth, label: 'FECHA DE EMISIÓN', value: issueDate },
+      ];
+      for (const detail of detailColumns) {
+        document
+          .font('Helvetica-Bold')
+          .fontSize(8)
+          .fillColor(CERTIFICATE_COLORS.gold)
+          .text(detail.label, detail.x, detailsTop, {
+            width: detailWidth,
+            align: 'center',
+            characterSpacing: 0.8,
+          });
+        drawFittedText(document, detail.value, {
+          x: detail.x,
+          y: detailsTop + 16,
+          width: detailWidth,
+          height: 50,
+          font: 'Helvetica',
+          maxFontSize: 11,
+          minFontSize: 8,
+          color: CERTIFICATE_COLORS.ink,
+        });
+      }
+
+      document
+        .lineWidth(0.8)
+        .strokeColor(CERTIFICATE_COLORS.gold)
+        .moveTo(74, 452)
+        .lineTo(width - 74, 452)
+        .stroke();
+      document
+        .font('Helvetica-Bold')
+        .fontSize(8)
+        .fillColor(CERTIFICATE_COLORS.muted)
+        .text('CÓDIGO ÚNICO', 74, 470, {
+          width: width - 148,
+          align: 'center',
+          characterSpacing: 1,
         })
-        .text(
-          `Fecha de emision: ${new Intl.DateTimeFormat('es-CO', {
-            dateStyle: 'long',
-            timeZone: 'America/Bogota',
-          }).format(data.issueDate)}`,
-          { align: 'center' },
-        );
+        .font('Courier')
+        .fontSize(10)
+        .fillColor(CERTIFICATE_COLORS.navy)
+        .text(data.certificateCode, 74, 485, {
+          width: width - 148,
+          align: 'center',
+        });
+
+      document
+        .circle(width - 84, height - 83, 37)
+        .lineWidth(1.2)
+        .strokeColor(CERTIFICATE_COLORS.blue)
+        .stroke();
+      document
+        .circle(width - 84, height - 83, 31)
+        .lineWidth(0.7)
+        .strokeColor(CERTIFICATE_COLORS.gold)
+        .stroke();
+      document
+        .font('Times-Bold')
+        .fontSize(20)
+        .fillColor(CERTIFICATE_COLORS.blue)
+        .text('K', width - 95, height - 100, { width: 22, align: 'center' })
+        .font('Helvetica-Bold')
+        .fontSize(5.5)
+        .fillColor(CERTIFICATE_COLORS.muted)
+        .text('KOOLER', width - 112, height - 77, {
+          width: 56,
+          align: 'center',
+          characterSpacing: 0.8,
+        })
+        .font('Helvetica')
+        .fontSize(5)
+        .text('PARTICIPACIÓN', width - 112, height - 67, {
+          width: 56,
+          align: 'center',
+        });
 
       document.end();
     });

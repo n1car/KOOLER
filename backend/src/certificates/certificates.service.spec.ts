@@ -175,7 +175,12 @@ describe('CertificatesService', () => {
         firstName: 'Ana',
         lastName: 'Estudiante',
       },
-      activity: { id: 20, name: 'Bienestar' },
+      activity: {
+        id: 20,
+        name: 'Bienestar',
+        date: '2026-10-02',
+        organizer: { firstName: 'Lina', lastName: 'Organizadora' },
+      },
       issueDate: new Date('2026-10-02T12:00:00Z'),
     };
     certificateRepository.findOne.mockResolvedValue(certificate);
@@ -184,10 +189,41 @@ describe('CertificatesService', () => {
 
     expect(result.fileName).toBe('certificate-CERT-10-20.pdf');
     expect(result.content.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(pdfDocumentFactory).toHaveBeenCalledWith({
+      size: 'A4',
+      layout: 'landscape',
+      margin: 0,
+    });
     expect(certificateRepository.findOne).toHaveBeenCalledWith({
       where: { id: 1, user: { id: 10 } },
-      relations: { activity: true, user: true },
+      relations: { activity: { organizer: true }, user: true },
     });
+  });
+
+  it('genera el PDF aun con nombres y títulos extensos', async () => {
+    certificateRepository.findOne.mockResolvedValue({
+      ...createCertificate(),
+      user: {
+        id: 10,
+        firstName: 'Ana María '.repeat(9),
+        lastName: 'Estudiante '.repeat(8),
+      },
+      activity: {
+        id: 20,
+        name: 'Encuentro universitario de bienestar y desarrollo integral '.repeat(3),
+        date: '2026-10-02',
+        organizer: {
+          firstName: 'Lina '.repeat(8),
+          lastName: 'Organizadora '.repeat(7),
+        },
+      },
+      issueDate: new Date('2026-10-02T12:00:00Z'),
+    });
+
+    const result = await service.downloadCertificatePdf(10, 1);
+
+    expect(result.content.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(result.fileName).toBe('certificate-CERT-10-20.pdf');
   });
 
   it('no permite descargar un certificado de otro estudiante ni uno inexistente', async () => {
@@ -198,7 +234,7 @@ describe('CertificatesService', () => {
     );
     expect(certificateRepository.findOne).toHaveBeenCalledWith({
       where: { id: 1, user: { id: 11 } },
-      relations: { activity: true, user: true },
+      relations: { activity: { organizer: true }, user: true },
     });
   });
 
@@ -206,7 +242,12 @@ describe('CertificatesService', () => {
     certificateRepository.findOne.mockResolvedValue({
       ...createCertificate(),
       user: { id: 10, firstName: 'Ana', lastName: 'Estudiante' },
-      activity: { id: 20, name: 'Bienestar' },
+      activity: {
+        id: 20,
+        name: 'Bienestar',
+        date: '2026-10-02',
+        organizer: { firstName: 'Lina', lastName: 'Organizadora' },
+      },
     });
     pdfDocumentFactory.mockImplementation(() => {
       throw new Error('PDF generation failed');
