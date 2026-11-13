@@ -10,6 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
+import { join } from 'path';
 import { In, QueryFailedError, Repository } from 'typeorm';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { EnrollmentEntity } from '../activities/entities/enrollment.entity';
@@ -33,10 +34,15 @@ const CERTIFICATE_COLORS = {
   navy: '#102A43',
   blue: '#245B83',
   gold: '#B89555',
+  logoOrange: '#F58220',
+  logoTeal: '#00B9A7',
+  logoBlue: '#4E52F8',
+  logoPurple: '#B24BD2',
   ink: '#273746',
   muted: '#667786',
   white: '#FFFFFF',
 };
+const KOOLER_LOGO_PATH = join(__dirname, 'assets', 'kooler-logo.png');
 
 function drawFittedText(
   document: CertificatePdfDocument,
@@ -480,23 +486,14 @@ export class CertificatesService {
         .stroke();
 
       document
-        .circle(center, 67, 20)
+        .roundedRect(center - 88, 37, 176, 68, 11)
         .fill(CERTIFICATE_COLORS.navy);
       document
-        .circle(center, 67, 15)
-        .lineWidth(1)
-        .strokeColor(CERTIFICATE_COLORS.gold)
-        .stroke();
-      document
-        .font('Times-Bold')
-        .fontSize(21)
-        .fillColor(CERTIFICATE_COLORS.white)
-        .text('K', center - 10, 54, { width: 20, align: 'center' });
-      document
-        .font('Helvetica-Bold')
-        .fontSize(10)
-        .fillColor(CERTIFICATE_COLORS.navy)
-        .text('KOOLER', center - 50, 92, { width: 100, align: 'center' });
+        .image(KOOLER_LOGO_PATH, center - 78, 41, {
+          fit: [156, 60],
+          align: 'center',
+          valign: 'center',
+        });
 
       document
         .font('Helvetica-Bold')
@@ -509,9 +506,21 @@ export class CertificatesService {
         });
       document
         .moveTo(center - 100, 150)
+        .lineTo(center - 50, 150)
+        .lineWidth(2.2)
+        .strokeColor(CERTIFICATE_COLORS.logoOrange)
+        .stroke()
+        .moveTo(center - 50, 150)
+        .lineTo(center, 150)
+        .strokeColor(CERTIFICATE_COLORS.logoTeal)
+        .stroke()
+        .moveTo(center, 150)
+        .lineTo(center + 50, 150)
+        .strokeColor(CERTIFICATE_COLORS.logoBlue)
+        .stroke()
+        .moveTo(center + 50, 150)
         .lineTo(center + 100, 150)
-        .lineWidth(1.2)
-        .strokeColor(CERTIFICATE_COLORS.gold)
+        .strokeColor(CERTIFICATE_COLORS.logoPurple)
         .stroke();
 
       document
@@ -614,20 +623,18 @@ export class CertificatesService {
         .strokeColor(CERTIFICATE_COLORS.gold)
         .stroke();
       document
-        .font('Times-Bold')
-        .fontSize(20)
-        .fillColor(CERTIFICATE_COLORS.blue)
-        .text('K', width - 95, height - 100, { width: 22, align: 'center' })
-        .font('Helvetica-Bold')
-        .fontSize(5.5)
-        .fillColor(CERTIFICATE_COLORS.muted)
-        .text('KOOLER', width - 112, height - 77, {
-          width: 56,
+        .roundedRect(width - 112, height - 95, 56, 24, 4)
+        .fill(CERTIFICATE_COLORS.navy);
+      document
+        .image(KOOLER_LOGO_PATH, width - 110, height - 94, {
+          fit: [52, 22],
           align: 'center',
-          characterSpacing: 0.8,
-        })
+          valign: 'center',
+        });
+      document
         .font('Helvetica')
         .fontSize(5)
+        .fillColor(CERTIFICATE_COLORS.muted)
         .text('PARTICIPACIÓN', width - 112, height - 67, {
           width: 56,
           align: 'center',

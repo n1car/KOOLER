@@ -189,6 +189,7 @@ describe('CertificatesService', () => {
 
     expect(result.fileName).toBe('certificate-CERT-10-20.pdf');
     expect(result.content.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(result.content.includes(Buffer.from('/Subtype /Image'))).toBe(true);
     expect(pdfDocumentFactory).toHaveBeenCalledWith({
       size: 'A4',
       layout: 'landscape',
