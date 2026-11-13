@@ -410,7 +410,6 @@ export class ActivitiesService {
 
       const [relations] = (await manager.query(
         `SELECT
-           (SELECT COUNT(*) FROM sessions WHERE id_activity = $1) AS sessions,
            (SELECT COUNT(*) FROM enrollments WHERE id_activity = $1) AS enrollments,
            (SELECT COUNT(*)
             FROM attendances attendance
@@ -421,7 +420,6 @@ export class ActivitiesService {
            (SELECT COUNT(*) FROM certificates WHERE id_activity = $1) AS certificates`,
         [id],
       )) as Array<{
-        sessions: number | string;
         enrollments: number | string;
         attendances: number | string;
         reviews: number | string;
@@ -429,7 +427,6 @@ export class ActivitiesService {
       }>;
 
       const blockers = [
-        { label: 'sesiones', count: Number(relations.sessions) },
         { label: 'inscripciones', count: Number(relations.enrollments) },
         { label: 'asistencias', count: Number(relations.attendances) },
         { label: 'reseñas', count: Number(relations.reviews) },
@@ -445,6 +442,10 @@ export class ActivitiesService {
       }
 
       try {
+        await manager.query(
+          'DELETE FROM sessions WHERE id_activity = $1',
+          [id],
+        );
         await manager.query(
           'DELETE FROM activities WHERE id_activity = $1',
           [id],

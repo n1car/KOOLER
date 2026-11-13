@@ -131,13 +131,13 @@ describe('ActivitiesService (Persona N)', () => {
       .mockResolvedValueOnce([{ id_organizer: 1 }])
       .mockResolvedValueOnce([
         {
-          sessions: '0',
           enrollments: '0',
           attendances: '0',
           reviews: '0',
           certificates: '0',
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
     await expect(
@@ -153,6 +153,41 @@ describe('ActivitiesService (Persona N)', () => {
     );
     expect(transactionQuery).toHaveBeenNthCalledWith(
       3,
+      'DELETE FROM sessions WHERE id_activity = $1',
+      [10],
+    );
+    expect(transactionQuery).toHaveBeenNthCalledWith(
+      4,
+      'DELETE FROM activities WHERE id_activity = $1',
+      [10],
+    );
+  });
+
+  it('elimina varias sesiones antes de eliminar su actividad', async () => {
+    transactionQuery
+      .mockResolvedValueOnce([{ id_organizer: 1 }])
+      .mockResolvedValueOnce([
+        {
+          enrollments: '0',
+          attendances: '0',
+          reviews: '0',
+          certificates: '0',
+        },
+      ])
+      .mockResolvedValueOnce([{ id_session: 4 }, { id_session: 5 }])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      service.deletePermanently(10, mockOrganizer),
+    ).resolves.toMatchObject({ id: 10 });
+
+    expect(transactionQuery).toHaveBeenNthCalledWith(
+      3,
+      'DELETE FROM sessions WHERE id_activity = $1',
+      [10],
+    );
+    expect(transactionQuery).toHaveBeenNthCalledWith(
+      4,
       'DELETE FROM activities WHERE id_activity = $1',
       [10],
     );
@@ -176,26 +211,57 @@ describe('ActivitiesService (Persona N)', () => {
     expect(transactionQuery).toHaveBeenCalledTimes(1);
   });
 
-  it('conserva actividades con sesiones, inscripciones o certificados asociados', async () => {
+  it.each([
+    {
+      relation: 'inscripciones',
+      counts: {
+        enrollments: '1',
+        attendances: '0',
+        reviews: '0',
+        certificates: '0',
+      },
+    },
+    {
+      relation: 'asistencias',
+      counts: {
+        enrollments: '0',
+        attendances: '1',
+        reviews: '0',
+        certificates: '0',
+      },
+    },
+    {
+      relation: 'reseñas',
+      counts: {
+        enrollments: '0',
+        attendances: '0',
+        reviews: '1',
+        certificates: '0',
+      },
+    },
+    {
+      relation: 'certificados',
+      counts: {
+        enrollments: '0',
+        attendances: '0',
+        reviews: '0',
+        certificates: '1',
+      },
+    },
+  ])('rechaza eliminar una actividad con $relation', async ({ counts }) => {
     transactionQuery
       .mockResolvedValueOnce([{ id_organizer: 1 }])
-      .mockResolvedValueOnce([
-        {
-          sessions: '1',
-          enrollments: '2',
-          attendances: '1',
-          reviews: '0',
-          certificates: '1',
-        },
-      ]);
+      .mockResolvedValueOnce([counts]);
 
-    await expect(
-      service.deletePermanently(10, mockOrganizer),
-    ).rejects.toMatchObject({
-      message: expect.stringContaining('certificados'),
-      status: 409,
-    });
+    const deletion = service.deletePermanently(10, mockOrganizer);
+    await expect(deletion).rejects.toBeInstanceOf(ConflictException);
+    await expect(deletion).rejects.toMatchObject({ status: 409 });
     expect(transactionQuery).toHaveBeenCalledTimes(2);
+    expect(
+      transactionQuery.mock.calls.filter(
+        ([sql]) => typeof sql === 'string' && sql.startsWith('DELETE FROM'),
+      ),
+    ).toHaveLength(0);
   });
 
   it('traduce una restricción de clave foránea en un conflicto seguro', async () => {
@@ -203,13 +269,13 @@ describe('ActivitiesService (Persona N)', () => {
       .mockResolvedValueOnce([{ id_organizer: 1 }])
       .mockResolvedValueOnce([
         {
-          sessions: '0',
           enrollments: '0',
           attendances: '0',
           reviews: '0',
           certificates: '0',
         },
       ])
+      .mockResolvedValueOnce([])
       .mockRejectedValueOnce({ driverError: { code: '23503' } });
 
     await expect(

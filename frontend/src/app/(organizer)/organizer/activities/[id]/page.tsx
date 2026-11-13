@@ -357,9 +357,9 @@ export default function OrganizerActivityDetailPage() {
               id="delete-activity-description"
             >
               La actividad se borrará permanentemente. No se puede deshacer.
-              Para proteger el historial, el sistema rechazará la eliminación
-              si existen sesiones, inscripciones, asistencias, reseñas o
-              certificados asociados.
+              Las sesiones asociadas también se eliminarán. Para proteger el
+              historial, el sistema rechazará la acción si existen
+              inscripciones, asistencias, reseñas o certificados asociados.
             </p>
             {deleteError && (
               <div className="mt-4">

@@ -339,7 +339,7 @@ La API utiliza el prefijo `/api`.
 | `POST` | `/api/activities` | Organizador | Crea una actividad. |
 | `PATCH` | `/api/activities/:id` | Organizador autorizado | Modifica una actividad propia. |
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad sin eliminarla. |
-| `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina una actividad únicamente cuando no tiene sesiones, inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si existen relaciones. |
+| `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina sesiones y actividad si no hay inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si hay registros protegidos. |
 | `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |
 | `GET` | `/api/activities/:id/enrollments` | Organizador autorizado | Consulta las inscripciones de una actividad propia. |
 | `GET` | `/api/activities/my-enrollments` | Estudiante | Consulta las inscripciones del estudiante autenticado. |
