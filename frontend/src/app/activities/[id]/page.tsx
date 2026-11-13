@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StudentShell } from "@/components/AppShell";
 import { RequireRole } from "@/components/RequireRole";
@@ -10,13 +10,19 @@ import {
   ChevronLeftIcon,
   MapPinIcon,
   StarIcon,
-  TrophyIcon,
   UsersIcon,
 } from "@/components/icons";
 import { formatDateLong, formatTimeRange } from "@/lib/format";
 import { activityTypeColor } from "@/lib/category";
 import { api, ApiError } from "@/lib/api";
-import type { Activity, ReviewSummary, Session } from "@/lib/types";
+import { CertificateAccessSection } from "./CertificateAccessSection";
+import type {
+  Activity,
+  Certificate,
+  Eligibility,
+  ReviewSummary,
+  Session,
+} from "@/lib/types";
 
 export default function ActivityDetailPage() {
   const params = useParams<{ id: string }>();
@@ -33,6 +39,47 @@ export default function ActivityDetailPage() {
   const [notice, setNotice] = useState("");
   const [enrolling, setEnrolling] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
+  const [certificateId, setCertificateId] = useState<number | null>(null);
+  const [certificateLoading, setCertificateLoading] = useState(false);
+  const [certificateError, setCertificateError] = useState("");
+  const [certificateDownloading, setCertificateDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
+  const downloadLock = useRef(false);
+
+  const loadCertificateProgress = useCallback(async (activityId: number) => {
+    setCertificateLoading(true);
+    setCertificateError("");
+    setEligibility(null);
+    setCertificateId(null);
+    setDownloadMessage(null);
+
+    try {
+      const result = await api.certificates.eligibility(activityId);
+      setEligibility(result);
+      if (result.eligible) {
+        const certificates = await api.certificates.list().catch((err: unknown) => {
+          if (err instanceof ApiError && err.status === 404) return [];
+          throw err;
+        });
+        const certificate = certificates.find(
+          (item: Certificate) => item.activityId === activityId,
+        );
+        setCertificateId(certificate?.id ?? null);
+      }
+    } catch (err) {
+      setCertificateError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo consultar la elegibilidad del certificado.",
+      );
+    } finally {
+      setCertificateLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     if (!Number.isFinite(id)) {
@@ -53,7 +100,16 @@ export default function ActivityDetailPage() {
       setActivity(detail);
       setSessions(sessionList);
       setReviews(reviewSummary);
-      setEnrolled(enrollments.some((item) => item.activity.id === id));
+      const isEnrolled = enrollments.some((item) => item.activity.id === id);
+      setEnrolled(isEnrolled);
+      if (isEnrolled && detail.isCertifiable) {
+        await loadCertificateProgress(id);
+      } else {
+        setEligibility(null);
+        setCertificateId(null);
+        setCertificateLoading(false);
+        setCertificateError("");
+      }
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -63,7 +119,7 @@ export default function ActivityDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadCertificateProgress]);
 
   useEffect(() => {
     void load();
@@ -86,6 +142,9 @@ export default function ActivityDetailPage() {
             }
           : prev,
       );
+      if (activity.isCertifiable) {
+        void loadCertificateProgress(id);
+      }
       setNotice("¡Inscripción realizada exitosamente!");
     } catch (err) {
       setEnrollError(
@@ -95,6 +154,31 @@ export default function ActivityDetailPage() {
       );
     } finally {
       setEnrolling(false);
+    }
+  }
+
+  async function downloadCertificate() {
+    if (certificateId === null || downloadLock.current) return;
+    downloadLock.current = true;
+    setCertificateDownloading(true);
+    setDownloadMessage(null);
+    try {
+      await api.certificates.download(certificateId);
+      setDownloadMessage({
+        tone: "success",
+        text: "La descarga del certificado comenzó.",
+      });
+    } catch (err) {
+      setDownloadMessage({
+        tone: "error",
+        text:
+          err instanceof ApiError
+            ? err.message
+            : "No se pudo descargar el certificado.",
+      });
+    } finally {
+      downloadLock.current = false;
+      setCertificateDownloading(false);
     }
   }
 
@@ -217,24 +301,18 @@ export default function ActivityDetailPage() {
             </div>
           )}
 
-          {activity.isCertifiable && (
-            <div className="flex gap-3 rounded-card border border-[#F2E3A7] bg-[#FFFBEB] p-4">
-              <TrophyIcon
-                width={22}
-                height={22}
-                className="shrink-0 text-[#FE9A00]"
-              />
-              <div className="flex flex-col gap-1">
-                <h2 className="text-sm font-bold text-[#92400E]">
-                  Certificación de participación
-                </h2>
-                <p className="text-sm text-[#B45309]">
-                  Esta actividad cuenta para tu certificación. Completar tu
-                  asistencia sumará esta actividad a tu progreso.
-                </p>
-              </div>
-            </div>
-          )}
+          <CertificateAccessSection
+            enrolled={enrolled}
+            certifiable={activity.isCertifiable}
+            loading={certificateLoading}
+            error={certificateError}
+            eligibility={eligibility}
+            certificateAvailable={certificateId !== null}
+            downloading={certificateDownloading}
+            downloadMessage={downloadMessage}
+            onRetry={() => void loadCertificateProgress(id)}
+            onDownload={() => void downloadCertificate()}
+          />
 
           {activity.status === "ACTIVE" && (
             <div className="my-4">
