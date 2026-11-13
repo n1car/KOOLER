@@ -8,7 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import PDFDocument from 'pdfkit';
 import { QueryFailedError } from 'typeorm';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { EnrollmentEntity } from '../activities/entities/enrollment.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
@@ -34,6 +34,8 @@ const createSessions = (count: number, activityId = 20): SessionEntity[] =>
   Array.from({ length: count }, (_, index) => ({
     id: index + 1,
     activity: { id: activityId },
+    sessionDate: '2020-01-01',
+    endTime: '11:00',
   })) as SessionEntity[];
 
 const createAttendance = (
@@ -135,6 +137,10 @@ describe('CertificatesService', () => {
     }).compile();
 
     service = module.get(CertificatesService);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   const mockStudentEligibility = (
@@ -244,6 +250,34 @@ describe('CertificatesService', () => {
       attendancePercentage: 60,
       eligible: false,
       reason: 'BELOW_MINIMUM',
+    });
+  });
+
+  it('refleja las sesiones pendientes y evita presentar elegibilidad antes de que terminen', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:00:00.000Z'));
+    const sessions = [
+      ...createSessions(1),
+      {
+        ...createSessions(1)[0],
+        id: 2,
+        sessionDate: '2026-11-12',
+        endTime: '05:00',
+      },
+    ] as SessionEntity[];
+    mockStudentEligibility(
+      sessions,
+      [
+        createAttendance(10, 1, 'PRESENT'),
+        createAttendance(10, 2, 'PRESENT'),
+      ],
+    );
+
+    await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
+      sessionsTotal: 2,
+      sessionsPending: 1,
+      eligible: false,
+      reason: 'SESSIONS_PENDING',
     });
   });
 
@@ -381,6 +415,71 @@ describe('CertificatesService', () => {
     });
     expect(enrollmentRepository.find).not.toHaveBeenCalled();
     expect(certificateRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('aplaza certificados mientras una sesión futura o inválida siga pendiente', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:00:00.000Z'));
+    activityRepository.findOneBy.mockResolvedValue(createActivity());
+    sessionRepository.find.mockResolvedValue([
+      ...createSessions(1),
+      {
+        ...createSessions(1)[0],
+        id: 2,
+        sessionDate: '2026-11-12',
+        endTime: '05:00',
+      },
+    ]);
+
+    await expect(service.issueEligibleCertificates(20)).resolves.toEqual({
+      activityId: 20,
+      eligibleStudents: 0,
+      issuedCertificates: 0,
+      existingCertificates: 0,
+      failedStudents: 0,
+    });
+    expect(enrollmentRepository.find).not.toHaveBeenCalled();
+    expect(certificateRepository.save).not.toHaveBeenCalled();
+
+    sessionRepository.find.mockResolvedValue([
+      { ...createSessions(1)[0], endTime: null },
+    ]);
+    await service.issueEligibleCertificates(20);
+    expect(enrollmentRepository.find).not.toHaveBeenCalled();
+    expect(certificateRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('reevalúa y emite al terminar la última sesión con el umbral del 80 por ciento', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:59:59.999Z'));
+    const sessions = createSessions(5).map((session, index) =>
+      index === 4
+        ? { ...session, sessionDate: '2026-11-12', endTime: '05:00' }
+        : session,
+    );
+    activityRepository.findOneBy.mockResolvedValue(createActivity());
+    sessionRepository.find.mockResolvedValue(sessions);
+    enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
+    attendanceRepository.find.mockResolvedValue(
+      Array.from({ length: 4 }, (_, index) =>
+        createAttendance(10, index + 1, 'PRESENT'),
+      ),
+    );
+    certificateRepository.findOne.mockResolvedValue(null);
+    certificateRepository.save.mockResolvedValue(createCertificate(10));
+
+    const deferred = await service.issueEligibleCertificates(20);
+    expect(deferred.issuedCertificates).toBe(0);
+    expect(enrollmentRepository.find).not.toHaveBeenCalled();
+
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+    const issued = await service.issueEligibleCertificates(20);
+    expect(issued).toMatchObject({
+      eligibleStudents: 1,
+      issuedCertificates: 1,
+      existingCertificates: 0,
+    });
+    expect(certificateRepository.save).toHaveBeenCalledOnce();
   });
 
   it('emite únicamente al estudiante que alcanza el umbral', async () => {

@@ -318,14 +318,49 @@ describe('ActivitiesService (Persona N)', () => {
     );
   });
 
-  it('does not allow manually finishing an activity before its Bogota end time', async () => {
+  it.each([0, 3])(
+    'allows the owner to finish an ACTIVE activity early with %i enrollments',
+    async (enrollmentCount) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-12T09:30:00.000Z'));
+      const activity = {
+        ...mockActivity,
+        date: '2026-11-12',
+        startTime: '04:00',
+        endTime: '05:00',
+        enrollments: Array.from({ length: enrollmentCount }, (_, index) => ({
+          id: index + 1,
+        })),
+      } as unknown as ActivityEntity;
+      activityRepo.findOne.mockResolvedValue(activity);
+
+      await expect(
+        service.update(10, { status: 'FINISHED' }, mockOrganizer),
+      ).resolves.toMatchObject({ status: 'FINISHED' });
+      expect(activityRepo.save).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('rejects an organizer who is not the owner from manually finishing early', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-12T09:30:00.000Z'));
     const activity = {
       ...mockActivity,
       date: '2026-11-12',
-      startTime: '04:00',
       endTime: '05:00',
+    } as unknown as ActivityEntity;
+    activityRepo.findOne.mockResolvedValue(activity);
+
+    await expect(
+      service.update(10, { status: 'FINISHED' }, mockOtherUser),
+    ).rejects.toThrow(ForbiddenException);
+    expect(activityRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects manually finishing an activity that is not ACTIVE', async () => {
+    const activity = {
+      ...mockActivity,
+      status: 'CANCELLED',
     } as unknown as ActivityEntity;
     activityRepo.findOne.mockResolvedValue(activity);
 
@@ -333,14 +368,9 @@ describe('ActivitiesService (Persona N)', () => {
       service.update(10, { status: 'FINISHED' }, mockOrganizer),
     ).rejects.toThrow(BadRequestException);
     expect(activityRepo.save).not.toHaveBeenCalled();
-
-    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
-    await expect(
-      service.update(10, { status: 'FINISHED' }, mockOrganizer),
-    ).resolves.toMatchObject({ status: 'FINISHED' });
   });
 
-  it('keeps a started activity active until its end time and repairs an early FINISHED status', async () => {
+  it('preserves a manually finished activity before its scheduled end', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-12T09:30:00.000Z'));
     const activity = {
@@ -352,19 +382,15 @@ describe('ActivitiesService (Persona N)', () => {
       registrationDeadline: new Date('2026-11-12T10:30:00.000Z'),
     } as unknown as ActivityEntity;
     activityRepo.findOne.mockResolvedValue(activity);
-    enrollmentRepo.findOne.mockResolvedValue(null);
-    enrollmentRepo.count.mockResolvedValue(0);
 
     const detail = await service.findOne(10);
-    expect(detail.status).toBe('ACTIVE');
-    expect(activityRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'ACTIVE' }),
-    );
+    expect(detail.status).toBe('FINISHED');
+    expect(activityRepo.save).not.toHaveBeenCalled();
 
-    await expect(service.enroll(10, mockStudent)).resolves.toMatchObject({
-      message: 'Inscripción realizada exitosamente',
-    });
-    expect(activity.status).toBe('ACTIVE');
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(activity.status).toBe('FINISHED');
   });
 
   it('finalizes activities from previous Colombia-local dates', async () => {

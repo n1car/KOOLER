@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { ActivitiesService } from '../activities/activities.service';
 import { SessionEntity } from '../activities/entities/session.entity';
+import { hasSessionEndElapsed } from '../activities/session-time';
 import { CertificatesService } from '../certificates/certificates.service';
 import { UsersService } from '../users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
@@ -81,6 +82,11 @@ export class AttendanceService {
     if (activity.status !== 'FINISHED') {
       throw new BadRequestException(
         'Solo se puede registrar asistencia en actividades finalizadas',
+      );
+    }
+    if (!hasSessionEndElapsed(session.sessionDate, session.endTime)) {
+      throw new BadRequestException(
+        'Solo se puede registrar asistencia cuando la sesión haya terminado en Colombia',
       );
     }
 

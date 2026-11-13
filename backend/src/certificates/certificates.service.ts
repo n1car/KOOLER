@@ -14,6 +14,7 @@ import { In, QueryFailedError, Repository } from 'typeorm';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { EnrollmentEntity } from '../activities/entities/enrollment.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
+import { hasSessionEndElapsed } from '../activities/session-time';
 import { AttendanceEntity } from '../attendance/entities/attendance.entity';
 import { CertificateEntity } from './entities/certificate.entity';
 
@@ -30,6 +31,7 @@ export type EligibilityReason =
   | 'ACTIVITY_NOT_FINISHED'
   | 'ACTIVITY_NOT_CERTIFIABLE'
   | 'NO_SESSIONS'
+  | 'SESSIONS_PENDING'
   | 'BELOW_MINIMUM';
 
 export interface CertificateEligibility {
@@ -38,6 +40,7 @@ export interface CertificateEligibility {
   sessionsPresent: number;
   attendancePercentage: number;
   minimumAttendancePercentage: number;
+  sessionsPending: number;
   eligible: boolean;
   reason?: EligibilityReason;
 }
@@ -167,6 +170,15 @@ export class CertificatesService {
         failedStudents: 0,
       };
     }
+    if (this.countPendingSessions(sessions) > 0) {
+      return {
+        activityId,
+        eligibleStudents: 0,
+        issuedCertificates: 0,
+        existingCertificates: 0,
+        failedStudents: 0,
+      };
+    }
 
     const enrollments = await this.enrollmentRepository.find({
       where: { activity: { id: activityId } },
@@ -284,6 +296,8 @@ export class CertificatesService {
       reason = 'ACTIVITY_NOT_CERTIFIABLE';
     } else if (sessionsTotal === 0) {
       reason = 'NO_SESSIONS';
+    } else if (this.countPendingSessions(sessions) > 0) {
+      reason = 'SESSIONS_PENDING';
     } else if (
       sessionsPresent * 100 <
       sessionsTotal * MINIMUM_ATTENDANCE_PERCENTAGE
@@ -297,9 +311,20 @@ export class CertificatesService {
       sessionsPresent,
       attendancePercentage,
       minimumAttendancePercentage: MINIMUM_ATTENDANCE_PERCENTAGE,
+      sessionsPending: this.countPendingSessions(sessions),
       eligible: reason === undefined,
       ...(reason ? { reason } : {}),
     };
+  }
+
+  private countPendingSessions(
+    sessions: SessionEntity[],
+    now: Date = new Date(),
+  ): number {
+    return sessions.filter(
+      (session) =>
+        !hasSessionEndElapsed(session.sessionDate, session.endTime, now),
+    ).length;
   }
 
   private async issueCertificate(

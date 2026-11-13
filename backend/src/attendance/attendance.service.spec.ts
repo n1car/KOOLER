@@ -6,7 +6,7 @@ import {
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueryFailedError } from 'typeorm';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
@@ -107,6 +107,10 @@ describe('AttendanceService', () => {
     service = module.get(AttendanceService);
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   // La marcación requiere que coincidan propietario, actividad, sesión y estudiante inscrito.
   it('registra asistencia para estudiante inscrito y propietario autenticado', async () => {
     const user = createUser();
@@ -135,6 +139,45 @@ describe('AttendanceService', () => {
       status: 'PRESENT',
     });
     expect(attendanceRepository.save).toHaveBeenCalledWith(attendance);
+  });
+
+  it('permite registrar asistencia justo cuando termina la sesión en Colombia', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+    const user = createUser();
+    const session = {
+      ...createSession(createActivity(), 5),
+      sessionDate: '2026-11-12',
+      endTime: '05:00',
+    };
+    const attendance = { user, session, status: 'PRESENT' };
+    usersService.findById.mockResolvedValue(user);
+    sessionRepository.findOne.mockResolvedValue(session);
+    attendanceRepository.create.mockReturnValue(attendance);
+    attendanceRepository.save.mockResolvedValue(attendance);
+
+    await expect(
+      service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
+    ).resolves.toBe(attendance);
+  });
+
+  it('rechaza una sesión hasta que su hora final pase en Colombia', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T09:59:59.999Z'));
+    const user = createUser();
+    const session = {
+      ...createSession(createActivity(), 5),
+      sessionDate: '2026-11-12',
+      endTime: '05:00',
+    };
+    usersService.findById.mockResolvedValue(user);
+    sessionRepository.findOne.mockResolvedValue(session);
+
+    await expect(
+      service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
+    ).rejects.toThrow(BadRequestException);
+    expect(attendanceRepository.create).not.toHaveBeenCalled();
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
   it('rechaza una sesión que no pertenece a la actividad indicada', async () => {

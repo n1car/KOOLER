@@ -144,11 +144,13 @@ export interface Eligibility {
   sessionsPresent: number;
   attendancePercentage: number;
   minimumAttendancePercentage: number;
+  sessionsPending: number;
   eligible: boolean;
   reason?:
     | "ACTIVITY_NOT_FINISHED"
     | "ACTIVITY_NOT_CERTIFIABLE"
     | "NO_SESSIONS"
+    | "SESSIONS_PENDING"
     | "BELOW_MINIMUM";
 }
 

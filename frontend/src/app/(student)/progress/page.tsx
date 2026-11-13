@@ -29,6 +29,8 @@ function getEligibilityMessage(eligibility: Eligibility): string {
       return "Esta actividad no entrega certificados.";
     case "NO_SESSIONS":
       return "Aún no hay sesiones registradas para calcular la asistencia.";
+    case "SESSIONS_PENDING":
+      return `Quedan ${eligibility.sessionsPending} sesiones por finalizar; la elegibilidad se confirmará después.`;
     case "BELOW_MINIMUM":
       return "Tu asistencia todavía no alcanza el porcentaje mínimo requerido.";
     default:
@@ -115,6 +117,8 @@ export default function ProgressPage() {
                 <span>
                   {eligibility.sessionsPresent}/{eligibility.sessionsTotal}{" "}
                   sesiones · mínimo {eligibility.minimumAttendancePercentage}%
+                  {eligibility.sessionsPending > 0 &&
+                    ` · ${eligibility.sessionsPending} pendientes`}
                 </span>
                 <Badge tone={eligibility.eligible ? "success" : "muted"}>
                   {eligibility.eligible ? (

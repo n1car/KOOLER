@@ -13,6 +13,7 @@ import {
   LoadingState,
   StatusBadge,
 } from "@/components/ui";
+import { FinishActivityDialog } from "@/components/activities/FinishActivityDialog";
 import { CertificateIcon } from "@/components/icons";
 import { formatDate, formatDateLong, formatTimeRange } from "@/lib/format";
 import { api, ApiError } from "@/lib/api";
@@ -30,6 +31,8 @@ export default function OrganizerActivityDetailPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [finishDialogOpen, setFinishDialogOpen] = useState(false);
+  const [finishEnrolledCount, setFinishEnrolledCount] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [sessionForm, setSessionForm] = useState({
@@ -71,15 +74,46 @@ export default function OrganizerActivityDetailPage() {
     void load();
   }, [load]);
 
-  async function finishActivity() {
+  async function performFinish() {
+    if (!activity) return;
+    await api.activities.update(id, { status: "FINISHED" });
+    setFinishDialogOpen(false);
+    await load();
+    setNotice("Actividad finalizada. Ya puedes registrar asistencia.");
+  }
+
+  async function requestFinish() {
     if (!activity || busy) return;
     setBusy(true);
     setNotice("");
     setError("");
     try {
-      await api.activities.update(id, { status: "FINISHED" });
-      setActivity((prev) => (prev ? { ...prev, status: "FINISHED" } : prev));
-      setNotice("Actividad finalizada. Ya puedes registrar asistencia.");
+      const latestRoster = await api.activities.enrollments(id);
+      setRoster(latestRoster);
+      if (latestRoster.totalEnrolled > 0) {
+        setFinishEnrolledCount(latestRoster.totalEnrolled);
+        setFinishDialogOpen(true);
+        return;
+      }
+      await performFinish();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo finalizar la actividad.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmFinish() {
+    if (!activity || busy) return;
+    setBusy(true);
+    setNotice("");
+    setError("");
+    try {
+      await performFinish();
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -207,7 +241,7 @@ export default function OrganizerActivityDetailPage() {
             variant="outline"
             fullWidth
             loading={busy}
-            onClick={finishActivity}
+            onClick={requestFinish}
           >
             Finalizar actividad
           </Button>
@@ -326,6 +360,15 @@ export default function OrganizerActivityDetailPage() {
           </ul>
         )}
       </Card>
+
+      {finishDialogOpen && (
+        <FinishActivityDialog
+          enrolledCount={finishEnrolledCount}
+          busy={busy}
+          onCancel={() => setFinishDialogOpen(false)}
+          onConfirm={confirmFinish}
+        />
+      )}
 
       {deleteDialogOpen && (
         <div

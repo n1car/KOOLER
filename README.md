@@ -337,7 +337,7 @@ La API utiliza el prefijo `/api`.
 | `GET` | `/api/activities` | Público o autenticado | Consulta las actividades y sus filtros disponibles. |
 | `GET` | `/api/activities/:id` | Público o autenticado | Consulta el detalle de una actividad. |
 | `POST` | `/api/activities` | Organizador | Crea una actividad. |
-| `PATCH` | `/api/activities/:id` | Organizador autorizado | Modifica una actividad propia. |
+| `PATCH` | `/api/activities/:id` | Organizador propietario | Modifica una actividad propia y permite finalizarla manualmente antes de su horario si está `ACTIVE`. |
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad sin eliminarla. |
 | `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina sesiones y actividad si no hay inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si hay registros protegidos. |
 | `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |

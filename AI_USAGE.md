@@ -86,3 +86,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Herramienta:** GitHub Copilot.
 - **Uso:** apoyo puntual en el endpoint protegido y la confirmación de borrado permanente.
 - **Verificación:** `npm test`, `npm run lint`, `npm run build` y `npx tsc --noEmit -p tsconfig.build.json` (en verde).
+
+## Finalización anticipada y sesiones pendientes (Samuel)
+
+- **Herramienta:** GitHub Copilot.
+- **Uso:** apoyo puntual en las validaciones temporales de asistencia y elegibilidad.
+- **Verificación:** backend `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit -p tsconfig.build.json`; frontend `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit` (en verde).

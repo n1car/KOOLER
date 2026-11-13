@@ -142,7 +142,9 @@ export class ActivitiesService {
     activity: Pick<ActivityEntity, 'date' | 'endTime'>,
     currentStatus: ActivityEntity['status'],
   ): ActivityEntity['status'] {
-    if (currentStatus === 'CANCELLED') return currentStatus;
+    if (currentStatus === 'CANCELLED' || currentStatus === 'FINISHED') {
+      return currentStatus;
+    }
     if (!this.getLocalEnd(activity)) return currentStatus;
     return this.isPastEnd(activity) ? 'FINISHED' : 'ACTIVE';
   }
@@ -298,11 +300,7 @@ export class ActivitiesService {
     const { activityTypeId, locationId, registrationDeadline, ...rest } = updateDto;
 
     if (rest.status === 'FINISHED') {
-      const scheduledEnd = {
-        date: rest.date ?? activity.date,
-        endTime: rest.endTime ?? activity.endTime,
-      };
-      if (!this.isPastEnd(scheduledEnd)) {
+      if (activity.status !== 'ACTIVE') {
         this.traceStatus(
           'ActivitiesService.update',
           activity,
@@ -311,7 +309,7 @@ export class ActivitiesService {
           'rejected',
         );
         throw new BadRequestException(
-          'No se puede finalizar la actividad antes de su hora de finalización en Colombia',
+          'Solo se puede finalizar manualmente una actividad activa',
         );
       }
     }

@@ -333,6 +333,7 @@ export const mockEligibility: Record<number, Eligibility> = {
     sessionsPresent: 0,
     attendancePercentage: 0,
     minimumAttendancePercentage: 80,
+    sessionsPending: 2,
     eligible: false,
     reason: "ACTIVITY_NOT_FINISHED",
   },
@@ -342,6 +343,7 @@ export const mockEligibility: Record<number, Eligibility> = {
     sessionsPresent: 2,
     attendancePercentage: 100,
     minimumAttendancePercentage: 80,
+    sessionsPending: 0,
     eligible: true,
   },
   7: {
@@ -350,6 +352,7 @@ export const mockEligibility: Record<number, Eligibility> = {
     sessionsPresent: 1,
     attendancePercentage: 100,
     minimumAttendancePercentage: 80,
+    sessionsPending: 0,
     eligible: true,
   },
 };
