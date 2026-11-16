@@ -98,3 +98,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Herramienta:** GitHub Copilot.
 - **Uso:** apoyo puntual en la sección de elegibilidad y descarga del detalle estudiantil.
 - **Verificación:** frontend `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit`; backend pruebas de certificados (en verde).
+
+## Pantallas de Jhon para D3 (Jhon)
+
+- **Herramienta:** Codex.
+- **Uso:** apoyo puntual en el pulido visual de autenticación, historial y retroalimentación.
+- **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (en verde).
