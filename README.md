@@ -125,20 +125,20 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 
 **Objetivo de la entrega:** que el frontend consuma el backend con sesión real, permisos por rol, manejo de errores y al menos **2 de las 3 funcionalidades de punta a punta**.
 
-### Estado D3 y faltantes (actualizado 2026-11-11)
+### Estado D3 y faltantes (actualizado 2026-11-16)
 
 | Integrante | Funcionalidad | Backend | Frontend | Estado D3 |
 | :--- | :--- | :--- | :--- | :--- |
 | **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear/editar actividad. | **F1 completo de punta a punta**; Fase 0, cliente API de F2/F3 y despliegue completos. |
-| **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador (endpoints listos y probados). | Login, Registro y Cuenta creada integrados; lectura pública de reseñas en el detalle integrada; Historial, crear Valoración y Retroalimentación aún usan `mock.ts`. | **Auth completo**; F2 parcial (lectura pública lista, escritura/historial pendientes). |
+| **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador (endpoints listos y probados). | Login, Registro y Cuenta creada integrados; detalle, Historial, creación de valoraciones y Retroalimentación conectados a la API. | **Auth y F2 conectados**; falta ejecutar pruebas manuales del flujo. |
 | **S (Samuel)** | F3 | Asistencia por sesión, cálculo de porcentaje y certificados PDF (endpoints listos y probados). | Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado aún usan `mock.ts`. | **F3 backend completo**; F3 frontend parcial (panel listo, asistencia/progreso/certificado pendientes). |
 
 **Bloqueante para D3 (mínimo 2 de 3 funcionalidades de punta a punta):**
 
-* [ ] **J:** conectar F2 en el frontend: `GET /api/history`, `POST /api/reviews`, `GET /api/reviews/organizer/activity/:activityId` (la lectura pública del detalle ya está integrada).
+* [x] **J:** conectar F2 en el frontend: `GET /api/history`, `POST /api/reviews`, `GET /api/reviews/organizer/activity/:activityId` (la lectura pública del detalle ya está integrada).
 * [ ] **S:** conectar F3 en el frontend: asistencia (`GET/POST /api/activities/:id/sessions/:sessionId/attendance`), elegibilidad (`GET /api/certificates/activities/:activityId/eligibility`), certificados (`GET /api/certificates`) y descarga del PDF.
 * [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados agregados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
-* [ ] Cerrar **al menos una** de las dos integraciones para cumplir D3; para DF se necesitan las dos.
+* [x] F1 y F2 conectadas de punta a punta en el frontend; F3 sigue pendiente para DF.
 
 **Checklist de rúbrica D3:**
 
@@ -146,8 +146,8 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 * [x] Inicio y cierre de sesión integrados; token enviado en las peticiones.
 * [x] Rutas protegidas por rol (`RequireRole`) y manejo de 401/403.
 * [x] Hook personalizado (`useAuth`) en uso.
-* [ ] Dos funcionalidades principales de punta a punta (hoy solo F1).
-* [ ] Estados de carga, error, vacío y éxito auditados en F2/F3 al integrarlas.
+* [x] Dos funcionalidades principales conectadas de punta a punta (F1 y F2).
+* [ ] Estados de carga, error, vacío y éxito auditados en F2/F3.
 * [ ] Casos de prueba manuales documentados y ejecutados.
 * [ ] Planning y Figma actualizados si el diseño cambió.
 * [ ] Registro de problemas y decisiones de D3.
@@ -197,7 +197,7 @@ Responsable: **N**, con revisión de J y S.
 
 ### Persona J (Jhon) — Autenticación + Funcionalidad 2
 
-**Estado:** autenticación completa; F2 backend completo; lectura pública de reseñas integrada; Historial, creación de Valoraciones y Retroalimentación pendientes (usan `mock.ts`).
+**Estado:** autenticación completa; F2 backend y frontend conectados a la API; pruebas manuales pendientes.
 
 **Pantallas a cargo:** Login, Registro, Cuenta creada, Historial, Valoraciones y Retroalimentación.
 
@@ -273,13 +273,13 @@ Responsable: **N**, con revisión de J y S.
 | Autenticación y autorización | Obligatorio de punta a punta (J) — **completo** |
 | F1 — Actividades e inscripciones | Obligatorio de punta a punta (N) — **completo** |
 | F3 — Asistencia y certificados | Obligatorio de punta a punta (S) — **pendiente de integrar frontend** |
-| F2 — Reseñas e historial | Pantallas + plan; integrar si el tiempo alcanza (J) — **pendiente de integrar frontend** |
+| F2 — Reseñas e historial | Historial, valoraciones y retroalimentación conectados (J) — **integrado; pruebas manuales pendientes** |
 
 ### Orden de trabajo y dependencias
 
 1. N entrega la Fase 0 (API client, auth context, guards y estados). **Hecho.**
 2. J integra login/registro y deja el token funcionando. **Hecho.**
-3. En paralelo: N integra F1, S integra F3 y J integra F2. **F1 hecho; F2/F3 pendientes en frontend.**
+3. En paralelo: N integra F1, S integra F3 y J integra F2. **F1 y F2 integradas; F3 pendiente en frontend.**
 4. N publica backend, frontend y BD en Render/Neon; todos apuntan a la URL pública. **Hecho.**
 5. Pruebas manuales por flujo, README de integración y ensayo de sustentación. **Pendiente.**
 
@@ -312,7 +312,7 @@ Responsable: **N**, con revisión de J y S.
 * **Neon + `synchronize`:** se usa `DATABASE_URL_UNPOOLED` (conexión directa) para evitar problemas de PgBouncer al crear el esquema.
 * **Render free:** el primer request tras inactividad tarda ~50 s; el frontend usa `npm install --include=dev` para que el build tenga TypeScript/Tailwind.
 * **Dos cuentas de Render:** el servicio del equipo sigue en la cuenta de Samuel (`kooler-api`); la demo de Nico usa `kooler-api-neon` y `kooler-web-neon`.
-* **Datos mock:** Historial, Valoraciones, Retroalimentación, Asistencia y Progreso todavía leen `frontend/src/lib/mock.ts`; la capa API ya expone los métodos, pero falta que J y S conecten sus pantallas. Es el principal pendiente de D3.
+* **Datos mock:** Asistencia y Progreso todavía leen `frontend/src/lib/mock.ts`; F2 ya consume la API real. La integración frontend pendiente principal es F3, a cargo de S.
 
 ### Límite de commits para D3
 
