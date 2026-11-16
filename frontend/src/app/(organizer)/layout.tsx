@@ -12,6 +12,7 @@ export default function OrganizerLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isFeedbackPage = pathname.endsWith("/feedback");
 
   return (
     <RequireRole role="ORGANIZADOR">
@@ -19,6 +20,9 @@ export default function OrganizerLayout({
         bannerSrc={
           BANNER_ROUTES.includes(pathname) ? "/images/Banner.png" : undefined
         }
+        hideHeader={isFeedbackPage}
+        hideNav={isFeedbackPage}
+        fullBleed={isFeedbackPage}
       >
         {children}
       </OrganizerShell>
