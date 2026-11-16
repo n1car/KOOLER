@@ -32,7 +32,11 @@ export default function OrganizerFeedbackPage({
       setActivity(activityData);
       setSummary(reviews);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo cargar la retroalimentación.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo cargar la retroalimentación.",
+      );
     } finally {
       setLoading(false);
     }
@@ -64,12 +68,17 @@ export default function OrganizerFeedbackPage({
           backgroundSize: "cover",
         }}
       >
-        <Link href={`/organizer/activities/${id}`} className="relative z-10 inline-flex items-center gap-2 text-sm font-medium text-white/95">
+        <Link
+          href={`/organizer/activities/${id}`}
+          className="relative z-10 inline-flex items-center gap-2 text-sm font-medium text-white/95"
+        >
           <span aria-hidden="true">←</span> Volver
         </Link>
         <div className="flex flex-col gap-1">
           <p className="text-sm text-white/80">Retroalimentación</p>
-          <h1 className="text-2xl font-bold leading-tight">{activity?.name ?? "Actividad"}</h1>
+          <h1 className="text-2xl font-bold leading-tight">
+            {activity?.name ?? "Actividad"}
+          </h1>
         </div>
       </header>
 
@@ -84,13 +93,27 @@ export default function OrganizerFeedbackPage({
       ) : total === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-surface text-[#90A1B9]">
-            <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z" />
             </svg>
           </div>
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold text-foreground">Sin calificaciones aún</h2>
-            <p className="text-sm text-muted">Los estudiantes pueden calificar en su historial.</p>
+            <h2 className="text-lg font-bold text-foreground">
+              Sin calificaciones aún
+            </h2>
+            <p className="text-sm text-muted">
+              Los estudiantes pueden calificar en su historial.
+            </p>
           </div>
         </div>
       ) : (
@@ -108,7 +131,10 @@ export default function OrganizerFeedbackPage({
 
             <div className="flex flex-1 flex-col gap-2">
               {distribution.map(({ n, count }) => (
-                <div key={n} className="flex items-center gap-2 text-xs text-muted">
+                <div
+                  key={n}
+                  className="flex items-center gap-2 text-xs text-muted"
+                >
                   <span className="w-3">{n}</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
                     <div
@@ -124,13 +150,22 @@ export default function OrganizerFeedbackPage({
 
           <div className="flex flex-col gap-3">
             {items.map((review) => (
-              <Card key={review.id} className="flex flex-col gap-2 rounded-2xl border-0 p-4 shadow-[0_4px_20px_rgba(15,23,42,0.03)]">
+              <Card
+                key={review.id}
+                className="flex flex-col gap-2 rounded-2xl border-0 p-4 shadow-[0_4px_20px_rgba(15,23,42,0.03)]"
+              >
                 <div className="flex items-center justify-between">
                   <Stars value={review.rating} readOnly size={16} />
-                  <span className="text-xs text-muted">{formatDate(review.date)}</span>
+                  <span className="text-xs text-muted">
+                    {formatDate(review.date)}
+                  </span>
                 </div>
-                <p className="text-sm font-semibold text-foreground">{review.author}</p>
-                {review.comment && <p className="text-sm text-foreground">{review.comment}</p>}
+                <p className="text-sm font-semibold text-foreground">
+                  {review.author}
+                </p>
+                {review.comment && (
+                  <p className="text-sm text-foreground">{review.comment}</p>
+                )}
               </Card>
             ))}
           </div>
