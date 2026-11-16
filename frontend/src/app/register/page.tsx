@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Input, Select, cn } from "@/components/ui";
+import { AuthHero } from "@/components/AuthHero";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { RoleName } from "@/lib/types";
@@ -51,7 +52,8 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
-      <div className="flex flex-1 flex-col gap-6 px-6 py-10">
+      <AuthHero />
+      <div className="flex flex-1 flex-col gap-7 px-6 pb-10 pt-9">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-foreground">Crear cuenta</h1>
           <p className="text-sm text-muted">
@@ -106,7 +108,7 @@ export default function RegisterPage() {
             <option value="ORGANIZADOR">Organizador</option>
           </Select>
 
-          <Button type="submit" fullWidth loading={submitting}>
+          <Button type="submit" fullWidth loading={submitting} className="mt-1 rounded-full py-4">
             Registrarse
           </Button>
         </form>
