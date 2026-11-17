@@ -109,10 +109,10 @@ function ShellHeader({
   return (
     <header
       className={cn(
-        "z-20 flex items-center px-5",
+        "flex items-center px-5",
         overlay
-          ? "absolute inset-0"
-          : "sticky top-0 border-b border-border bg-white/95 py-3 backdrop-blur",
+          ? "absolute inset-0 z-40"
+          : "sticky top-0 z-20 border-b border-border bg-white/95 py-3 backdrop-blur",
         className,
       )}
     >
@@ -375,24 +375,42 @@ export function OrganizerShell({
   return (
     <AppContainer>
       {hideHeader ? null : bannerSrc ? (
-        <div className="relative h-[208px] w-full shrink-0 overflow-hidden lg:h-auto">
-          <Image
-            src={bannerSrc}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-left-bottom lg:hidden"
-          />
-          <Image
-            src="/images/bannerPC.png"
-            alt=""
-            width={5757}
-            height={1185}
-            priority
-            unoptimized
-            className="hidden h-auto w-full lg:block"
-          />
+        <div
+          className={cn(
+            "relative h-[208px] w-full shrink-0 overflow-hidden",
+            bannerArtSrc ? "lg:h-[300px]" : "lg:h-auto",
+          )}
+        >
+          {bannerArtSrc ? (
+            <Image
+              src={bannerSrc}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-left-bottom"
+            />
+          ) : (
+            <>
+              <Image
+                src={bannerSrc}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-left-bottom lg:hidden"
+              />
+              <Image
+                src="/images/bannerPC.png"
+                alt=""
+                width={5757}
+                height={1185}
+                priority
+                unoptimized
+                className="hidden h-auto w-full lg:block"
+              />
+            </>
+          )}
           <div
             aria-hidden="true"
             className="absolute inset-0 bg-[#242633]/20"
@@ -431,12 +449,12 @@ export function OrganizerShell({
             </div>
           )}
           {bannerArtSrc && (
-            <div className="absolute bottom-4 right-4 z-10 h-[132px] w-[132px] lg:hidden">
+            <div className="absolute bottom-4 right-4 z-10 h-[132px] w-[132px] lg:bottom-8 lg:right-10 lg:h-40 lg:w-40">
               <Image
                 src={bannerArtSrc}
                 alt=""
                 fill
-                sizes="132px"
+                sizes="(min-width: 1024px) 160px, 132px"
                 className="object-contain"
               />
             </div>

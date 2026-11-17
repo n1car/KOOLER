@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { ChevronLeftIcon } from "@/components/icons";
-import { activityTypeColor, categoryEmoji } from "@/lib/category";
+import { activityTypeColor } from "@/lib/category";
+import { getActivityImageSources } from "@/lib/activity-image";
 import type { Activity } from "@/lib/types";
 
 export function ActivityHero({
@@ -19,31 +20,42 @@ export function ActivityHero({
   const showImage = Boolean(
     activity.imageUrl && failedImageUrl !== activity.imageUrl,
   );
+  const categoryImageUrl = getActivityImageSources({
+    id: activity.id,
+    name: activity.name,
+    category: activity.activityType?.name,
+  })[0];
+  const heroImageUrl =
+    showImage && activity.imageUrl ? activity.imageUrl : categoryImageUrl;
+  const categoryColor = activityTypeColor(activity.activityType?.name);
 
   return (
     <div
       className="relative flex min-h-56 flex-col gap-4 overflow-hidden px-5 pb-10 pt-6 lg:min-h-72 lg:px-8"
-      style={{ backgroundColor: activityTypeColor(activity.activityType?.name) }}
+      style={{ backgroundColor: categoryColor }}
     >
-      {!showImage && (
-        <span
-          aria-hidden="true"
-          className="absolute right-8 top-8 text-7xl opacity-30 lg:text-8xl"
-        >
-          {categoryEmoji(activity.activityType?.name)}
-        </span>
-      )}
-      {showImage && activity.imageUrl && (
+      {heroImageUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={activity.imageUrl}
+          src={heroImageUrl}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-60"
-          onError={() => setFailedImageUrl(activity.imageUrl ?? null)}
+          className={`absolute inset-0 h-full w-full object-cover ${
+            showImage ? "opacity-60" : ""
+          }`}
+          onError={() => {
+            if (showImage) setFailedImageUrl(activity.imageUrl ?? null);
+          }}
         />
       )}
       {showImage && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      )}
+      {!showImage && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{ backgroundColor: categoryColor, opacity: 0.85 }}
+        />
       )}
 
       <button
