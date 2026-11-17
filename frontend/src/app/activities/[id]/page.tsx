@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StudentShell } from "@/components/AppShell";
 import { RequireRole } from "@/components/RequireRole";
-import { Alert, ErrorState, LoadingState, Stars } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  ErrorState,
+  LoadingState,
+  Stars,
+  StatusBadge,
+} from "@/components/ui";
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -15,6 +22,8 @@ import {
 import { formatDateLong, formatTimeRange } from "@/lib/format";
 import { activityTypeColor } from "@/lib/category";
 import { api, ApiError } from "@/lib/api";
+import { getEnrollmentAction } from "@/lib/enrollment";
+import type { EnrollmentActionKind } from "@/lib/enrollment";
 import { CertificateAccessSection } from "./CertificateAccessSection";
 import type {
   Activity,
@@ -23,6 +32,15 @@ import type {
   ReviewSummary,
   Session,
 } from "@/lib/types";
+
+const actionStyles: Record<EnrollmentActionKind, string> = {
+  enroll: "bg-black text-white active:opacity-90 disabled:opacity-60",
+  enrolled: "border border-[#8FE0B8] bg-[#CAFFE6] text-[#065F46]",
+  full: "border border-[#EDA9A9] bg-[#FFEBEB] text-[#991B1B]",
+  finished: "border border-[#E2E8F0] bg-surface-2 text-muted",
+  cancelled: "border border-[#EDA9A9] bg-[#FFEBEB] text-[#991B1B]",
+  deadline: "border border-[#E2E8F0] bg-surface-2 text-muted",
+};
 
 export default function ActivityDetailPage() {
   const params = useParams<{ id: string }>();
@@ -207,6 +225,7 @@ export default function ActivityDetailPage() {
   }
 
   const spots = activity.availableSpots ?? 0;
+  const enrollmentAction = getEnrollmentAction(activity, enrolled);
   const reviewItems = reviews?.items ?? [];
 
   return (
@@ -255,6 +274,12 @@ export default function ActivityDetailPage() {
             {activity.description}
           </p>
 
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={activity.status} />
+            {enrolled && <Badge tone="success">Inscrito</Badge>}
+            {activity.isCertifiable && <Badge tone="primary">Certificable</Badge>}
+          </div>
+
           <div className="flex flex-col gap-3">
             <p className="text-sm text-muted">
               {formatDateLong(activity.date)} ·{" "}
@@ -301,48 +326,40 @@ export default function ActivityDetailPage() {
             </div>
           )}
 
-          <CertificateAccessSection
-            enrolled={enrolled}
-            certifiable={activity.isCertifiable}
-            loading={certificateLoading}
-            error={certificateError}
-            eligibility={eligibility}
-            certificateAvailable={certificateId !== null}
-            downloading={certificateDownloading}
-            downloadMessage={downloadMessage}
-            onRetry={() => void loadCertificateProgress(id)}
-            onDownload={() => void downloadCertificate()}
-          />
+          <div className="my-4">
+            {enrollmentAction.kind === "enroll" ? (
+              <button
+                type="button"
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className={`w-full rounded-full px-5 py-3 text-[15px] font-semibold ${actionStyles.enroll}`}
+              >
+                {enrolling ? "Inscribiendo..." : enrollmentAction.label}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className={`w-full rounded-full px-5 py-3 text-[15px] font-semibold ${actionStyles[enrollmentAction.kind]}`}
+              >
+                {enrollmentAction.label}
+              </button>
+            )}
+          </div>
 
-          {activity.status === "ACTIVE" && (
-            <div className="my-4">
-              {enrolled ? (
-                <button
-                  type="button"
-                  disabled
-                  className="w-full rounded-full border border-[#8FE0B8] bg-[#CAFFE6] px-5 py-3 text-[15px] font-semibold text-[#065F46]"
-                >
-                  Ya estás inscrito en esta actividad
-                </button>
-              ) : spots <= 0 ? (
-                <button
-                  type="button"
-                  disabled
-                  className="w-full rounded-full border border-[#EDA9A9] bg-[#FFEBEB] px-5 py-3 text-[15px] font-semibold text-[#991B1B]"
-                >
-                  Agotado / Sin cupos
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="w-full rounded-full bg-black px-5 py-3 text-[15px] font-semibold text-white active:opacity-90 disabled:opacity-60"
-                >
-                  {enrolling ? "Inscribiendo..." : "Inscribirse"}
-                </button>
-              )}
-            </div>
+          {enrolled && (
+            <CertificateAccessSection
+              enrolled={enrolled}
+              certifiable={activity.isCertifiable}
+              loading={certificateLoading}
+              error={certificateError}
+              eligibility={eligibility}
+              certificateAvailable={certificateId !== null}
+              downloading={certificateDownloading}
+              downloadMessage={downloadMessage}
+              onRetry={() => void loadCertificateProgress(id)}
+              onDownload={() => void downloadCertificate()}
+            />
           )}
 
           {reviewItems.length > 0 && reviews && (

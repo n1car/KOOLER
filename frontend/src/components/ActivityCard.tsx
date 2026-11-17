@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { BookmarkIcon } from "./icons";
 import { activityTypeColor } from "@/lib/category";
+import type { ActivityStatus } from "@/lib/types";
+
 export interface ActivityCardData {
   id: number;
   name: string;
   imageUrl?: string | null;
   activityType?: { name: string } | null;
+  status?: ActivityStatus;
+  availableSpots?: number;
 }
 
 export function ActivityCard({
@@ -18,6 +22,14 @@ export function ActivityCard({
   enrolled?: boolean;
 }) {
   const color = activityTypeColor(activity.activityType?.name);
+  const statusLabel =
+    activity.status === "FINISHED"
+      ? "Finalizada"
+      : activity.status === "CANCELLED"
+        ? "Cancelada"
+        : activity.availableSpots === 0
+          ? "Sin cupos"
+          : null;
 
   return (
     <Link
@@ -32,6 +44,12 @@ export function ActivityCard({
           alt=""
           className="absolute inset-0 h-full w-full object-cover opacity-10"
         />
+      )}
+
+      {statusLabel && (
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-foreground">
+          {statusLabel}
+        </span>
       )}
 
       {enrolled && (
