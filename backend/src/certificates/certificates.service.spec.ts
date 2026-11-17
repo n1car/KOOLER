@@ -340,15 +340,16 @@ describe('CertificatesService', () => {
   });
 
   it('solo cuenta asistencias PRESENT asociadas a sesiones de la actividad', async () => {
-    const sessions = createSessions(1);
+    const sessions = createSessions(2);
     const attendanceFromAnotherActivity = createAttendance(10, 99, 'PRESENT', 999);
     mockStudentEligibility(sessions, [
       createAttendance(10, 1, 'ABSENT'),
+      createAttendance(10, 2, 'ABSENT'),
       attendanceFromAnotherActivity,
     ]);
 
     await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
-      sessionsTotal: 1,
+      sessionsTotal: 2,
       sessionsPresent: 0,
       attendancePercentage: 0,
       eligible: false,
@@ -373,6 +374,19 @@ describe('CertificatesService', () => {
     });
     expect(Number.isNaN(eligibility.attendancePercentage)).toBe(false);
     expect(attendanceRepository.find).not.toHaveBeenCalled();
+  });
+
+  it('no considera elegible una actividad con una sola sesión', async () => {
+    mockStudentEligibility(createSessions(1), [
+      createAttendance(10, 1, 'PRESENT'),
+    ]);
+
+    await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
+      sessionsTotal: 1,
+      sessionsPresent: 1,
+      eligible: false,
+      reason: 'ACTIVITY_NOT_CERTIFIABLE',
+    });
   });
 
   // La emisión solo procesa actividades certificables ya finalizadas con sesiones.
@@ -450,6 +464,18 @@ describe('CertificatesService', () => {
   it('no emite certificados si la actividad no tiene sesiones', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
     sessionRepository.find.mockResolvedValue([]);
+
+    await expect(service.issueEligibleCertificates(20)).resolves.toMatchObject({
+      eligibleStudents: 0,
+      issuedCertificates: 0,
+    });
+    expect(enrollmentRepository.find).not.toHaveBeenCalled();
+    expect(certificateRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('no emite certificados para una actividad con una sola sesión', async () => {
+    activityRepository.findOneBy.mockResolvedValue(createActivity());
+    sessionRepository.find.mockResolvedValue(createSessions(1));
 
     await expect(service.issueEligibleCertificates(20)).resolves.toMatchObject({
       eligibleStudents: 0,
@@ -561,10 +587,11 @@ describe('CertificatesService', () => {
   it('hace idempotente la emisión al repetir el proceso', async () => {
     const existing = createCertificate(10);
     activityRepository.findOneBy.mockResolvedValue(createActivity());
-    sessionRepository.find.mockResolvedValue(createSessions(1));
+    sessionRepository.find.mockResolvedValue(createSessions(2));
     enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
     attendanceRepository.find.mockResolvedValue([
       createAttendance(10, 1, 'PRESENT'),
+      createAttendance(10, 2, 'PRESENT'),
     ]);
     certificateRepository.findOne
       .mockResolvedValueOnce(null)
@@ -594,10 +621,11 @@ describe('CertificatesService', () => {
   // Las colisiones de código se reintentan; un error de guardado no debe tumbar el lote.
   it('reanuda con otro código si la restricción única detecta una colisión de código', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
-    sessionRepository.find.mockResolvedValue(createSessions(1));
+    sessionRepository.find.mockResolvedValue(createSessions(2));
     enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
     attendanceRepository.find.mockResolvedValue([
       createAttendance(10, 1, 'PRESENT'),
+      createAttendance(10, 2, 'PRESENT'),
     ]);
     certificateRepository.findOne.mockResolvedValue(null);
     certificateRepository.save
@@ -616,10 +644,11 @@ describe('CertificatesService', () => {
 
   it('registra y contabiliza fallos de persistencia para reintentar sin abortar el lote', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
-    sessionRepository.find.mockResolvedValue(createSessions(1));
+    sessionRepository.find.mockResolvedValue(createSessions(2));
     enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
     attendanceRepository.find.mockResolvedValue([
       createAttendance(10, 1, 'PRESENT'),
+      createAttendance(10, 2, 'PRESENT'),
     ]);
     certificateRepository.findOne.mockResolvedValue(null);
     certificateRepository.save.mockRejectedValue(new Error('DB unavailable'));
@@ -635,10 +664,11 @@ describe('CertificatesService', () => {
 
   it('emite en un ciclo posterior el certificado cuyo primer guardado falló', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
-    sessionRepository.find.mockResolvedValue(createSessions(1));
+    sessionRepository.find.mockResolvedValue(createSessions(2));
     enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
     attendanceRepository.find.mockResolvedValue([
       createAttendance(10, 1, 'PRESENT'),
+      createAttendance(10, 2, 'PRESENT'),
     ]);
     certificateRepository.findOne.mockResolvedValue(null);
     certificateRepository.save

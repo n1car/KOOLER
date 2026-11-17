@@ -215,7 +215,7 @@ export class CertificatesService {
     }
 
     const sessions = await this.findActivitySessions(activityId);
-    if (sessions.length === 0) {
+    if (sessions.length <= 1) {
       return {
         activityId,
         eligibleStudents: 0,
@@ -350,6 +350,9 @@ export class CertificatesService {
       reason = 'ACTIVITY_NOT_CERTIFIABLE';
     } else if (sessionsTotal === 0) {
       reason = 'NO_SESSIONS';
+    } else if (sessionsTotal === 1) {
+      // La certificación solo aplica a actividades con varias sesiones.
+      reason = 'ACTIVITY_NOT_CERTIFIABLE';
     } else if (this.countPendingSessions(sessions) > 0) {
       reason = 'SESSIONS_PENDING';
     } else if (

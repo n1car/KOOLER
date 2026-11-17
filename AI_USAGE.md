@@ -104,3 +104,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Herramienta:** Codex.
 - **Uso:** apoyo puntual en el pulido visual de autenticación, historial y retroalimentación.
 - **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (en verde).
+
+## Ajustes de creación de actividades y detalle admin (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en ubicación por texto, sesiones única/múltiple, certificación automática, imágenes y estilo del detalle admin.
+- **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (14/14); backend `npm test` (110/110), `npm run build` y `npm run lint` en verde.

@@ -175,7 +175,7 @@ export class ActivitiesService {
 
   // 1. Crear actividad (Solo Organizador)
   async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
-    const { activityTypeId, locationId, ...rest } = createDto;
+    const { activityTypeId, locationId, locationName, ...rest } = createDto;
 
     const activity = this.activityRepo.create({
       ...rest,
@@ -189,6 +189,9 @@ export class ActivitiesService {
     }
     if (locationId !== undefined) {
       activity.location = await this.catalogService.findLocationById(locationId);
+    } else if (locationName?.trim()) {
+      activity.location =
+        await this.catalogService.findOrCreateLocationByName(locationName);
     }
 
     const saved = await this.activityRepo.save(activity);
@@ -297,7 +300,13 @@ export class ActivitiesService {
       throw new ForbiddenException('Solo el organizador responsable puede modificar esta actividad');
     }
 
-    const { activityTypeId, locationId, registrationDeadline, ...rest } = updateDto;
+    const {
+      activityTypeId,
+      locationId,
+      locationName,
+      registrationDeadline,
+      ...rest
+    } = updateDto;
 
     if (rest.status === 'FINISHED') {
       if (activity.status !== 'ACTIVE') {
@@ -336,6 +345,9 @@ export class ActivitiesService {
 
     if (locationId !== undefined) {
       activity.location = await this.catalogService.findLocationById(locationId);
+    } else if (locationName?.trim()) {
+      activity.location =
+        await this.catalogService.findOrCreateLocationByName(locationName);
     }
 
     const previousStatus = activity.status;
@@ -605,7 +617,7 @@ export class ActivitiesService {
         date: e.activity.date,
         startTime: e.activity.startTime,
         endTime: e.activity.endTime,
-        status: e.activity.status,
+        status: this.statusForSchedule(e.activity, e.activity.status),
         imageUrl: e.activity.imageUrl,
         isCertifiable: e.activity.isCertifiable,
         category: e.activity.activityType?.name ?? null,

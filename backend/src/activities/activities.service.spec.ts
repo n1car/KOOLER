@@ -25,6 +25,7 @@ describe('ActivitiesService (Persona N)', () => {
   const catalogService = {
     findActivityTypeById: vi.fn(),
     findLocationById: vi.fn(),
+    findOrCreateLocationByName: vi.fn(),
   };
 
   const mockOrganizer = { id: 1, email: 'organizador@icesi.edu.co' } as UserEntity;
@@ -118,6 +119,33 @@ describe('ActivitiesService (Persona N)', () => {
     expect(result.name).toBe('Torneo de Ping Pong');
     expect(result.status).toBe('ACTIVE');
     expect(result.organizer).toBe(mockOrganizer);
+  });
+
+  it('asigna una ubicación existente o nueva cuando se envía el nombre', async () => {
+    const location = { id: 3, name: 'Campus Pance' };
+    catalogService.findOrCreateLocationByName.mockResolvedValue(location);
+
+    const result = await service.create(
+      {
+        name: 'Caminata',
+        description: 'Caminata guiada',
+        date: '2026-11-20',
+        startTime: '08:00',
+        endTime: '10:00',
+        capacity: 10,
+        registrationDeadline: '2026-11-19T23:59:59Z',
+        locationName: '  Campus Pance  ',
+      },
+      mockOrganizer,
+    );
+
+    expect(catalogService.findOrCreateLocationByName).toHaveBeenCalledWith(
+      '  Campus Pance  ',
+    );
+    expect(result.location).toBe(location);
+    expect(activityRepo.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({ locationName: expect.anything() }),
+    );
   });
 
   it('debe lanzar ForbiddenException si un usuario no dueño intenta cancelar la actividad', async () => {

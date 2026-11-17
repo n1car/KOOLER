@@ -129,7 +129,7 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 
 | Integrante | Funcionalidad | Backend | Frontend | Estado D3 |
 | :--- | :--- | :--- | :--- | :--- |
-| **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear/editar actividad. | **F1 completo de punta a punta**; Fase 0, cliente API de F2/F3 y despliegue completos. |
+| **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear/editar actividad. | **F1 completo de punta a punta**; Fase 0, cliente API de F2/F3, despliegue y ajustes de creación/sesiones completos. |
 | **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador (endpoints listos y probados). | Login, Registro y Cuenta creada integrados; detalle, Historial, creación de valoraciones y Retroalimentación conectados a la API. | **Auth y F2 conectados**; falta ejecutar pruebas manuales del flujo. |
 | **S (Samuel)** | F3 | Asistencia por sesión, cálculo de porcentaje y certificados PDF (endpoints listos y probados). | Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado aún usan `mock.ts`. | **F3 backend completo**; F3 frontend parcial (panel listo, asistencia/progreso/certificado pendientes). |
 
@@ -139,6 +139,7 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 * [ ] **S:** conectar F3 en el frontend: asistencia (`GET/POST /api/activities/:id/sessions/:sessionId/attendance`), elegibilidad (`GET /api/certificates/activities/:activityId/eligibility`), certificados (`GET /api/certificates`) y descarga del PDF.
 * [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados agregados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
 * [x] F1 y F2 conectadas de punta a punta en el frontend; F3 sigue pendiente para DF.
+* [x] **N:** crear actividad con ubicación por texto (`locationName`), sesiones única/múltiple y certificación automática solo para actividades con varias sesiones.
 
 **Checklist de rúbrica D3:**
 
@@ -180,18 +181,20 @@ Responsable: **N**, con revisión de J y S.
 * Inscripción: `POST /api/activities/:id/enroll`; manejar 400 por duplicado, cupo agotado, plazo vencido o actividad no activa.
 * Mis Inscripciones: `GET /api/activities/my-enrollments`.
 * Panel del organizador: filtrar sus actividades, métricas reales de activas/finalizadas/inscritos.
-* Crear actividad: formulario conectado, catálogos reales y validación de errores del backend.
-* Detalle admin: sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+* Crear actividad: formulario conectado, ubicación por texto (`locationName`), cantidad de sesiones con fecha/hora, certificación automática en multi-sesión y validación de errores del backend.
+* Detalle admin: mismo lenguaje visual del detalle estudiantil, sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+* Reglas de sesión: única no lleva asistencia ni certificado; múltiple crea N sesiones y emite certificado con el PDF generado por el backend.
 * Despliegue: backend `kooler-api-neon` y frontend `kooler-web-neon` en Render, con Neon y verificación de health/CORS.
 
-**Endpoints que consume:** `/api/auth`, `/api/activities`, `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
+**Endpoints que consume:** `/api/auth`, `/api/activities` (`POST` acepta `locationName` opcional y resuelve/crea la ubicación), `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
 
 **Archivos clave:** `frontend/src/lib/api.ts`, `frontend/src/lib/auth.tsx`, `frontend/src/components/RequireRole.tsx`, `frontend/src/components/AppShell.tsx`, `frontend/src/app/(student)/home/page.tsx`, `frontend/src/app/(student)/my-enrollments/page.tsx`, `frontend/src/app/activities/[id]/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/new/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/[id]/page.tsx`.
 
 **Criterios de aceptación:**
 
 * Un estudiante se inscribe y ve la actividad en Mis Inscripciones sin recargar datos falsos.
-* El organizador crea una actividad y la ve en su panel.
+* El organizador crea una actividad y la ve en su panel; las de sesión única no muestran asistencia ni certificado y las de varias sesiones crean todas sus fechas.
+* Las actividades finalizadas no aparecen en Home ni en Mis Inscripciones.
 * Los errores del backend se muestran en pantalla (cupo, duplicado, plazo).
 * `npm run lint` y `npm run build` en verde.
 

@@ -59,4 +59,8 @@ export class CreateActivityDto {
   @IsInt({ message: 'El id de ubicación debe ser un número entero' })
   @IsOptional()
   locationId?: number;
+
+  @IsString()
+  @IsOptional()
+  locationName?: string;
 }
