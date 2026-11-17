@@ -184,10 +184,10 @@ export class ActivitiesService {
       registrationDeadline: new Date(createDto.registrationDeadline),
     });
 
-    if (activityTypeId !== undefined) {
+    if (activityTypeId !== undefined && activityTypeId !== null) {
       activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
     }
-    if (locationId !== undefined) {
+    if (locationId !== undefined && locationId !== null) {
       activity.location = await this.catalogService.findLocationById(locationId);
     } else if (locationName?.trim()) {
       activity.location =
@@ -339,11 +339,11 @@ export class ActivitiesService {
       activity.registrationDeadline = new Date(registrationDeadline);
     }
 
-    if (activityTypeId !== undefined) {
+    if (activityTypeId !== undefined && activityTypeId !== null) {
       activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
     }
 
-    if (locationId !== undefined) {
+    if (locationId !== undefined && locationId !== null) {
       activity.location = await this.catalogService.findLocationById(locationId);
     } else if (locationName?.trim()) {
       activity.location =
