@@ -125,7 +125,8 @@ Check ((Get-StatusCode "POST" "/activities" @{ name = "x"; description = "x"; da
 
 # 3. Sesion y asistencia (F3)
 Write-Host "`n[3] Funcionalidad 3: sesiones, asistencia y certificados"
-$sess = Invoke-Api "POST" "/activities/$aid/sessions" @{ sessionDate = $date; startTime = "10:00"; endTime = "12:00" } $ot
+$sessionDate = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd")
+$sess = Invoke-Api "POST" "/activities/$aid/sessions" @{ sessionDate = $sessionDate; startTime = "10:00"; endTime = "12:00" } $ot
 Check ([bool]$sess.id) "Crear sesion (id=$($sess.id))"
 $final = Invoke-Api "PATCH" "/activities/$aid" @{ status = "FINISHED" } $ot
 Check ($final.status -eq "FINISHED") "Finalizar actividad"
