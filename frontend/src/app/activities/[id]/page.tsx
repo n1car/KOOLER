@@ -14,13 +14,12 @@ import {
 } from "@/components/ui";
 import {
   ChevronDownIcon,
-  ChevronLeftIcon,
   MapPinIcon,
   StarIcon,
   UsersIcon,
 } from "@/components/icons";
+import { ActivityHero } from "@/components/activities/ActivityHero";
 import { formatDateLong, formatTimeRange } from "@/lib/format";
-import { activityTypeColor } from "@/lib/category";
 import { api, ApiError } from "@/lib/api";
 import { getEnrollmentAction } from "@/lib/enrollment";
 import type { EnrollmentActionKind } from "@/lib/enrollment";
@@ -120,7 +119,7 @@ export default function ActivityDetailPage() {
       setReviews(reviewSummary);
       const isEnrolled = enrollments.some((item) => item.activity.id === id);
       setEnrolled(isEnrolled);
-      if (isEnrolled && detail.isCertifiable) {
+      if (isEnrolled && detail.isCertifiable && sessionList.length > 1) {
         await loadCertificateProgress(id);
       } else {
         setEligibility(null);
@@ -160,7 +159,7 @@ export default function ActivityDetailPage() {
             }
           : prev,
       );
-      if (activity.isCertifiable) {
+      if (activity.isCertifiable && sessions.length > 1) {
         void loadCertificateProgress(id);
       }
       setNotice("¡Inscripción realizada exitosamente!");
@@ -227,44 +226,12 @@ export default function ActivityDetailPage() {
   const spots = activity.availableSpots ?? 0;
   const enrollmentAction = getEnrollmentAction(activity, enrolled);
   const reviewItems = reviews?.items ?? [];
+  const canIssueCertificate = activity.isCertifiable && sessions.length > 1;
 
   return (
     <RequireRole role="ESTUDIANTE">
       <StudentShell hideHeader hideNav fullBleed>
-        <div
-          className="relative flex min-h-56 flex-col gap-4 overflow-hidden px-5 pb-10 pt-6 lg:min-h-72 lg:px-8"
-          style={{ backgroundColor: activityTypeColor(activity.activityType?.name) }}
-        >
-          {activity.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={activity.imageUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-10"
-            />
-          )}
-
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="Volver"
-            className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-white active:bg-white/20"
-          >
-            <ChevronLeftIcon />
-          </button>
-
-          <div className="relative z-10 flex flex-col gap-1">
-            {activity.activityType && (
-              <span className="w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
-                {activity.activityType.name}
-              </span>
-            )}
-            <h1 className="text-2xl font-bold text-white">{activity.name}</h1>
-            <p className="pt-1 text-sm text-white/80">
-              {activity.organizer.firstName} {activity.organizer.lastName}
-            </p>
-          </div>
-        </div>
+        <ActivityHero activity={activity} onBack={() => router.back()} />
 
         <div className="flex flex-col gap-6 px-5 pb-10 pt-6 lg:mx-auto lg:w-full lg:max-w-3xl lg:px-8 lg:py-10">
           {notice && <Alert tone="success">{notice}</Alert>}
@@ -277,7 +244,7 @@ export default function ActivityDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={activity.status} />
             {enrolled && <Badge tone="success">Inscrito</Badge>}
-            {activity.isCertifiable && <Badge tone="primary">Certificable</Badge>}
+            {canIssueCertificate && <Badge tone="primary">Certificable</Badge>}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -347,7 +314,7 @@ export default function ActivityDetailPage() {
             )}
           </div>
 
-          {enrolled && (
+          {enrolled && canIssueCertificate && (
             <CertificateAccessSection
               enrolled={enrolled}
               certifiable={activity.isCertifiable}

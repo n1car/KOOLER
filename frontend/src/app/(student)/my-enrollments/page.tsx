@@ -17,7 +17,8 @@ export default function MyEnrollmentsPage() {
     setLoading(true);
     setError("");
     try {
-      setEnrollments(await api.activities.myEnrollments());
+      const list = await api.activities.myEnrollments();
+      setEnrollments(list.filter(({ activity }) => activity.status !== "FINISHED"));
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -79,6 +80,7 @@ export default function MyEnrollmentsPage() {
               activityType: activity.category
                 ? { name: activity.category }
                 : null,
+              status: activity.status,
             }}
             enrolled
           />

@@ -38,12 +38,18 @@ export function ActivityCard({
       style={{ backgroundColor: color }}
     >
       {activity.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={activity.imageUrl}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-10"
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={activity.imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+        </>
       )}
 
       {statusLabel && (

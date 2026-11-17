@@ -35,7 +35,7 @@ export default function HomePage() {
         api.catalog.activityTypes(),
         api.activities.myEnrollments(),
       ]);
-      setActivities(list.filter((activity) => activity.status !== "CANCELLED"));
+      setActivities(list.filter((activity) => activity.status === "ACTIVE"));
       setTypes(catalog);
       setEnrolledIds(new Set(enrollments.map((item) => item.activity.id)));
     } catch (err) {

@@ -175,6 +175,19 @@ export default function AttendancePage() {
     return <Alert>Actividad no encontrada.</Alert>;
   }
 
+  if (sessions.length <= 1) {
+    return (
+      <div className="flex flex-col gap-4">
+        <BackHeader title={activity.name} />
+        <Alert tone="info">
+          {sessions.length === 0
+            ? "Esta actividad no tiene sesiones registradas."
+            : "Las actividades de sesión única no llevan control de asistencia."}
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <BackHeader title={activity.name} />
