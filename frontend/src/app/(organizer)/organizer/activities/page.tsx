@@ -97,8 +97,19 @@ export default function OrganizerActivitiesPage() {
               href={`/organizer/activities/${activity.id}`}
               className="flex items-center gap-4 rounded-card border border-[#E2E8F0] bg-white p-4"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-input bg-surface-2 text-2xl">
+              <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-input bg-surface-2 text-2xl">
                 {categoryEmoji(activity.activityType?.name)}
+                {activity.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={activity.imageUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-center gap-2">
