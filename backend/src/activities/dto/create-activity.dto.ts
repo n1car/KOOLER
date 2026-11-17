@@ -1,4 +1,7 @@
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -7,7 +10,10 @@ import {
   IsString,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateSessionDto } from './create-session.dto';
 
 export class CreateActivityDto {
   @IsString()
@@ -63,4 +69,12 @@ export class CreateActivityDto {
   @IsString()
   @IsOptional()
   locationName?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CreateSessionDto)
+  @IsOptional()
+  sessions?: CreateSessionDto[];
 }

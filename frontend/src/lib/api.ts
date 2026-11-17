@@ -237,6 +237,7 @@ export interface CreateActivityPayload {
   activityTypeId?: number;
   locationId?: number;
   locationName?: string;
+  sessions?: CreateSessionPayload[];
 }
 
 export type UpdateActivityPayload = Partial<CreateActivityPayload> & {

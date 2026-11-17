@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Input, Select, Textarea } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
+import { generateSessionDates } from "@/lib/session-schedule";
 import type { ActivityType, Location } from "@/lib/types";
 
 interface SessionDraft {
@@ -18,6 +19,16 @@ const EMPTY_SESSION: SessionDraft = {
   endTime: "",
 };
 
+const WEEKDAYS = [
+  { value: 1, label: "Lun" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mié" },
+  { value: 4, label: "Jue" },
+  { value: 5, label: "Vie" },
+  { value: 6, label: "Sáb" },
+  { value: 0, label: "Dom" },
+];
+
 export default function CreateActivityPage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -25,7 +36,16 @@ export default function CreateActivityPage() {
   const [saving, setSaving] = useState(false);
   const [multipleSessions, setMultipleSessions] = useState(false);
   const [sessionCount, setSessionCount] = useState("2");
-  const [sessions, setSessions] = useState<SessionDraft[]>([{ ...EMPTY_SESSION }]);
+  const [durationWeeks, setDurationWeeks] = useState("4");
+  const [selectedDays, setSelectedDays] = useState<number[]>([1, 3]);
+  const [singleSession, setSingleSession] = useState<SessionDraft>({
+    ...EMPTY_SESSION,
+  });
+  const [schedule, setSchedule] = useState({
+    startDate: "",
+    startTime: "",
+    endTime: "",
+  });
   const [types, setTypes] = useState<ActivityType[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
 
@@ -65,58 +85,84 @@ export default function CreateActivityPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function updateSession(
-    index: number,
-    key: keyof SessionDraft,
-    value: string,
+  function updateSingleSession(key: keyof SessionDraft, value: string) {
+    setSingleSession((previous) => ({ ...previous, [key]: value }));
+  }
+
+  function updateSchedule(
+    key: keyof typeof schedule,
+    value: (typeof schedule)[keyof typeof schedule],
   ) {
-    setSessions((prev) =>
-      prev.map((session, sessionIndex) =>
-        sessionIndex === index ? { ...session, [key]: value } : session,
-      ),
-    );
+    setSchedule((previous) => ({ ...previous, [key]: value }));
   }
 
   function selectMode(multiple: boolean) {
     setMultipleSessions(multiple);
     if (multiple) {
-      setSessions((prev) => {
-        if (prev.length >= 2) return prev;
-        const first = prev[0] ?? EMPTY_SESSION;
-        return [
-          first,
-          { date: "", startTime: first.startTime, endTime: first.endTime },
-        ];
-      });
+      setSchedule((previous) => ({
+        startDate: previous.startDate || singleSession.date,
+        startTime: previous.startTime || singleSession.startTime,
+        endTime: previous.endTime || singleSession.endTime,
+      }));
       return;
     }
 
-    setSessionCount("2");
-    setSessions((prev) => [prev[0] ?? { ...EMPTY_SESSION }]);
+    setSingleSession((previous) => ({
+      date: schedule.startDate || previous.date,
+      startTime: schedule.startTime || previous.startTime,
+      endTime: schedule.endTime || previous.endTime,
+    }));
   }
 
-  function updateSessionCount(value: string) {
-    setSessionCount(value);
-    const count = Number.parseInt(value, 10);
-    if (!Number.isFinite(count) || count < 2) return;
+  function toggleWeekday(weekday: number) {
+    setSelectedDays((previous) =>
+      previous.includes(weekday)
+        ? previous.filter((day) => day !== weekday)
+        : [...previous, weekday].sort((a, b) => a - b),
+    );
+  }
 
-    setSessions((prev) => {
-      const next = [...prev];
-      while (next.length < count) {
-        const last = next[next.length - 1] ?? EMPTY_SESSION;
-        next.push({ date: "", startTime: last.startTime, endTime: last.endTime });
+  const generatedDates = useMemo(
+    () =>
+      generateSessionDates(
+        schedule.startDate,
+        selectedDays,
+        Number(sessionCount),
+        Number(durationWeeks),
+      ),
+    [durationWeeks, schedule.startDate, selectedDays, sessionCount],
+  );
+  const generatedSessions = useMemo(
+    () =>
+      generatedDates.map((date) => ({
+        date,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+      })),
+    [generatedDates, schedule.endTime, schedule.startTime],
+  );
+
+  function validateSessions(activeSessions: SessionDraft[]): string | null {
+    if (multipleSessions) {
+      const count = Number(sessionCount);
+      const weeks = Number(durationWeeks);
+      if (!Number.isInteger(count) || count < 2 || count > 20) {
+        return "La cantidad debe estar entre 2 y 20 sesiones.";
       }
-      return next.slice(0, count);
-    });
-  }
-
-  function validateSessions(): string | null {
-    const activeSessions = multipleSessions ? sessions : sessions.slice(0, 1);
-    if (activeSessions.length === 0) {
-      return "Agrega al menos una fecha para la actividad.";
-    }
-    if (multipleSessions && activeSessions.length < 2) {
-      return "Una actividad con varias sesiones debe tener al menos dos fechas.";
+      if (!Number.isInteger(weeks) || weeks < 1 || weeks > 52) {
+        return "La duración debe estar entre 1 y 52 semanas.";
+      }
+      if (selectedDays.length === 0) {
+        return "Selecciona al menos un día para las sesiones.";
+      }
+      if (!schedule.startDate || !schedule.startTime || !schedule.endTime) {
+        return "Completa la fecha de inicio y el horario de las sesiones.";
+      }
+      if (activeSessions.length !== count) {
+        return "Aumenta la duración o selecciona más días para completar la cantidad de sesiones.";
+      }
+    } else if (activeSessions.length !== 1) {
+      return "Agrega una fecha para la actividad.";
     }
 
     for (const [index, session] of activeSessions.entries()) {
@@ -131,11 +177,38 @@ export default function CreateActivityPage() {
     return null;
   }
 
+  function getActiveSessions(): SessionDraft[] {
+    return multipleSessions ? generatedSessions : [singleSession];
+  }
+
+  function updateCount(value: string) {
+    setSessionCount(value);
+  }
+
+  function updateDuration(value: string) {
+    setDurationWeeks(value);
+  }
+
+  function getSessionCountHint() {
+    if (!schedule.startDate || selectedDays.length === 0) return "";
+    if (generatedDates.length < Number(sessionCount)) {
+      return `${generatedDates.length} de ${sessionCount} sesiones caben en este periodo.`;
+    }
+    return `${generatedDates.length} sesiones programadas.`;
+  }
+
+  function getDayButtonClass(selected: boolean) {
+    return selected
+      ? "border-primary bg-primary text-white"
+      : "border-border bg-white text-muted hover:border-primary/40";
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
 
-    const sessionError = validateSessions();
+    const activeSessions = getActiveSessions();
+    const sessionError = validateSessions(activeSessions);
     if (sessionError) {
       setError(sessionError);
       return;
@@ -165,7 +238,6 @@ export default function CreateActivityPage() {
       }
     }
 
-    const activeSessions = multipleSessions ? sessions : sessions.slice(0, 1);
     const firstSession = activeSessions[0];
     if (!firstSession) {
       setError("Agrega al menos una fecha para la actividad.");
@@ -193,21 +265,12 @@ export default function CreateActivityPage() {
         ...(form.locationName.trim()
           ? { locationName: form.locationName.trim() }
           : {}),
+        sessions: activeSessions.map((session) => ({
+          sessionDate: session.date,
+          startTime: session.startTime,
+          endTime: session.endTime,
+        })),
       });
-
-      try {
-        for (const session of activeSessions) {
-          await api.activities.createSession(created.id, {
-            sessionDate: session.date,
-            startTime: session.startTime,
-            endTime: session.endTime,
-          });
-        }
-      } catch {
-        router.push(`/organizer/activities/${created.id}`);
-        return;
-      }
-
       router.push(`/organizer/activities/${created.id}`);
     } catch (err) {
       setError(
@@ -219,8 +282,6 @@ export default function CreateActivityPage() {
       setSaving(false);
     }
   }
-
-  const activeSessions = multipleSessions ? sessions : sessions.slice(0, 1);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -319,64 +380,99 @@ export default function CreateActivityPage() {
         {multipleSessions ? (
           <>
             <p className="text-xs text-muted">
-              Define cuántas sesiones tendrá la actividad. Puedes cambiar la fecha
-              de cada una y mantener la misma hora.
+              Programa sesiones recurrentes eligiendo una fecha inicial, los días
+              y el horario. Las fechas se repiten durante la duración indicada.
             </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Cantidad de sesiones"
+                type="number"
+                min={2}
+                max={20}
+                step={1}
+                value={sessionCount}
+                onChange={(e) => updateCount(e.target.value)}
+                required
+              />
+              <Input
+                label="Duración (semanas)"
+                type="number"
+                min={1}
+                max={52}
+                step={1}
+                value={durationWeeks}
+                onChange={(e) => updateDuration(e.target.value)}
+                required
+              />
+            </div>
             <Input
-              label="Cantidad de sesiones"
-              type="number"
-              min={2}
-              max={20}
-              value={sessionCount}
-              onChange={(e) => updateSessionCount(e.target.value)}
-              onBlur={() => {
-                if (Number(sessionCount) < 2) {
-                  updateSessionCount("2");
-                }
-              }}
+              label="Fecha inicial"
+              type="date"
+              value={schedule.startDate}
+              onChange={(e) => updateSchedule("startDate", e.target.value)}
               required
             />
-
-            <div className="flex flex-col gap-3">
-              {activeSessions.map((session, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col gap-3 rounded-input border border-border p-3"
-                >
-                  <span className="text-xs font-semibold text-muted">
-                    Sesión {index + 1}
-                  </span>
-                  <Input
-                    label="Fecha"
-                    type="date"
-                    value={session.date}
-                    onChange={(e) =>
-                      updateSession(index, "date", e.target.value)
-                    }
-                    required
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input
-                      label="Hora inicio"
-                      type="time"
-                      value={session.startTime}
-                      onChange={(e) =>
-                        updateSession(index, "startTime", e.target.value)
-                      }
-                      required
-                    />
-                    <Input
-                      label="Hora fin"
-                      type="time"
-                      value={session.endTime}
-                      onChange={(e) =>
-                        updateSession(index, "endTime", e.target.value)
-                      }
-                      required
-                    />
-                  </div>
-                </div>
-              ))}
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-foreground">
+                Días seleccionados
+              </span>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {WEEKDAYS.map((day) => {
+                  const selected = selectedDays.includes(day.value);
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => toggleWeekday(day.value)}
+                      className={`rounded-input border px-2 py-2 text-sm font-semibold transition-colors ${getDayButtonClass(selected)}`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Hora inicio"
+                type="time"
+                value={schedule.startTime}
+                onChange={(e) => updateSchedule("startTime", e.target.value)}
+                required
+              />
+              <Input
+                label="Hora fin"
+                type="time"
+                value={schedule.endTime}
+                onChange={(e) => updateSchedule("endTime", e.target.value)}
+                required
+              />
+            </div>
+            <div className="rounded-input border border-border bg-surface px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                Fechas generadas
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {getSessionCountHint() || "Elige la fecha inicial y los días."}
+              </p>
+              {generatedDates.length > 0 && (
+                <ol className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted sm:grid-cols-3">
+                  {generatedDates.map((date, index) => (
+                    <li key={`${date}-${index}`}>
+                      Sesión {index + 1}: {date}
+                    </li>
+                  ))}
+                </ol>
+              )}
+              {generatedDates.length < Number(sessionCount) &&
+                schedule.startDate &&
+                selectedDays.length > 0 && (
+                  <p className="mt-2 text-xs font-medium text-warning">
+                    Aumenta la duración o selecciona más días para completar las
+                    sesiones.
+                  </p>
+                )}
             </div>
           </>
         ) : (
@@ -388,23 +484,25 @@ export default function CreateActivityPage() {
             <Input
               label="Fecha de la actividad"
               type="date"
-              value={activeSessions[0]?.date ?? ""}
-              onChange={(e) => updateSession(0, "date", e.target.value)}
+              value={singleSession.date}
+              onChange={(e) => updateSingleSession("date", e.target.value)}
               required
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Hora inicio"
                 type="time"
-                value={activeSessions[0]?.startTime ?? ""}
-                onChange={(e) => updateSession(0, "startTime", e.target.value)}
+                value={singleSession.startTime}
+                onChange={(e) =>
+                  updateSingleSession("startTime", e.target.value)
+                }
                 required
               />
               <Input
                 label="Hora fin"
                 type="time"
-                value={activeSessions[0]?.endTime ?? ""}
-                onChange={(e) => updateSession(0, "endTime", e.target.value)}
+                value={singleSession.endTime}
+                onChange={(e) => updateSingleSession("endTime", e.target.value)}
                 required
               />
             </div>

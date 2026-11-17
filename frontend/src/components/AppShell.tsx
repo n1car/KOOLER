@@ -114,6 +114,14 @@ function ShellHeader({
         className,
       )}
     >
+      {overlay && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-14 top-1/2 flex h-44 w-44 -translate-y-1/2 items-center justify-center rounded-full border border-[#6D77F3]/45"
+        >
+          <span className="h-36 w-36 rounded-full border border-[#6D77F3]/40" />
+        </span>
+      )}
       <ProfileMenu
         pathname={pathname}
         className="flex items-center gap-3 rounded-input py-1 pr-3 text-left active:opacity-90"
@@ -122,13 +130,13 @@ function ShellHeader({
         <div className="leading-tight">
           <p
             className={cn(
-              "font-semibold",
-              overlay ? "text-3xl text-white" : "text-[15px] text-foreground",
+              "font-bold",
+              overlay ? "text-xl text-white" : "text-[15px] text-foreground",
             )}
           >
             {`${user.firstName} ${user.lastName}`}
           </p>
-          <p className={cn(overlay ? "text-base text-white/45" : "text-xs text-muted")}>
+          <p className={cn(overlay ? "text-xs text-white/65" : "text-xs text-muted")}>
             {roleLabel(user)}
           </p>
         </div>
@@ -233,7 +241,7 @@ export function StudentShell({
   return (
     <AppContainer>
       {hideHeader ? null : bannerSrc ? (
-        <div className="relative h-40 w-full shrink-0 overflow-hidden lg:h-auto">
+        <div className="relative h-24 w-full shrink-0 overflow-hidden bg-[#242633] lg:h-auto">
           <Image
             src={bannerSrc}
             alt=""
@@ -250,6 +258,10 @@ export function StudentShell({
             priority
             unoptimized
             className="hidden h-auto w-full lg:block"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[#242633]/85 lg:hidden"
           />
           <ShellHeader user={user} overlay className="lg:hidden" />
           {hideNav ? null : (

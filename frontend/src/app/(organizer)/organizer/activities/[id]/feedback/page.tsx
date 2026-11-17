@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, ErrorState, LoadingState, Stars } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
-import { activityTypeColor } from "@/lib/category";
+import { activityTypeColor, categoryEmoji } from "@/lib/category";
 import { formatDate } from "@/lib/format";
 import type { Activity, ReviewSummary } from "@/lib/types";
 
@@ -20,6 +20,7 @@ export default function OrganizerFeedbackPage({
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,6 +43,9 @@ export default function OrganizerFeedbackPage({
     void load();
   }, [load]);
 
+  const showImage = Boolean(
+    activity?.imageUrl && failedImageUrl !== activity.imageUrl,
+  );
   const color = activityTypeColor(activity?.activityType?.name);
   const items = summary?.items ?? [];
   const total = summary?.total ?? 0;
@@ -55,15 +59,34 @@ export default function OrganizerFeedbackPage({
     <div className="flex min-h-full flex-1 flex-col bg-background">
       <header
         className="relative flex min-h-[190px] shrink-0 flex-col justify-between overflow-hidden px-6 pb-6 pt-7 text-white"
-        style={{
-          backgroundColor: color,
-          backgroundImage: activity?.imageUrl
-            ? `linear-gradient(115deg, rgba(151, 62, 190, .88), rgba(120, 48, 163, .80)), url(${JSON.stringify(activity.imageUrl)})`
-            : `linear-gradient(115deg, ${color}, #7b3da0)`,
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-        }}
+        style={{ backgroundColor: color }}
       >
+        {!showImage && (
+          <span
+            aria-hidden="true"
+            className="absolute right-8 top-8 text-7xl opacity-30"
+          >
+            {categoryEmoji(activity?.activityType?.name)}
+          </span>
+        )}
+        {showImage && activity?.imageUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activity.imageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setFailedImageUrl(activity.imageUrl ?? null)}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(115deg, rgba(151, 62, 190, .88), rgba(120, 48, 163, .80))",
+              }}
+            />
+          </>
+        )}
         <Link href={`/organizer/activities/${id}`} className="relative z-10 inline-flex items-center gap-2 text-sm font-medium text-white/95">
           <span aria-hidden="true">←</span> Volver
         </Link>

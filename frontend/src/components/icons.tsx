@@ -151,6 +151,51 @@ export function MapPinIcon(props: IconProps) {
   );
 }
 
+export function CalendarIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.5" y="5" width="17" height="16" rx="2" />
+      <path d="M7.5 3v4M16.5 3v4M3.5 9.5h17" />
+    </svg>
+  );
+}
+
+export function SportsIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" />
+    </svg>
+  );
+}
+
+export function WorkshopIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m14 4 6 6-2.5 2.5-6-6L14 4Z" />
+      <path d="m12 6 6 6M4 20l8.5-8.5" />
+      <path d="m3.5 19.5 1 1" />
+    </svg>
+  );
+}
+
+export function CultureIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 5.5h5a3 3 0 0 1 3 3v11a3 3 0 0 0-3-3H4z" />
+      <path d="M20 5.5h-5a3 3 0 0 0-3 3v11a3 3 0 0 1 3-3h5z" />
+    </svg>
+  );
+}
+
+export function RecreationIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
+      <path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" />
+    </svg>
+  );
+}
+
 export function UsersIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

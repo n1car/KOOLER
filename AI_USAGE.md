@@ -110,3 +110,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Herramienta:** OpenCode.
 - **Uso:** apoyo puntual en ubicación por texto, sesiones única/múltiple, certificación automática, imágenes y estilo del detalle admin.
 - **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (14/14); backend `npm test` (110/110), `npm run build` y `npm run lint` en verde.
+
+## Ajustes contra prototipos y sesiones (Samuel)
+
+- **Herramienta:** GitHub Copilot.
+- **Uso:** apoyo puntual en sesiones recurrentes, control de asistencia y organización de actividades.
+- **Verificación:** pruebas, lint, TypeScript y build de backend/frontend, más `git diff --check` (en verde).

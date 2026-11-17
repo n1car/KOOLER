@@ -18,7 +18,7 @@ export default function MyEnrollmentsPage() {
     setError("");
     try {
       const list = await api.activities.myEnrollments();
-      setEnrollments(list.filter(({ activity }) => activity.status !== "FINISHED"));
+      setEnrollments(list.filter(({ activity }) => activity.status === "ACTIVE"));
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -46,8 +46,8 @@ export default function MyEnrollmentsPage() {
     return (
       <EmptyState
         icon={<BookmarkIcon width={36} height={36} />}
-        title="Aún no tienes inscripciones"
-        description="Explora las actividades disponibles y apúntate a las que te interesen."
+        title="No tienes inscripciones activas"
+        description="Explora las actividades disponibles. Las actividades finalizadas aparecen en tu historial."
         action={
           <Link
             href="/home"

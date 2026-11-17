@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { BookmarkIcon } from "./icons";
 import { activityTypeColor } from "@/lib/category";
+import { getActivityImageSources } from "@/lib/activity-image";
 import type { ActivityStatus } from "@/lib/types";
 
 export interface ActivityCardData {
@@ -22,6 +24,17 @@ export function ActivityCard({
   enrolled?: boolean;
 }) {
   const color = activityTypeColor(activity.activityType?.name);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const imageSources = getActivityImageSources({
+    id: activity.id,
+    name: activity.name,
+    imageUrl: activity.imageUrl,
+    category: activity.activityType?.name,
+  });
+  const imageUrl =
+    imageSources.find((source) => !failedImageUrls.has(source)) ?? null;
   const statusLabel =
     activity.status === "FINISHED"
       ? "Finalizada"
@@ -34,21 +47,25 @@ export function ActivityCard({
   return (
     <Link
       href={`/activities/${activity.id}`}
-      className="relative flex min-h-36 flex-col justify-end overflow-hidden rounded-card p-4"
+      className="relative block aspect-square w-full overflow-hidden rounded-card"
       style={{ backgroundColor: color }}
     >
-      {activity.imageUrl && (
+      {imageUrl && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={activity.imageUrl}
+            src={imageUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={() =>
+              setFailedImageUrls((failed) => new Set(failed).add(imageUrl))
+            }
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{ backgroundColor: color, opacity: 0.85 }}
+          />
         </>
       )}
 
@@ -60,19 +77,20 @@ export function ActivityCard({
 
       {enrolled && (
         <span
-          className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white"
+          aria-hidden="true"
+          className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white"
           style={{ color }}
         >
-          <BookmarkIcon width={13} height={13} />
+          <BookmarkIcon width={14} height={14} />
         </span>
       )}
 
-      <div className="relative z-10 flex flex-col items-start gap-2">
-        <h3 className="text-base font-bold leading-snug text-white">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-2 p-4">
+        <h3 className="text-sm font-bold leading-snug text-white">
           {activity.name}
         </h3>
         {activity.activityType && (
-          <span className="rounded-full bg-white/25 px-3 py-1 text-xs font-semibold text-white">
+          <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-[10px] font-semibold text-white">
             {activity.activityType.name}
           </span>
         )}

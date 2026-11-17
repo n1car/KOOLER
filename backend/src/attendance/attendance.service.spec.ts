@@ -161,6 +161,27 @@ describe('AttendanceService', () => {
     ).resolves.toBe(attendance);
   });
 
+  it('permite registrar asistencia en una sesión terminada aunque la actividad siga activa', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+    const user = createUser();
+    const session = {
+      ...createSession(createActivity('ACTIVE'), 5),
+      sessionDate: '2026-11-12',
+      endTime: '05:00',
+    };
+    const attendance = { user, session, status: 'PRESENT' };
+    usersService.findById.mockResolvedValue(user);
+    sessionRepository.findOne.mockResolvedValue(session);
+    attendanceRepository.create.mockReturnValue(attendance);
+    attendanceRepository.save.mockResolvedValue(attendance);
+
+    await expect(
+      service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
+    ).resolves.toBe(attendance);
+    expect(attendanceRepository.save).toHaveBeenCalledOnce();
+  });
+
   it('rechaza una sesión hasta que su hora final pase en Colombia', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-12T09:59:59.999Z'));
@@ -256,15 +277,34 @@ describe('AttendanceService', () => {
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
-  it('rechaza asistencia en una actividad no finalizada', async () => {
+  it('rechaza asistencia en una sesión futura aunque la actividad esté activa', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
     const user = createUser();
     const activity = createActivity('ACTIVE');
     usersService.findById.mockResolvedValue(user);
-    sessionRepository.findOne.mockResolvedValue(createSession(activity, 5));
+    sessionRepository.findOne.mockResolvedValue({
+      ...createSession(activity, 5),
+      sessionDate: '2026-11-13',
+      endTime: '05:00',
+    });
 
     await expect(
       service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
     ).rejects.toThrow(BadRequestException);
+    expect(attendanceRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('rechaza asistencia en actividades canceladas', async () => {
+    usersService.findById.mockResolvedValue(createUser());
+    sessionRepository.findOne.mockResolvedValue(
+      createSession(createActivity('CANCELLED'), 5),
+    );
+
+    await expect(
+      service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
+    ).rejects.toThrow(BadRequestException);
+    expect(attendanceRepository.create).not.toHaveBeenCalled();
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 

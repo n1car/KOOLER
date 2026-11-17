@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { ChevronLeftIcon } from "@/components/icons";
-import { activityTypeColor } from "@/lib/category";
+import { activityTypeColor, categoryEmoji } from "@/lib/category";
 import type { Activity } from "@/lib/types";
 
 export function ActivityHero({
@@ -14,23 +15,34 @@ export function ActivityHero({
   onBack: () => void;
   children?: ReactNode;
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const showImage = Boolean(
+    activity.imageUrl && failedImageUrl !== activity.imageUrl,
+  );
+
   return (
     <div
       className="relative flex min-h-56 flex-col gap-4 overflow-hidden px-5 pb-10 pt-6 lg:min-h-72 lg:px-8"
       style={{ backgroundColor: activityTypeColor(activity.activityType?.name) }}
     >
-      {activity.imageUrl && (
+      {!showImage && (
+        <span
+          aria-hidden="true"
+          className="absolute right-8 top-8 text-7xl opacity-30 lg:text-8xl"
+        >
+          {categoryEmoji(activity.activityType?.name)}
+        </span>
+      )}
+      {showImage && activity.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={activity.imageUrl}
           alt=""
           className="absolute inset-0 h-full w-full object-cover opacity-60"
-          onError={(event) => {
-            event.currentTarget.style.display = "none";
-          }}
+          onError={() => setFailedImageUrl(activity.imageUrl ?? null)}
         />
       )}
-      {activity.imageUrl && (
+      {showImage && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
       )}
 

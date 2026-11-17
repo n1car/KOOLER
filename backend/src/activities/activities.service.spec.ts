@@ -64,8 +64,14 @@ describe('ActivitiesService (Persona N)', () => {
 
     sessionRepo = {
       create: vi.fn().mockImplementation((dto) => dto),
-      save: vi.fn().mockImplementation((session) => Promise.resolve({ id: 7, ...session })),
-      find: vi.fn(),
+      save: vi.fn().mockImplementation((sessions) =>
+        Promise.resolve(
+          Array.isArray(sessions)
+            ? sessions.map((session, index) => ({ id: index + 7, ...session }))
+            : { id: 7, ...sessions },
+        ),
+      ),
+      find: vi.fn().mockResolvedValue([]),
     };
     transactionQuery = vi.fn();
 
@@ -76,7 +82,11 @@ describe('ActivitiesService (Persona N)', () => {
         cb({
           query: transactionQuery,
           getRepository: (entity: any) =>
-            entity === ActivityEntity ? activityRepo : enrollmentRepo,
+            entity === ActivityEntity
+              ? activityRepo
+              : entity === SessionEntity
+                ? sessionRepo
+                : enrollmentRepo,
         }),
       ),
     };
@@ -146,6 +156,121 @@ describe('ActivitiesService (Persona N)', () => {
     expect(activityRepo.create).toHaveBeenCalledWith(
       expect.not.objectContaining({ locationName: expect.anything() }),
     );
+  });
+
+  it('crea las sesiones generadas en la misma transacción que la actividad', async () => {
+    const sessions = [
+      { sessionDate: '2026-11-12', startTime: '10:00', endTime: '11:00' },
+      { sessionDate: '2026-11-16', startTime: '10:00', endTime: '11:00' },
+    ];
+
+    await service.create(
+      {
+        name: 'Taller semanal',
+        description: 'Taller de varias semanas',
+        date: sessions[0].sessionDate,
+        startTime: sessions[0].startTime,
+        endTime: sessions[0].endTime,
+        capacity: 16,
+        registrationDeadline: '2026-11-11T23:59:59Z',
+        isCertifiable: true,
+        sessions,
+      },
+      mockOrganizer,
+    );
+
+    expect(dataSource.transaction).toHaveBeenCalledOnce();
+    expect(sessionRepo.save).toHaveBeenCalledWith(
+      sessions.map((session) =>
+        expect.objectContaining({
+          activity: expect.objectContaining({ id: 10 }),
+          ...session,
+        }),
+      ),
+    );
+  });
+
+  it('revierte la creación si falla la persistencia de una sesión', async () => {
+    const persistenceError = new Error('No se pudo guardar la sesión');
+    sessionRepo.save.mockRejectedValueOnce(persistenceError);
+
+    await expect(
+      service.create(
+        {
+          name: 'Taller semanal',
+          description: 'Taller de varias semanas',
+          date: '2026-11-12',
+          startTime: '10:00',
+          endTime: '11:00',
+          capacity: 16,
+          registrationDeadline: '2026-11-11T23:59:59Z',
+          isCertifiable: true,
+          sessions: [
+            { sessionDate: '2026-11-12', startTime: '10:00', endTime: '11:00' },
+            { sessionDate: '2026-11-16', startTime: '10:00', endTime: '11:00' },
+          ],
+        },
+        mockOrganizer,
+      ),
+    ).rejects.toBe(persistenceError);
+  });
+
+  it('mantiene activa una actividad recurrente hasta que termine su última sesión', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T10:00:00.000Z'));
+    activityRepo.find.mockResolvedValue([
+      {
+        ...mockActivity,
+        date: '2026-11-12',
+        endTime: '05:00',
+        enrollments: [],
+      },
+    ]);
+    sessionRepo.find.mockResolvedValue([
+      {
+        activity: { id: 10 },
+        sessionDate: '2026-11-12',
+        endTime: '05:00',
+      },
+      {
+        activity: { id: 10 },
+        sessionDate: '2026-11-16',
+        endTime: '05:00',
+      },
+    ]);
+
+    await expect(service.findAll()).resolves.toMatchObject([
+      { id: 10, status: 'ACTIVE' },
+    ]);
+  });
+
+  it('finaliza la actividad recurrente al terminar su última sesión en Colombia', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-16T10:00:00.000Z'));
+    activityRepo.find.mockResolvedValue([
+      {
+        ...mockActivity,
+        date: '2026-11-12',
+        endTime: '05:00',
+        enrollments: [],
+      },
+    ]);
+    sessionRepo.find.mockResolvedValue([
+      {
+        activity: { id: 10 },
+        sessionDate: '2026-11-12',
+        endTime: '05:00',
+      },
+      {
+        activity: { id: 10 },
+        sessionDate: '2026-11-16',
+        endTime: '05:00',
+      },
+    ]);
+
+    await expect(service.findAll()).resolves.toMatchObject([
+      { id: 10, status: 'FINISHED' },
+    ]);
   });
 
   it('debe lanzar ForbiddenException si un usuario no dueño intenta cancelar la actividad', async () => {

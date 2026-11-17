@@ -339,7 +339,7 @@ La API utiliza el prefijo `/api`.
 |---|---|---|---|
 | `GET` | `/api/activities` | Público o autenticado | Consulta las actividades y sus filtros disponibles. |
 | `GET` | `/api/activities/:id` | Público o autenticado | Consulta el detalle de una actividad. |
-| `POST` | `/api/activities` | Organizador | Crea una actividad. |
+| `POST` | `/api/activities` | Organizador | Crea una actividad; acepta `sessions` para crear el calendario completo dentro de la misma transacción. |
 | `PATCH` | `/api/activities/:id` | Organizador propietario | Modifica una actividad propia y permite finalizarla manualmente antes de su horario si está `ACTIVE`. |
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad sin eliminarla. |
 | `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina sesiones y actividad si no hay inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si hay registros protegidos. |
@@ -348,6 +348,8 @@ La API utiliza el prefijo `/api`.
 | `GET` | `/api/activities/my-enrollments` | Estudiante | Consulta las inscripciones del estudiante autenticado. |
 | `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
 | `POST` | `/api/activities/:id/sessions` | Organizador autorizado | Crea una sesión de la actividad. |
+| `GET` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Consulta la asistencia de una sesión. |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Registra asistencia cuando la sesión ya terminó en `America/Bogota` y la actividad está `ACTIVE` o `FINISHED`. |
 
 Los permisos, validaciones y condiciones específicas se aplican desde el backend.
 
