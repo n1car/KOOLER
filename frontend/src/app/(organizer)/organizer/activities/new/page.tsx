@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Input, Select, Textarea } from "@/components/ui";
+import { ActivityCategoryIcon } from "@/components/ActivityCategoryIcon";
+import { CalendarIcon } from "@/components/icons";
 import { api, ApiError } from "@/lib/api";
+import { activityTypeColor } from "@/lib/category";
+import { formatDateLong } from "@/lib/format";
 import { generateSessionDates } from "@/lib/session-schedule";
 import type { ActivityType, Location } from "@/lib/types";
 
@@ -34,6 +38,7 @@ export default function CreateActivityPage() {
   const [error, setError] = useState("");
   const [catalogError, setCatalogError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
   const [multipleSessions, setMultipleSessions] = useState(false);
   const [sessionCount, setSessionCount] = useState("2");
   const [durationWeeks, setDurationWeeks] = useState("4");
@@ -141,6 +146,14 @@ export default function CreateActivityPage() {
       })),
     [generatedDates, schedule.endTime, schedule.startTime],
   );
+  const imagePreviewUrl = form.imageUrl.trim();
+  const canPreviewImage =
+    /^https?:\/\//i.test(imagePreviewUrl) &&
+    failedPreviewUrl !== imagePreviewUrl;
+  const selectedCategory = types.find(
+    (type) => String(type.id) === form.activityTypeId,
+  )?.name;
+  const selectedCategoryColor = activityTypeColor(selectedCategory);
 
   function validateSessions(activeSessions: SessionDraft[]): string | null {
     if (multipleSessions) {
@@ -284,19 +297,74 @@ export default function CreateActivityPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold text-foreground">Crea tu nueva actividad</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto flex w-full max-w-5xl flex-col gap-5"
+    >
+      <p className="text-sm leading-relaxed text-muted">
+        Completa la información y organiza las sesiones de tu actividad.
+      </p>
       {error && <Alert>{error}</Alert>}
       {catalogError && <Alert tone="info">{catalogError}</Alert>}
 
-      <Card className="flex flex-col gap-4">
-        <Input
-          label="Imagen de la actividad (URL)"
-          placeholder="https://..."
-          value={form.imageUrl}
-          onChange={(e) => update("imageUrl", e.target.value)}
-          hint="Usa una URL directa a la imagen (JPG, PNG o WebP)."
-        />
+      <Card className="flex flex-col gap-5 p-4 sm:gap-6 sm:p-6">
+        <div>
+          <h2 className="text-base font-bold text-foreground">
+            Información de la actividad
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            Cuéntales a los estudiantes qué van a realizar.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1.15fr)_minmax(200px,0.85fr)] sm:items-end">
+          <Input
+            label="Imagen de la actividad (URL)"
+            placeholder="https://..."
+            value={form.imageUrl}
+            onChange={(e) => update("imageUrl", e.target.value)}
+            hint="Usa un enlace directo a una imagen JPG, PNG o WebP."
+          />
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-foreground">
+              Vista previa
+            </span>
+            <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-dashed border-[#D8DDE7] bg-surface-2">
+              {canPreviewImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imagePreviewUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  onError={() => setFailedPreviewUrl(imagePreviewUrl)}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
+                  {selectedCategory && (
+                    <span
+                      className="flex h-11 w-11 items-center justify-center rounded-full bg-white"
+                      style={{ color: selectedCategoryColor }}
+                    >
+                      <ActivityCategoryIcon
+                        category={selectedCategory}
+                        size={22}
+                      />
+                    </span>
+                  )}
+                  <span className="text-xs text-muted">
+                    {failedPreviewUrl === imagePreviewUrl && imagePreviewUrl
+                      ? "No se pudo cargar esta imagen."
+                      : "La imagen aparecerá aquí."}
+                  </span>
+                </div>
+              )}
+              {canPreviewImage && (
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white">
+                  Vista previa
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
         <Input
           label="Nombre"
           placeholder="Título de la actividad"
@@ -311,7 +379,7 @@ export default function CreateActivityPage() {
           onChange={(e) => update("description", e.target.value)}
           required
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Select
             label="Categoría"
             value={form.activityTypeId}
@@ -350,29 +418,50 @@ export default function CreateActivityPage() {
         </datalist>
       </Card>
 
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-foreground">
-            Configuración de sesiones
-          </span>
-          <div className="flex items-center gap-1 rounded-full bg-surface-2 p-1">
+      <Card className="flex flex-col gap-5 p-4 sm:gap-6 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="text-base font-bold text-foreground">
+              Configuración de sesiones
+            </h2>
+            <p className="mt-1 text-xs text-muted">
+              Elige cómo se desarrollará la actividad.
+            </p>
+          </div>
+          <div
+            aria-label="Tipo de sesiones"
+            className="grid grid-cols-2 gap-2"
+            role="group"
+          >
             <button
               type="button"
+              aria-pressed={!multipleSessions}
               onClick={() => selectMode(false)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                !multipleSessions ? "bg-white text-foreground shadow-sm" : "text-muted"
+              className={`flex min-h-[72px] flex-col items-start justify-center gap-1 rounded-xl border px-3.5 py-3 text-left transition-colors ${
+                !multipleSessions
+                  ? "border-primary bg-primary/5 text-foreground"
+                  : "border-[#E5E8EF] bg-white text-muted hover:border-primary/40"
               }`}
             >
-              Única
+              <span className="text-sm font-bold">Sesión única</span>
+              <span className="text-[11px] font-normal opacity-80">
+                Un día y un horario
+              </span>
             </button>
             <button
               type="button"
+              aria-pressed={multipleSessions}
               onClick={() => selectMode(true)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                multipleSessions ? "bg-white text-foreground shadow-sm" : "text-muted"
+              className={`flex min-h-[72px] flex-col items-start justify-center gap-1 rounded-xl border px-3.5 py-3 text-left transition-colors ${
+                multipleSessions
+                  ? "border-primary bg-primary/5 text-foreground"
+                  : "border-[#E5E8EF] bg-white text-muted hover:border-primary/40"
               }`}
             >
-              Varias
+              <span className="text-sm font-bold">Varias sesiones</span>
+              <span className="text-[11px] font-normal opacity-80">
+                Programa días recurrentes
+              </span>
             </button>
           </div>
         </div>
@@ -383,7 +472,7 @@ export default function CreateActivityPage() {
               Programa sesiones recurrentes eligiendo una fecha inicial, los días
               y el horario. Las fechas se repiten durante la duración indicada.
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label="Cantidad de sesiones"
                 type="number"
@@ -433,7 +522,7 @@ export default function CreateActivityPage() {
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label="Hora inicio"
                 type="time"
@@ -459,8 +548,22 @@ export default function CreateActivityPage() {
               {generatedDates.length > 0 && (
                 <ol className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted sm:grid-cols-3">
                   {generatedDates.map((date, index) => (
-                    <li key={`${date}-${index}`}>
-                      Sesión {index + 1}: {date}
+                    <li
+                      key={`${date}-${index}`}
+                      className="flex items-start gap-1.5"
+                    >
+                      <CalendarIcon
+                        aria-hidden="true"
+                        width={14}
+                        height={14}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <span>
+                        Sesión {index + 1}: {formatDateLong(date)}
+                        {schedule.startTime && schedule.endTime
+                          ? ` · ${schedule.startTime}–${schedule.endTime}`
+                          : ""}
+                      </span>
                     </li>
                   ))}
                 </ol>
@@ -488,7 +591,7 @@ export default function CreateActivityPage() {
               onChange={(e) => updateSingleSession("date", e.target.value)}
               required
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
                 label="Hora inicio"
                 type="time"
@@ -509,52 +612,56 @@ export default function CreateActivityPage() {
           </>
         )}
 
-        <Input
-          label="Fecha límite de inscripción"
-          type="datetime-local"
-          value={form.registrationDeadline}
-          onChange={(e) => update("registrationDeadline", e.target.value)}
-          required
-        />
+        <div className="border-t border-[#E8EAF0] pt-4">
+          <p className="mb-3 text-sm font-bold text-foreground">
+            Inscripciones
+          </p>
+          <Input
+            label="Fecha límite de inscripción"
+            type="datetime-local"
+            value={form.registrationDeadline}
+            onChange={(e) => update("registrationDeadline", e.target.value)}
+            required
+          />
+        </div>
       </Card>
 
-      <Card className="flex flex-col gap-4">
-        {multipleSessions ? (
-          <>
-            <div className="rounded-input bg-success/10 px-4 py-3 text-sm text-success">
-              Las actividades con varias sesiones emiten certificado
-              automáticamente. El PDF se genera al finalizar y se descarga desde
-              el detalle de la actividad.
-            </div>
-            <Input
-              label="Asistencia mínima para certificar (%)"
-              type="number"
-              min={1}
-              max={100}
-              value={form.minAttendancePercentage}
-              onChange={(e) =>
-                update("minAttendancePercentage", e.target.value)
-              }
-            />
-          </>
-        ) : (
-          <div className="rounded-input bg-surface-2 px-4 py-3 text-sm text-muted">
-            Las actividades de sesión única no emiten certificado ni llevan
-            control de asistencia.
+      {multipleSessions && (
+        <Card className="flex flex-col gap-4 border-[#DDEDE6] bg-white p-4 sm:p-6">
+          <div className="rounded-input bg-success/10 px-4 py-3 text-sm text-success">
+            Las actividades con varias sesiones emiten certificado
+            automáticamente. El PDF se genera al finalizar y se descarga desde
+            el detalle de la actividad.
           </div>
-        )}
-      </Card>
+          <Input
+            label="Asistencia mínima para certificar (%)"
+            type="number"
+            min={1}
+            max={100}
+            value={form.minAttendancePercentage}
+            onChange={(e) =>
+              update("minAttendancePercentage", e.target.value)
+            }
+          />
+        </Card>
+      )}
 
-      <div className="flex gap-3">
+      <div className="grid grid-cols-2 gap-3 border-t border-[#E5E8EF] pt-4 sm:flex sm:justify-end">
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           fullWidth
+          className="rounded-full border-transparent bg-white px-2.5 text-sm shadow-sm sm:w-44"
           onClick={() => router.back()}
         >
           Cancelar
         </Button>
-        <Button type="submit" fullWidth loading={saving}>
+        <Button
+          type="submit"
+          fullWidth
+          loading={saving}
+          className="rounded-full px-2.5 text-sm sm:w-44"
+        >
           Crear actividad
         </Button>
       </div>
