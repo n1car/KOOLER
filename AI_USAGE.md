@@ -116,3 +116,9 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Herramienta:** GitHub Copilot.
 - **Uso:** apoyo puntual en sesiones recurrentes, control de asistencia y organización de actividades.
 - **Verificación:** pruebas, lint, TypeScript y build de backend/frontend, más `git diff --check` (en verde).
+
+## Rediseño visual y autenticación responsive (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en tokens de color, botones, layout de autenticación e iconos por categoría.
+- **Verificación:** frontend `npm run lint`, `npm test` (26/26) y `npm run build` en verde.

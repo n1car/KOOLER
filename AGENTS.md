@@ -32,7 +32,7 @@ Toda la documentación conceptual, requerimientos y rúbricas del proyecto se en
   * Base del backend (Setup, Docker, Auth, Roles, Seeds).
   * Funcionalidad 1: Gestión de actividades (`ActivityEntity`) e inscripciones (`EnrollmentEntity`).
   * Catálogos de apoyo: categorías (`ActivityTypeEntity`) y ubicaciones (`LocationEntity`) exigidos por RF03/RF06.
-  * **Frontend:** Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado + filtros + inscripción), Mis Inscripciones, Detalle de actividad, Detalle admin y Crear/editar actividad.
+  * **Frontend:** Inicio (Bienvenida, pantalla oscura), Home del estudiante (listado + filtros + inscripción), Mis Inscripciones, Detalle de actividad, Detalle admin y Crear actividad.
 * **Persona J (Jhon) — Rama: `feature/valoraciones`:**
   * Funcionalidad 2: Reseñas y calificaciones (`ReviewEntity`).
   * Endpoints públicos de lectura de reseñas y creación por estudiantes que hayan participado.
