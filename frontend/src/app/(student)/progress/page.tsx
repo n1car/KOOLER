@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  Alert,
   Badge,
   EmptyState,
   ErrorState,
@@ -48,13 +49,15 @@ export default function ProgressPage() {
   const [activities, setActivities] = useState<ActivityProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [partialError, setPartialError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+    setPartialError("");
     try {
       const enrollments = await api.activities.myEnrollments();
-      const progress = await Promise.all(
+      const results = await Promise.allSettled(
         enrollments.map(async (enrollment) => ({
           enrollment,
           eligibility: await api.certificates.eligibility(
@@ -62,7 +65,22 @@ export default function ProgressPage() {
           ),
         })),
       );
+      const progress = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      if (enrollments.length > 0 && progress.length === 0) {
+        setError("No se pudo cargar tu progreso.");
+        return;
+      }
       setActivities(progress);
+      const failed = results.length - progress.length;
+      if (failed > 0) {
+        setPartialError(
+          `No se pudo cargar el progreso de ${failed} ${
+            failed === 1 ? "actividad" : "actividades"
+          }.`,
+        );
+      }
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -87,8 +105,10 @@ export default function ProgressPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <h2 className="text-xl font-bold text-foreground">Mi progreso</h2>
+
+      {partialError && <Alert tone="info">{partialError}</Alert>}
 
       {activities.length === 0 ? (
         <EmptyState
