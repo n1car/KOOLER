@@ -208,8 +208,8 @@ function DesktopNav({
               className={cn(
                 "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                 active
-                  ? "bg-black text-white"
-                  : "text-[#90A1B9] hover:bg-black/5 hover:text-foreground",
+                  ? "bg-primary text-white"
+                  : "text-[#90A1B9] hover:bg-primary/5 hover:text-foreground",
               )}
             >
               <Icon width={18} height={18} />
@@ -327,8 +327,8 @@ export function StudentShell({
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
                   active
-                    ? "bg-black text-white"
-                    : "text-[#90A1B9] hover:bg-black hover:text-white",
+                    ? "bg-primary text-white"
+                    : "text-[#90A1B9] hover:bg-primary hover:text-white",
                 )}
               >
                 <Icon />
@@ -498,8 +498,8 @@ export function OrganizerShell({
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
                   active
-                    ? "bg-black text-white"
-                    : "text-[#90A1B9] hover:bg-black hover:text-white",
+                    ? "bg-primary text-white"
+                    : "text-[#90A1B9] hover:bg-primary hover:text-white",
                 )}
               >
                 <Icon />

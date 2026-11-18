@@ -10,12 +10,3 @@ export function activityTypeColor(name?: string | null): string {
   const key = (name ?? "").toLowerCase().replace(/s$/, "");
   return ACTIVITY_TYPE_COLORS[key] ?? "#6D77F3";
 }
-
-export function categoryEmoji(name?: string | null): string {
-  const key = (name ?? "").toLowerCase();
-  if (key.includes("deport")) return "⚽";
-  if (key.includes("cultur")) return "🎭";
-  if (key.includes("taller")) return "🛠️";
-  if (key.includes("recreat")) return "🎉";
-  return "📌";
-}

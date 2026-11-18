@@ -358,7 +358,7 @@ export default function CreateActivityPage() {
                 </div>
               )}
               {canPreviewImage && (
-                <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white">
+                <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2.5 py-1 text-[10px] font-semibold text-white">
                   Vista previa
                 </span>
               )}
@@ -650,18 +650,12 @@ export default function CreateActivityPage() {
         <Button
           type="button"
           variant="outline"
-          fullWidth
-          className="rounded-full border-transparent bg-white px-2.5 text-sm shadow-sm sm:w-44"
+          className="border-transparent bg-white shadow-sm sm:w-44"
           onClick={() => router.back()}
         >
           Cancelar
         </Button>
-        <Button
-          type="submit"
-          fullWidth
-          loading={saving}
-          className="rounded-full px-2.5 text-sm sm:w-44"
-        >
+        <Button type="submit" loading={saving} className="sm:w-44">
           Crear actividad
         </Button>
       </div>

@@ -33,7 +33,7 @@ import type {
 } from "@/lib/types";
 
 const actionStyles: Record<EnrollmentActionKind, string> = {
-  enroll: "bg-black text-white active:opacity-90 disabled:opacity-60",
+  enroll: "bg-primary text-white hover:bg-[#171923] active:bg-[#171923] disabled:opacity-60",
   enrolled: "border border-[#8FE0B8] bg-[#CAFFE6] text-[#065F46]",
   full: "border border-[#EDA9A9] bg-[#FFEBEB] text-[#991B1B]",
   finished: "border border-[#E2E8F0] bg-surface-2 text-muted",
@@ -293,13 +293,13 @@ export default function ActivityDetailPage() {
             </div>
           )}
 
-          <div className="my-4">
+          <div className="my-4 flex">
             {enrollmentAction.kind === "enroll" ? (
               <button
                 type="button"
                 onClick={handleEnroll}
                 disabled={enrolling}
-                className={`w-full rounded-full px-5 py-3 text-[15px] font-semibold ${actionStyles.enroll}`}
+                className={`w-full rounded-input px-5 py-3 text-sm font-semibold sm:w-auto sm:px-8 ${actionStyles.enroll}`}
               >
                 {enrolling ? "Inscribiendo..." : enrollmentAction.label}
               </button>
@@ -307,7 +307,7 @@ export default function ActivityDetailPage() {
               <button
                 type="button"
                 disabled
-                className={`w-full rounded-full px-5 py-3 text-[15px] font-semibold ${actionStyles[enrollmentAction.kind]}`}
+                className={`w-full rounded-input px-5 py-3 text-sm font-semibold sm:w-auto sm:px-8 ${actionStyles[enrollmentAction.kind]}`}
               >
                 {enrollmentAction.label}
               </button>

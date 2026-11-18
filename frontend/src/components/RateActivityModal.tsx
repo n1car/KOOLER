@@ -42,7 +42,7 @@ export function RateActivityModal({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 px-4 pb-6 lg:items-center">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/45 px-4 pb-6 lg:items-center">
       <div className="w-full max-w-md rounded-card bg-white p-6 shadow-lg">
         <div className="mb-4 flex flex-col gap-1">
           <h2 className="text-lg font-bold text-foreground">Calificar actividad</h2>

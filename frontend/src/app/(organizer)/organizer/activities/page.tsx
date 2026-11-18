@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import Link from "next/link";
@@ -275,7 +276,8 @@ function OrganizerActivityCard({
   return (
     <Link
       href={`/organizer/activities/${activity.id}`}
-      className="group overflow-hidden rounded-card border border-[#E5E8EF] bg-white transition-colors hover:border-[#CCD2DE]"
+      className="group overflow-hidden rounded-card border border-[#E5E8EF] bg-white transition-colors hover:border-[color:var(--category-color)]"
+      style={{ "--category-color": color } as CSSProperties}
     >
       <CategoryStripe category={category} />
       <div className="flex min-w-0 items-start gap-3 p-3.5 sm:gap-4 sm:p-4">

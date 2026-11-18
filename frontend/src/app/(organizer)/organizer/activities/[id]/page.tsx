@@ -15,7 +15,12 @@ import {
 } from "@/components/ui";
 import { ActivityHero } from "@/components/activities/ActivityHero";
 import { FinishActivityDialog } from "@/components/activities/FinishActivityDialog";
-import { CertificateIcon } from "@/components/icons";
+import {
+  CertificateIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/icons";
+import { activityTypeColor } from "@/lib/category";
 import { formatDate, formatDateLong, formatTimeRange } from "@/lib/format";
 import { api, ApiError } from "@/lib/api";
 import type { Activity, ActivityEnrollments, Session } from "@/lib/types";
@@ -191,9 +196,10 @@ export default function OrganizerActivityDetailPage() {
   const isActive = activity.status === "ACTIVE";
   const isMultiSession = sessions.length > 1 || activity.isCertifiable;
   const canIssueCertificate = activity.isCertifiable && sessions.length > 1;
+  const categoryColor = activityTypeColor(activity.activityType?.name);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       {notice && <Alert tone="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
@@ -224,55 +230,71 @@ export default function OrganizerActivityDetailPage() {
             {formatDateLong(activity.date)} ·{" "}
             {formatTimeRange(activity.startTime, activity.endTime)}
           </p>
-          <p className="text-sm text-muted">
-            📍 {activity.location?.name ?? "Sin ubicación"}
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <MapPinIcon width={16} height={16} className="shrink-0" />
+            {activity.location?.name ?? "Sin ubicación"}
           </p>
-          <p className="text-sm text-muted">
-            👥 {activity.enrolledCount ?? 0} de {activity.capacity} inscritos
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <UsersIcon width={16} height={16} className="shrink-0" />
+            {activity.enrolledCount ?? 0} de {activity.capacity} inscritos
           </p>
         </div>
       </Card>
 
-      <div className="flex flex-col gap-2">
-        {sessions.length > 1 && (isActive || activity.status === "FINISHED") && (
-          <Link
-            href={`/organizer/activities/${id}/attendance`}
-            className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
-          >
-            Control de asistencia
-          </Link>
-        )}
-        {isActive && (
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-foreground">Acciones</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {sessions.length > 1 &&
+            (isActive || activity.status === "FINISHED") && (
+              <Link
+                href={`/organizer/activities/${id}/attendance`}
+                className="flex w-full items-center justify-center rounded-input border px-5 py-3 text-sm font-semibold text-foreground transition-[filter] hover:brightness-95 sm:w-auto"
+                style={{
+                  borderColor: `${categoryColor}55`,
+                  backgroundColor: `${categoryColor}14`,
+                }}
+              >
+                Control de asistencia
+              </Link>
+            )}
+          {isActive && (
+            <Button
+              fullWidth
+              loading={busy}
+              onClick={requestFinish}
+              className="sm:w-auto"
+            >
+              Finalizar actividad
+            </Button>
+          )}
+          {!isActive && (
+            <Link
+              href={`/organizer/activities/${id}/feedback`}
+              className="flex w-full items-center justify-center rounded-input border px-5 py-3 text-sm font-semibold text-foreground transition-[filter] hover:brightness-95 sm:w-auto"
+              style={{
+                borderColor: `${categoryColor}55`,
+                backgroundColor: `${categoryColor}14`,
+              }}
+            >
+              Ver retroalimentación
+            </Link>
+          )}
           <Button
-            variant="outline"
+            variant="danger"
             fullWidth
-            loading={busy}
-            onClick={requestFinish}
+            disabled={busy}
+            onClick={() => {
+              setDeleteError("");
+              setDeleteDialogOpen(true);
+            }}
+            className="sm:w-auto"
           >
-            Finalizar actividad
+            Eliminar actividad
           </Button>
-        )}
-        {!isActive && (
-          <Link
-            href={`/organizer/activities/${id}/feedback`}
-            className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
-          >
-            Ver retroalimentación
-          </Link>
-        )}
-        <Button
-          variant="danger"
-          fullWidth
-          disabled={busy}
-          onClick={() => {
-            setDeleteError("");
-            setDeleteDialogOpen(true);
-          }}
-        >
-          Eliminar actividad
-        </Button>
-      </div>
+        </div>
+      </Card>
 
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <Card className="flex flex-col gap-3">
         <h2 className="text-sm font-bold text-foreground">Sesiones</h2>
         {sessions.length === 0 ? (
@@ -339,7 +361,11 @@ export default function OrganizerActivityDetailPage() {
                 }
               />
             </div>
-            <Button type="submit" variant="secondary" fullWidth loading={busy}>
+            <Button
+              type="submit"
+              loading={busy}
+              className="w-full sm:w-auto sm:self-start"
+            >
               Agregar sesión
             </Button>
           </form>
@@ -381,6 +407,7 @@ export default function OrganizerActivityDetailPage() {
           </ul>
         )}
       </Card>
+      </div>
 
       {finishDialogOpen && (
         <FinishActivityDialog

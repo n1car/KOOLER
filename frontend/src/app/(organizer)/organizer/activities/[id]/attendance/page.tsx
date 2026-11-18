@@ -232,7 +232,7 @@ export default function AttendancePage() {
 
   if (error && !activity) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
         <BackHeader title="Asistencia" />
         <ErrorState message={error} onRetry={() => void load()} />
       </div>
@@ -245,7 +245,7 @@ export default function AttendancePage() {
 
   if (sessions.length <= 1) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
         <BackHeader title={activity.name} />
         <Alert tone="info">
           {sessions.length === 0
@@ -257,7 +257,7 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <BackHeader title={activity.name} />
       {notice && (
         <div
