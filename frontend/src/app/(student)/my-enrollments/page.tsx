@@ -10,6 +10,7 @@ import type { EnrollmentSummary } from "@/lib/types";
 
 export default function MyEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<EnrollmentSummary[]>([]);
+  const [hasFinished, setHasFinished] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -18,6 +19,7 @@ export default function MyEnrollmentsPage() {
     setError("");
     try {
       const list = await api.activities.myEnrollments();
+      setHasFinished(list.some(({ activity }) => activity.status === "FINISHED"));
       setEnrollments(list.filter(({ activity }) => activity.status === "ACTIVE"));
     } catch (err) {
       setError(
@@ -46,14 +48,22 @@ export default function MyEnrollmentsPage() {
     return (
       <EmptyState
         icon={<BookmarkIcon width={36} height={36} />}
-        title="No tienes inscripciones activas"
-        description="Explora las actividades disponibles. Las actividades finalizadas aparecen en tu historial."
+        title={
+          hasFinished
+            ? "No tienes inscripciones activas"
+            : "Aún no tienes inscripciones"
+        }
+        description={
+          hasFinished
+            ? "Tus actividades finalizadas están en el historial."
+            : "Explora las actividades disponibles y apúntate a las que te interesen."
+        }
         action={
           <Link
-            href="/home"
+            href={hasFinished ? "/history" : "/home"}
             className="rounded-input bg-primary px-5 py-2.5 text-sm font-semibold text-white"
           >
-            Explorar actividades
+            {hasFinished ? "Ver historial" : "Explorar actividades"}
           </Link>
         }
       />
