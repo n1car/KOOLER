@@ -28,6 +28,7 @@ export default function AttendancePage() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [roster, setRoster] = useState<ActivityEnrollments | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -87,6 +88,11 @@ export default function AttendancePage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!notice) return;
@@ -182,7 +188,7 @@ export default function AttendancePage() {
   );
   const attendanceAvailable =
     activity !== null &&
-    canRecordAttendance(activity.status, selectedSession);
+    canRecordAttendance(activity.status, selectedSession, currentTime);
   const isSaving = Object.values(savingStudents).some(Boolean);
 
   async function mark(studentId: number, status: AttendanceStatus) {
@@ -243,14 +249,12 @@ export default function AttendancePage() {
     return <Alert>Actividad no encontrada.</Alert>;
   }
 
-  if (sessions.length <= 1) {
+  if (sessions.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
         <BackHeader title={activity.name} />
         <Alert tone="info">
-          {sessions.length === 0
-            ? "Esta actividad no tiene sesiones registradas."
-            : "Las actividades de sesión única no llevan control de asistencia."}
+          Esta actividad no tiene sesiones registradas.
         </Alert>
       </div>
     );

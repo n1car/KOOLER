@@ -71,6 +71,7 @@ describe('Attendance endpoint (e2e)', () => {
   let attendanceRepository: {
     create: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+    find: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -118,6 +119,11 @@ describe('Attendance endpoint (e2e)', () => {
 
     attendanceRepository = {
       create: vi.fn((data) => data),
+      find: vi.fn(async ({ where: { session } }: { where: { session: { id: number } } }) =>
+        [...attendanceRecords.values()].filter(
+          (record) => record.session.id === session.id,
+        ),
+      ),
       save: vi.fn(
         async (attendance: {
           session: { id: number };
@@ -286,11 +292,41 @@ describe('Attendance endpoint (e2e)', () => {
     expect(attendanceRepository.save).not.toHaveBeenCalled();
   });
 
-  it('rejects attendance for an activity that is not finished', async () => {
+  it('allows attendance for an active activity once its session has ended', async () => {
     const token = tokenFor(usersById.get(2)!);
 
-    await sendAttendance(12, 2, 1, 'PRESENT', token).expect(400);
-    expect(attendanceRepository.save).not.toHaveBeenCalled();
+    await sendAttendance(12, 2, 1, 'PRESENT', token).expect(201);
+    expect(attendanceRepository.save).toHaveBeenCalledOnce();
+  });
+
+  it('persists PRESENT and ABSENT for finished and active activities across GET reloads', async () => {
+    const token = tokenFor(usersById.get(2)!);
+
+    await sendAttendance(10, 1, 1, 'PRESENT', token).expect(201);
+    await sendAttendance(12, 2, 1, 'ABSENT', token).expect(201);
+
+    await request(app.getHttpServer())
+      .get('/api/activities/10/sessions/1/attendance')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect((response) => {
+        expect(response.body.attendance).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ studentId: 1, status: 'PRESENT' }),
+          ]),
+        );
+      });
+    await request(app.getHttpServer())
+      .get('/api/activities/12/sessions/2/attendance')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect((response) => {
+        expect(response.body.attendance).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ studentId: 1, status: 'ABSENT' }),
+          ]),
+        );
+      });
   });
 
   it('returns 409 for duplicate attendance in the same session', async () => {

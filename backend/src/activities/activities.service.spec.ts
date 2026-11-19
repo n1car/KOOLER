@@ -190,6 +190,33 @@ describe('ActivitiesService (Persona N)', () => {
     );
   });
 
+  it('permite crear una actividad con varias sesiones y certificación desactivada', async () => {
+    const sessions = [
+      { sessionDate: '2026-11-12', startTime: '10:00', endTime: '11:00' },
+      { sessionDate: '2026-11-16', startTime: '10:00', endTime: '11:00' },
+    ];
+
+    await expect(
+      service.create(
+        {
+          name: 'Encuentro sin certificados',
+          description: 'Actividad con asistencia',
+          date: sessions[0].sessionDate,
+          startTime: sessions[0].startTime,
+          endTime: sessions[0].endTime,
+          capacity: 16,
+          registrationDeadline: '2026-11-11T23:59:59Z',
+          isCertifiable: false,
+          sessions,
+        },
+        mockOrganizer,
+      ),
+    ).resolves.toMatchObject({ isCertifiable: false });
+
+    expect(sessionRepo.save).toHaveBeenCalledOnce();
+    expect(dataSource.transaction).toHaveBeenCalledOnce();
+  });
+
   it('revierte la creación si falla la persistencia de una sesión', async () => {
     const persistenceError = new Error('No se pudo guardar la sesión');
     sessionRepo.save.mockRejectedValueOnce(persistenceError);

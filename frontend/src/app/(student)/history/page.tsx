@@ -30,7 +30,14 @@ export default function HistoryPage() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState("");
   const [activityMetadata, setActivityMetadata] = useState<
-    Map<number, { category: string | null; location: string | null }>
+    Map<
+      number,
+      {
+        category: string | null;
+        location: string | null;
+        isCertifiable: boolean;
+      }
+    >
   >(new Map());
   const [activityMetadataError, setActivityMetadataError] = useState("");
   const [toRate, setToRate] = useState<HistoryItem | null>(null);
@@ -67,6 +74,7 @@ export default function HistoryPage() {
               {
                 category: activity.category,
                 location: activity.location,
+                isCertifiable: activity.isCertifiable,
               },
             ]),
           ),
@@ -158,11 +166,18 @@ export default function HistoryPage() {
     setReviewMessage("¡Gracias! Tu calificación quedó registrada.");
   }
 
+  const visibleCertificates = certificates.filter(
+    (certificate) =>
+      activityMetadata.get(certificate.activityId)?.isCertifiable === true,
+  );
   const certificatesByActivityId = new Map(
-    certificates.map((certificate) => [certificate.activityId, certificate]),
+    visibleCertificates.map((certificate) => [
+      certificate.activityId,
+      certificate,
+    ]),
   );
   const historyActivityIds = new Set(items.map((item) => item.activityId));
-  const unlinkedCertificates = certificates.filter(
+  const unlinkedCertificates = visibleCertificates.filter(
     (certificate) => !historyActivityIds.has(certificate.activityId),
   );
   const showCertificateSection =

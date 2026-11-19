@@ -125,7 +125,7 @@ export class CertificatesService {
 
   async findByStudentId(studentId: number): Promise<CertificateEntity[]> {
     return this.certificateRepository.find({
-      where: { user: { id: studentId } },
+      where: { user: { id: studentId }, activity: { isCertifiable: true } },
       relations: { activity: true, user: true },
       order: { issueDate: 'DESC' },
     });
@@ -140,6 +140,9 @@ export class CertificatesService {
       relations: { activity: { organizer: true }, user: true },
     });
     if (!certificate) {
+      throw new NotFoundException('Certificado no encontrado');
+    }
+    if (!certificate.activity.isCertifiable) {
       throw new NotFoundException('Certificado no encontrado');
     }
 
@@ -215,7 +218,7 @@ export class CertificatesService {
     }
 
     const sessions = await this.findActivitySessions(activityId);
-    if (sessions.length <= 1) {
+    if (sessions.length === 0) {
       return {
         activityId,
         eligibleStudents: 0,
@@ -350,9 +353,6 @@ export class CertificatesService {
       reason = 'ACTIVITY_NOT_CERTIFIABLE';
     } else if (sessionsTotal === 0) {
       reason = 'NO_SESSIONS';
-    } else if (sessionsTotal === 1) {
-      // La certificación solo aplica a actividades con varias sesiones.
-      reason = 'ACTIVITY_NOT_CERTIFIABLE';
     } else if (this.countPendingSessions(sessions) > 0) {
       reason = 'SESSIONS_PENDING';
     } else if (

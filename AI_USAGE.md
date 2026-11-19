@@ -99,6 +99,12 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Uso:** apoyo puntual en la sección de elegibilidad y descarga del detalle estudiantil.
 - **Verificación:** frontend `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit`; backend pruebas de certificados (en verde).
 
+## Asistencia y certificación por sesión (Samuel)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual para habilitar asistencia y certificación opcional en actividades de una sesión.
+- **Verificación:** backend `npm test` (120) y e2e F3 (23), frontend `npm test` (28) y lint; build frontend condicionado por aviso de seguridad de Next.js.
+
 ## Pantallas de Jhon para D3 (Jhon)
 
 - **Herramienta:** Codex.

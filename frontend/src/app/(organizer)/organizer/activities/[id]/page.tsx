@@ -86,7 +86,7 @@ export default function OrganizerActivityDetailPage() {
     setFinishDialogOpen(false);
     await load();
     setNotice(
-      sessions.length > 1
+      sessions.length > 0
         ? "Actividad finalizada. Ya puedes registrar asistencia."
         : "Actividad finalizada.",
     );
@@ -195,7 +195,7 @@ export default function OrganizerActivityDetailPage() {
 
   const isActive = activity.status === "ACTIVE";
   const isMultiSession = sessions.length > 1 || activity.isCertifiable;
-  const canIssueCertificate = activity.isCertifiable && sessions.length > 1;
+  const canIssueCertificate = activity.isCertifiable;
   const categoryColor = activityTypeColor(activity.activityType?.name);
 
   return (
@@ -244,7 +244,7 @@ export default function OrganizerActivityDetailPage() {
       <Card className="flex flex-col gap-3">
         <h2 className="text-sm font-bold text-foreground">Acciones</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {sessions.length > 1 &&
+          {sessions.length > 0 &&
             (isActive || activity.status === "FINISHED") && (
               <Link
                 href={`/organizer/activities/${id}/attendance`}
@@ -371,8 +371,8 @@ export default function OrganizerActivityDetailPage() {
           </form>
         ) : (
           <p className="border-t border-border pt-3 text-xs text-muted">
-            Las actividades de sesión única no llevan control de asistencia ni
-            emiten certificado.
+            El control de asistencia estará disponible cuando finalice la
+            sesión.
           </p>
         )}
       </Card>

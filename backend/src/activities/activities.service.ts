@@ -239,11 +239,6 @@ export class ActivitiesService {
     }
 
     if (sessions?.length) {
-      if (sessions.length > 1 && !activity.isCertifiable) {
-        throw new BadRequestException(
-          'Las actividades con varias sesiones deben ser certificables',
-        );
-      }
       if (
         sessions.some(
           (session) =>

@@ -139,7 +139,7 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 * [x] **S:** F3 conectado en el frontend: asistencia, elegibilidad, certificados y descarga del PDF.
 * [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
 * [x] F1, F2 y F3 conectadas de punta a punta en el frontend.
-* [x] **N:** crear actividad con ubicación por texto (`locationName`), sesiones única/múltiple y certificación automática solo para actividades con varias sesiones.
+* [x] **N:** crear actividad con ubicación por texto (`locationName`), sesiones única/múltiple y certificación opcional elegida por el organizador.
 * [x] **N:** eliminar `frontend/src/lib/mock.ts`; todas las pantallas usan la API real.
 
 **Checklist de rúbrica D3:**
@@ -181,9 +181,9 @@ Responsable: **N**, con revisión de J y S.
 * Inscripción: `POST /api/activities/:id/enroll`; manejar 400 por duplicado, cupo agotado, plazo vencido o actividad no activa.
 * Mis Inscripciones: `GET /api/activities/my-enrollments`.
 * Panel del organizador: filtrar sus actividades, métricas reales de activas/finalizadas/inscritos.
-* Crear actividad: formulario conectado, ubicación por texto (`locationName`), cantidad de sesiones con fecha/hora, certificación automática en multi-sesión y validación de errores del backend.
+* Crear actividad: formulario conectado, ubicación por texto (`locationName`), cantidad de sesiones con fecha/hora y opción del organizador para activar certificados.
 * Detalle admin: mismo lenguaje visual del detalle estudiantil, sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
-* Reglas de sesión: única no lleva asistencia ni certificado; múltiple crea N sesiones y emite certificado con el PDF generado por el backend.
+* Reglas de sesión: tanto las actividades de una sesión como las de varias permiten asistencia por sesión; el certificado es opcional y requiere cumplir la elegibilidad vigente.
 * Despliegue: backend `kooler-api-neon` y frontend `kooler-web-neon` en Render, con Neon y verificación de health/CORS.
 
 **Endpoints que consume:** `/api/auth`, `/api/activities` (`POST` acepta `locationName` opcional y resuelve/crea la ubicación), `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
@@ -193,7 +193,7 @@ Responsable: **N**, con revisión de J y S.
 **Criterios de aceptación:**
 
 * Un estudiante se inscribe y ve la actividad en Mis Inscripciones sin recargar datos falsos.
-* El organizador crea una actividad y la ve en su panel; las de sesión única no muestran asistencia ni certificado y las de varias sesiones crean todas sus fechas.
+* El organizador crea una actividad y la ve en su panel; puede abrir control de asistencia para cada sesión y decide si la actividad emite certificados.
 * Las actividades finalizadas no aparecen en Home ni en Mis Inscripciones.
 * Los errores del backend se muestran en pantalla (cupo, duplicado, plazo).
 * `npm run lint` y `npm run build` en verde.
@@ -301,14 +301,14 @@ Un caso de prueba manual es una lista de pasos que una persona ejecuta en la int
 | F2 — Historial y reseña | Abrir Historial, calificar con estrellas y comentario. | Reseña creada, promedio actualizado y comentario público. | Smoke API |
 | F2 — Retroalimentación | Abrir feedback como organizador. | Solo lectura; el organizador no modifica ni elimina reseñas. | Smoke API |
 | F3 — Asistencia | Crear sesión, marcar PRESENT/ABSENT y consultar. | Asistencia persistida por sesión. | Smoke API |
-| F3 — Certificado | Ver progreso, elegibilidad y descargar PDF. | Porcentaje correcto y PDF descargable. | Smoke API + verificación negativa de sesión única |
+| F3 — Certificado | Ver progreso, elegibilidad y descargar PDF. | Porcentaje correcto; una sesión también puede certificar si se configura y cumple el requisito. | Pruebas de backend y frontend |
 
 **Evidencias:**
 
-* `npm run lint`, `npm run build` y `npm test` en verde: backend **116/116**, frontend **26/26**.
+* Verificación actual: backend `npm test` **120/120**, e2e F3 **23/23**, lint y build; frontend `npm test` **28/28** y lint.
 * Login/logout de estudiante y organizador verificado manualmente contra la URL desplegada.
 * Smoke de producción: **27/27 OK** contra `https://kooler-api-neon.onrender.com/api` (F1, F2 y F3).
-* Verificación negativa: una actividad de sesión única finalizada no emite certificado (`ACTIVITY_NOT_CERTIFIABLE`).
+* El build frontend compila y pasa TypeScript, pero Next.js detiene el comando por una vulnerabilidad conocida de la versión instalada; requiere evaluar la actualización recomendada.
 * URLs: backend `https://kooler-api-neon.onrender.com`, frontend `https://kooler-web-neon.onrender.com`.
 * `npm run test:e2e` del backend requiere Docker/PostgreSQL local en `localhost:5433`; no se ejecutó en esta máquina porque Docker estaba apagado.
 
@@ -318,7 +318,7 @@ Un caso de prueba manual es una lista de pasos que una persona ejecuta en la int
 * **Render free:** el primer request tras inactividad tarda ~50 s; el frontend usa `npm install --include=dev` para que el build tenga TypeScript/Tailwind.
 * **Dos cuentas de Render:** el servicio del equipo sigue en la cuenta de Samuel (`kooler-api`); la demo de Nico usa `kooler-api-neon` y `kooler-web-neon`.
 * **Sin edición de actividades:** el frontend no expone edición de actividades creadas; `PATCH /api/activities/:id` se usa solo para cambios de estado como finalizar.
-* **Sesión única:** no registra asistencia ni emite certificado; la certificación aplica solo a actividades con varias sesiones.
+* **Sesiones y certificación:** todas las sesiones admiten asistencia. `isCertifiable` decide si una actividad de una o varias sesiones puede emitir certificados.
 * **Datos mock:** `frontend/src/lib/mock.ts` fue eliminado; F1, F2 y F3 consumen la API real.
 * **Auto-deploy:** `render.yaml` declara `autoDeployTrigger: commit`, pero el último push requirió despliegue manual; revisar el auto-deploy en el panel de Render.
 
@@ -344,8 +344,8 @@ La API utiliza el prefijo `/api`.
 |---|---|---|---|
 | `GET` | `/api/activities` | Público o autenticado | Consulta las actividades y sus filtros disponibles. |
 | `GET` | `/api/activities/:id` | Público o autenticado | Consulta el detalle de una actividad. |
-| `POST` | `/api/activities` | Organizador | Crea una actividad; acepta `sessions` para crear el calendario completo dentro de la misma transacción. |
-| `PATCH` | `/api/activities/:id` | Organizador propietario | Actualiza el estado de una actividad propia (por ejemplo, finalizarla). No expone edición de datos desde el frontend. |
+| `POST` | `/api/activities` | Organizador | Crea una actividad; acepta `sessions` para crear el calendario completo y `isCertifiable` para configurar la emisión opcional dentro de la misma transacción. |
+| `PATCH` | `/api/activities/:id` | Organizador propietario | Actualiza el estado y permite cambiar `isCertifiable`. No expone un formulario de edición de datos desde el frontend. |
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad sin eliminarla. |
 | `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina sesiones y actividad si no hay inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si hay registros protegidos. |
 | `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |
@@ -354,7 +354,7 @@ La API utiliza el prefijo `/api`.
 | `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
 | `POST` | `/api/activities/:id/sessions` | Organizador autorizado | Crea una sesión de la actividad. |
 | `GET` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Consulta la asistencia de una sesión. |
-| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Registra asistencia cuando la sesión ya terminó en `America/Bogota` y la actividad está `ACTIVE` o `FINISHED`. |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Registra asistencia para actividades de una o varias sesiones cuando la sesión indicada terminó en `America/Bogota` y la actividad está `ACTIVE` o `FINISHED`. |
 
 ### Catálogos — `/api/activity-types` y `/api/locations`
 
@@ -388,9 +388,9 @@ La API utiliza el prefijo `/api`.
 
 | Método | Endpoint | Acceso | Descripción |
 |---|---|---|---|
-| `GET` | `/api/certificates` | Estudiante | Lista los certificados emitidos al estudiante. |
-| `GET` | `/api/certificates/activities/:activityId/eligibility` | Estudiante | Consulta el porcentaje de asistencia y la elegibilidad para certificar. |
-| `GET` | `/api/certificates/:certificateId/download` | Estudiante propietario | Descarga el PDF del certificado generado por el backend. |
+| `GET` | `/api/certificates` | Estudiante | Lista los certificados emitidos para actividades que actualmente tienen `isCertifiable` activado. |
+| `GET` | `/api/certificates/activities/:activityId/eligibility` | Estudiante | Consulta el porcentaje de asistencia y la elegibilidad para certificar en actividades de una o varias sesiones. |
+| `GET` | `/api/certificates/:certificateId/download` | Estudiante propietario | Descarga el PDF si la actividad continúa configurada como certificable. |
 
 ### Salud — `/api/health`
 

@@ -119,7 +119,7 @@ export default function ActivityDetailPage() {
       setReviews(reviewSummary);
       const isEnrolled = enrollments.some((item) => item.activity.id === id);
       setEnrolled(isEnrolled);
-      if (isEnrolled && detail.isCertifiable && sessionList.length > 1) {
+      if (isEnrolled && detail.isCertifiable) {
         await loadCertificateProgress(id);
       } else {
         setEligibility(null);
@@ -159,7 +159,7 @@ export default function ActivityDetailPage() {
             }
           : prev,
       );
-      if (activity.isCertifiable && sessions.length > 1) {
+      if (activity.isCertifiable) {
         void loadCertificateProgress(id);
       }
       setNotice("¡Inscripción realizada exitosamente!");
@@ -226,7 +226,7 @@ export default function ActivityDetailPage() {
   const spots = activity.availableSpots ?? 0;
   const enrollmentAction = getEnrollmentAction(activity, enrolled);
   const reviewItems = reviews?.items ?? [];
-  const canIssueCertificate = activity.isCertifiable && sessions.length > 1;
+  const canIssueCertificate = activity.isCertifiable;
 
   return (
     <RequireRole role="ESTUDIANTE">

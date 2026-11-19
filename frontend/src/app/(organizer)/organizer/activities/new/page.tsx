@@ -40,6 +40,7 @@ export default function CreateActivityPage() {
   const [saving, setSaving] = useState(false);
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
   const [multipleSessions, setMultipleSessions] = useState(false);
+  const [isCertifiable, setIsCertifiable] = useState(false);
   const [sessionCount, setSessionCount] = useState("2");
   const [durationWeeks, setDurationWeeks] = useState("4");
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 3]);
@@ -239,7 +240,7 @@ export default function CreateActivityPage() {
       return;
     }
 
-    if (multipleSessions) {
+    if (multipleSessions && isCertifiable) {
       const minimumAttendance = Number(form.minAttendancePercentage);
       if (
         !Number.isFinite(minimumAttendance) ||
@@ -267,8 +268,8 @@ export default function CreateActivityPage() {
         endTime: firstSession.endTime,
         capacity: Number(form.capacity),
         registrationDeadline: deadline.toISOString(),
-        isCertifiable: multipleSessions,
-        ...(multipleSessions
+        isCertifiable,
+        ...(multipleSessions && isCertifiable
           ? { minAttendancePercentage: Number(form.minAttendancePercentage) }
           : {}),
         ...(imageUrl ? { imageUrl } : {}),
@@ -581,8 +582,8 @@ export default function CreateActivityPage() {
         ) : (
           <>
             <p className="text-xs text-muted">
-              La actividad tendrá una sola fecha y no llevará control de
-              asistencia.
+              La actividad tendrá una sola sesión. Podrás registrar asistencia
+              cuando finalice.
             </p>
             <Input
               label="Fecha de la actividad"
@@ -626,12 +627,32 @@ export default function CreateActivityPage() {
         </div>
       </Card>
 
-      {multipleSessions && (
+      <Card className="flex flex-col gap-3 border-[#DDEDE6] bg-white p-4 sm:p-6">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={isCertifiable}
+            onChange={(event) => setIsCertifiable(event.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 accent-primary"
+          />
+          <span className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-foreground">
+              ¿Esta actividad emitirá certificados?
+            </span>
+            <span className="text-xs leading-relaxed text-muted">
+              {isCertifiable
+                ? "Se emitirán cuando la actividad finalice y cada estudiante cumpla el requisito de asistencia."
+                : "La actividad tendrá control de asistencia, pero no se emitirán certificados."}
+            </span>
+          </span>
+        </label>
+      </Card>
+
+      {multipleSessions && isCertifiable && (
         <Card className="flex flex-col gap-4 border-[#DDEDE6] bg-white p-4 sm:p-6">
           <div className="rounded-input bg-success/10 px-4 py-3 text-sm text-success">
-            Las actividades con varias sesiones emiten certificado
-            automáticamente. El PDF se genera al finalizar y se descarga desde
-            el detalle de la actividad.
+            El certificado se genera al finalizar la actividad si se cumple el
+            requisito de asistencia. El PDF se descarga desde el detalle.
           </div>
           <Input
             label="Asistencia mínima para certificar (%)"

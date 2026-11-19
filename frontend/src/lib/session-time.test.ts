@@ -37,6 +37,16 @@ describe("session attendance availability", () => {
     ).toBe(false);
   });
 
+  it("allows ended sessions when the activity is finished", () => {
+    expect(
+      canRecordAttendance(
+        "FINISHED",
+        { sessionDate: "2026-11-12", endTime: "05:00" },
+        new Date("2026-11-12T10:00:00.000Z"),
+      ),
+    ).toBe(true);
+  });
+
   it("does not allow recording for cancelled activities or invalid session times", () => {
     const now = new Date("2026-11-12T10:00:00.000Z");
     expect(

@@ -26,7 +26,14 @@ interface ActivityProgress {
   eligibility: Eligibility;
 }
 
-function getEligibilityMessage(eligibility: Eligibility): string {
+function getEligibilityMessage(
+  eligibility: Eligibility,
+  isCertifiable: boolean,
+): string {
+  if (!isCertifiable) {
+    return "Este resumen muestra tu asistencia. La actividad no emite certificados.";
+  }
+
   switch (eligibility.reason) {
     case "ACTIVITY_NOT_FINISHED":
       return "La actividad todavía no ha finalizado; la elegibilidad se confirmará después.";
@@ -205,26 +212,41 @@ export default function ProgressPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
                 <span>
                   {eligibility.sessionsPresent}/{eligibility.sessionsTotal}{" "}
-                  clases · mínimo {eligibility.minimumAttendancePercentage}%
+                  clases
+                  {enrollment.activity.isCertifiable &&
+                    ` · mínimo ${eligibility.minimumAttendancePercentage}%`}
                   {eligibility.sessionsPending > 0 &&
                     ` · ${eligibility.sessionsPending} pendientes`}
                 </span>
-                <Badge tone={eligibility.eligible ? "success" : "muted"}>
-                  {eligibility.eligible ? (
-                    <span className="inline-flex items-center gap-1">
-                      <CertificateIcon width={14} height={14} />
-                      Apto
-                    </span>
-                  ) : eligibility.reason === "ACTIVITY_NOT_CERTIFIABLE" ? (
-                    "No certificable"
+                <Badge
+                  tone={
+                    enrollment.activity.isCertifiable && eligibility.eligible
+                      ? "success"
+                      : "muted"
+                  }
+                >
+                  {enrollment.activity.isCertifiable ? (
+                    eligibility.eligible ? (
+                      <span className="inline-flex items-center gap-1">
+                        <CertificateIcon width={14} height={14} />
+                        Apto
+                      </span>
+                    ) : eligibility.reason === "ACTIVITY_NOT_CERTIFIABLE" ? (
+                      "No certificable"
+                    ) : (
+                      "Pendiente"
+                    )
                   ) : (
-                    "Pendiente"
+                    "Asistencia"
                   )}
                 </Badge>
               </div>
 
               <p className="rounded-xl bg-[#F4F5F8] px-3 py-2 text-xs leading-relaxed text-muted">
-                {getEligibilityMessage(eligibility)}
+                {getEligibilityMessage(
+                  eligibility,
+                  enrollment.activity.isCertifiable,
+                )}
               </p>
 
               <Link

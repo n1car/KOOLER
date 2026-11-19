@@ -39,7 +39,13 @@ const createCertificate = (id: number, studentId: number, activityId: number) =>
     firstName: 'User',
     lastName: `${studentId}`,
   },
-  activity: { id: activityId, name: `Activity ${activityId}` },
+  activity: {
+    id: activityId,
+    name: `Activity ${activityId}`,
+    isCertifiable: true,
+    date: '2026-10-01',
+    organizer: { firstName: 'Organizer', lastName: 'Test' },
+  },
   issueDate: new Date('2026-10-02T12:00:00Z'),
   certificateCode: `CERT-${studentId}-${activityId}`,
 });
@@ -110,11 +116,11 @@ describe('Certificates endpoint (e2e)', () => {
     };
     sessionRepository = {
       find: vi.fn(async () => [
-        { id: 1, activity: { id: 30 } },
-        { id: 2, activity: { id: 30 } },
-        { id: 3, activity: { id: 30 } },
-        { id: 4, activity: { id: 30 } },
-        { id: 5, activity: { id: 30 } },
+        { id: 1, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
+        { id: 2, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
+        { id: 3, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
+        { id: 4, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
+        { id: 5, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
       ]),
     };
     attendanceRepository = {
@@ -243,6 +249,7 @@ describe('Certificates endpoint (e2e)', () => {
       sessionsPresent: 4,
       attendancePercentage: 80,
       minimumAttendancePercentage: 80,
+      sessionsPending: 0,
       eligible: true,
     });
     expect(enrollmentRepository.findOne).toHaveBeenCalledWith({

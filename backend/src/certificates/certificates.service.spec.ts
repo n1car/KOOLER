@@ -60,7 +60,7 @@ const createCertificate = (studentId = 10, activityId = 20) =>
   ({
     id: studentId,
     user: { id: studentId },
-    activity: { id: activityId },
+    activity: { id: activityId, isCertifiable: true },
     certificateCode: `CERT-${studentId}-${activityId}`,
   }) as CertificateEntity;
 
@@ -161,7 +161,7 @@ describe('CertificatesService', () => {
 
     await expect(service.findByStudentId(10)).resolves.toEqual(certificates);
     expect(certificateRepository.find).toHaveBeenCalledWith({
-      where: { user: { id: 10 } },
+      where: { user: { id: 10 }, activity: { isCertifiable: true } },
       relations: { activity: true, user: true },
       order: { issueDate: 'DESC' },
     });
@@ -177,6 +177,7 @@ describe('CertificatesService', () => {
       },
       activity: {
         id: 20,
+        isCertifiable: true,
         name: 'Bienestar',
         date: '2026-10-02',
         organizer: { firstName: 'Lina', lastName: 'Organizadora' },
@@ -211,6 +212,7 @@ describe('CertificatesService', () => {
       },
       activity: {
         id: 20,
+        isCertifiable: true,
         name: 'Encuentro universitario de bienestar y desarrollo integral '.repeat(3),
         date: '2026-10-02',
         organizer: {
@@ -239,12 +241,25 @@ describe('CertificatesService', () => {
     });
   });
 
+  it('no permite descargar un certificado cuando la certificación está desactivada', async () => {
+    certificateRepository.findOne.mockResolvedValue({
+      ...createCertificate(),
+      activity: { id: 20, isCertifiable: false },
+    });
+
+    await expect(service.downloadCertificatePdf(10, 1)).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(pdfDocumentFactory).not.toHaveBeenCalled();
+  });
+
   it('devuelve un error explícito si falla la generación del PDF', async () => {
     certificateRepository.findOne.mockResolvedValue({
       ...createCertificate(),
       user: { id: 10, firstName: 'Ana', lastName: 'Estudiante' },
       activity: {
         id: 20,
+        isCertifiable: true,
         name: 'Bienestar',
         date: '2026-10-02',
         organizer: { firstName: 'Lina', lastName: 'Organizadora' },
@@ -376,7 +391,7 @@ describe('CertificatesService', () => {
     expect(attendanceRepository.find).not.toHaveBeenCalled();
   });
 
-  it('no considera elegible una actividad con una sola sesión', async () => {
+  it('considera elegible una actividad certificable de una sesión con asistencia presente', async () => {
     mockStudentEligibility(createSessions(1), [
       createAttendance(10, 1, 'PRESENT'),
     ]);
@@ -384,8 +399,9 @@ describe('CertificatesService', () => {
     await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
       sessionsTotal: 1,
       sessionsPresent: 1,
-      eligible: false,
-      reason: 'ACTIVITY_NOT_CERTIFIABLE',
+      attendancePercentage: 100,
+      minimumAttendancePercentage: 80,
+      eligible: true,
     });
   });
 
@@ -408,20 +424,23 @@ describe('CertificatesService', () => {
     },
   );
 
-  it('no considera elegible una actividad marcada como no certificable', async () => {
-    mockStudentEligibility(
-      createSessions(5),
-      Array.from({ length: 5 }, (_, index) =>
-        createAttendance(10, index + 1, 'PRESENT'),
-      ),
-      createActivity('FINISHED', false),
-    );
+  it.each([1, 5])(
+    'no considera elegible una actividad no certificable con %i sesión(es)',
+    async (sessionCount) => {
+      mockStudentEligibility(
+        createSessions(sessionCount),
+        Array.from({ length: sessionCount }, (_, index) =>
+          createAttendance(10, index + 1, 'PRESENT'),
+        ),
+        createActivity('FINISHED', false),
+      );
 
-    await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
-      eligible: false,
-      reason: 'ACTIVITY_NOT_CERTIFIABLE',
-    });
-  });
+      await expect(service.getEligibilityForStudent(10, 20)).resolves.toMatchObject({
+        eligible: false,
+        reason: 'ACTIVITY_NOT_CERTIFIABLE',
+      });
+    },
+  );
 
   it('impide consultar la elegibilidad de una actividad no inscrita', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
@@ -445,21 +464,25 @@ describe('CertificatesService', () => {
     },
   );
 
-  it('no emite certificados para actividades no certificables', async () => {
-    activityRepository.findOneBy.mockResolvedValue(
-      createActivity('FINISHED', false),
-    );
+  it.each([1, 5])(
+    'no emite certificados para actividades no certificables con %i sesión(es)',
+    async (sessionCount) => {
+      activityRepository.findOneBy.mockResolvedValue(
+        createActivity('FINISHED', false),
+      );
+      sessionRepository.find.mockResolvedValue(createSessions(sessionCount));
 
-    await expect(service.issueEligibleCertificates(20)).resolves.toEqual({
-      activityId: 20,
-      eligibleStudents: 0,
-      issuedCertificates: 0,
-      existingCertificates: 0,
-      failedStudents: 0,
-    });
-    expect(sessionRepository.find).not.toHaveBeenCalled();
-    expect(certificateRepository.save).not.toHaveBeenCalled();
-  });
+      await expect(service.issueEligibleCertificates(20)).resolves.toEqual({
+        activityId: 20,
+        eligibleStudents: 0,
+        issuedCertificates: 0,
+        existingCertificates: 0,
+        failedStudents: 0,
+      });
+      expect(sessionRepository.find).not.toHaveBeenCalled();
+      expect(certificateRepository.save).not.toHaveBeenCalled();
+    },
+  );
 
   it('no emite certificados si la actividad no tiene sesiones', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
@@ -473,16 +496,24 @@ describe('CertificatesService', () => {
     expect(certificateRepository.save).not.toHaveBeenCalled();
   });
 
-  it('no emite certificados para una actividad con una sola sesión', async () => {
+  it('emite certificado para una actividad certificable de una sesión si cumple el 80 por ciento', async () => {
     activityRepository.findOneBy.mockResolvedValue(createActivity());
     sessionRepository.find.mockResolvedValue(createSessions(1));
+    enrollmentRepository.find.mockResolvedValue([createEnrollment(10)]);
+    attendanceRepository.find.mockResolvedValue([
+      createAttendance(10, 1, 'PRESENT'),
+    ]);
+    certificateRepository.findOne.mockResolvedValue(null);
+    certificateRepository.save.mockResolvedValue(createCertificate(10));
 
-    await expect(service.issueEligibleCertificates(20)).resolves.toMatchObject({
-      eligibleStudents: 0,
-      issuedCertificates: 0,
+    await expect(service.issueEligibleCertificates(20)).resolves.toEqual({
+      activityId: 20,
+      eligibleStudents: 1,
+      issuedCertificates: 1,
+      existingCertificates: 0,
+      failedStudents: 0,
     });
-    expect(enrollmentRepository.find).not.toHaveBeenCalled();
-    expect(certificateRepository.save).not.toHaveBeenCalled();
+    expect(certificateRepository.save).toHaveBeenCalledOnce();
   });
 
   it('aplaza certificados mientras una sesión futura o inválida siga pendiente', async () => {
