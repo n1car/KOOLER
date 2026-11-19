@@ -13,6 +13,8 @@ export default function OrganizerLayout({
 }) {
   const pathname = usePathname();
   const isFeedbackPage = pathname.endsWith("/feedback");
+  const isActivitiesPage = pathname === "/organizer/activities";
+  const isCreatePage = pathname === "/organizer/activities/new";
 
   return (
     <RequireRole role="ORGANIZADOR">
@@ -20,6 +22,22 @@ export default function OrganizerLayout({
         bannerSrc={
           BANNER_ROUTES.includes(pathname) ? "/images/Banner.png" : undefined
         }
+        bannerTitle={
+          isCreatePage
+            ? "Crea tu nueva actividad"
+            : isActivitiesPage
+              ? "Mis actividades"
+              : undefined
+        }
+        bannerSubtitle={
+          isCreatePage
+            ? "Comparte una nueva experiencia de bienestar."
+            : isActivitiesPage
+              ? "Organiza y acompaña las actividades de tu comunidad."
+              : undefined
+        }
+        bannerArtSrc={isCreatePage ? "/images/kooler%20azul.png" : undefined}
+        bannerBackHref={isCreatePage ? "/organizer/activities" : undefined}
         hideHeader={isFeedbackPage}
         hideNav={isFeedbackPage}
         fullBleed={isFeedbackPage}

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Input, cn } from "@/components/ui";
-import { AuthHero } from "@/components/AuthHero";
+import { Alert, Button, Input } from "@/components/ui";
+import { AuthLayout } from "@/components/AuthLayout";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -45,48 +45,45 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
-      <AuthHero />
-      <div className="flex flex-1 flex-col gap-7 px-6 pb-10 pt-9">
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Bienvenido</h1>
-          <p className="text-sm text-muted">Ingresa a tu cuenta institucional.</p>
-        </header>
+    <AuthLayout variant="login">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-foreground">Bienvenido</h1>
+        <p className="text-sm text-muted">Ingresa a tu cuenta institucional.</p>
+      </header>
 
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          {error && <Alert>{error}</Alert>}
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        {error && <Alert>{error}</Alert>}
 
-          <Input
-            label="Correo institucional"
-            type="email"
-            placeholder="usuario@icesi.edu.co"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Contraseña"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <Input
+          label="Correo institucional"
+          type="email"
+          placeholder="usuario@icesi.edu.co"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          label="Contraseña"
+          type="password"
+          placeholder="••••••••"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <Button type="submit" fullWidth loading={submitting} className="mt-1 rounded-full py-4">
-            Iniciar sesión
-          </Button>
-        </form>
+        <Button type="submit" fullWidth loading={submitting} className="mt-1">
+          Iniciar sesión
+        </Button>
+      </form>
 
-        <p className="text-center text-sm text-muted">
-          ¿No tienes cuenta?{" "}
-          <Link href="/register" className={cn("font-semibold text-primary")}>
-            Regístrate
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="text-center text-sm text-muted">
+        ¿No tienes cuenta?{" "}
+        <Link href="/register" className="font-semibold text-primary">
+          Regístrate
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

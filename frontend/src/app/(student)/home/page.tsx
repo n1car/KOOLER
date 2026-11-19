@@ -35,7 +35,7 @@ export default function HomePage() {
         api.catalog.activityTypes(),
         api.activities.myEnrollments(),
       ]);
-      setActivities(list.filter((activity) => activity.status !== "CANCELLED"));
+      setActivities(list.filter((activity) => activity.status === "ACTIVE"));
       setTypes(catalog);
       setEnrolledIds(new Set(enrollments.map((item) => item.activity.id)));
     } catch (err) {
@@ -111,7 +111,14 @@ export default function HomePage() {
       )}
 
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-xl font-bold text-foreground lg:text-2xl">Actividades</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl font-bold text-foreground lg:text-2xl">
+            Actividades
+          </h1>
+          <span className="shrink-0 text-xs font-semibold text-primary">
+            {filtered.length} disponibles
+          </span>
+        </div>
         <p className="text-sm text-muted">Encuentra, inscríbete y participa</p>
       </div>
 

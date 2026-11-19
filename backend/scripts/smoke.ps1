@@ -101,7 +101,6 @@ $locs = @(Invoke-Api "GET" "/locations" $null $null)
 Check ($types.Count -ge 1) "Categorias disponibles ($($types.Count))"
 Check ($locs.Count -ge 1) "Ubicaciones disponibles ($($locs.Count))"
 $typeId = $types[0].id
-$locId = $locs[0].id
 
 # 2. Actividad (F1)
 Write-Host "`n[2] Funcionalidad 1: actividades e inscripciones"
@@ -112,7 +111,7 @@ $act = Invoke-Api "POST" "/activities" @{
   description = "Verificacion automatica"
   date = $date; startTime = "10:00"; endTime = "12:00"
   capacity = 5; registrationDeadline = $deadline; isCertifiable = $true
-  activityTypeId = $typeId; locationId = $locId
+  activityTypeId = $typeId; locationName = $locs[0].name
 } $ot
 $aid = $act.id
 Check ($act.status -eq "ACTIVE") "Crear actividad (id=$aid, status=$($act.status))"
@@ -123,18 +122,25 @@ Check ([bool]$enr.enrollmentId) "Inscribir estudiante (enrollmentId=$($enr.enrol
 Check ((Get-StatusCode "POST" "/activities/$aid/enroll" @{} $st) -eq 400) "Inscripcion duplicada rechazada (400)"
 Check ((Get-StatusCode "POST" "/activities" @{ name = "x"; description = "x"; date = $date; startTime = "10:00"; endTime = "11:00"; capacity = 1; registrationDeadline = $deadline } $st) -eq 403) "Estudiante no puede crear actividad (403)"
 
-# 3. Sesion y asistencia (F3)
+# 3. Sesiones y asistencia (F3)
+# La regla de negocio actual exige varias sesiones para emitir certificado.
 Write-Host "`n[3] Funcionalidad 3: sesiones, asistencia y certificados"
-$sess = Invoke-Api "POST" "/activities/$aid/sessions" @{ sessionDate = $date; startTime = "10:00"; endTime = "12:00" } $ot
-Check ([bool]$sess.id) "Crear sesion (id=$($sess.id))"
+$sessionDate1 = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd")
+$sessionDate2 = (Get-Date).AddDays(-2).ToString("yyyy-MM-dd")
+$sess1 = Invoke-Api "POST" "/activities/$aid/sessions" @{ sessionDate = $sessionDate1; startTime = "10:00"; endTime = "12:00" } $ot
+$sess2 = Invoke-Api "POST" "/activities/$aid/sessions" @{ sessionDate = $sessionDate2; startTime = "10:00"; endTime = "12:00" } $ot
+Check ([bool]$sess1.id) "Crear primera sesion (id=$($sess1.id))"
+Check ([bool]$sess2.id) "Crear segunda sesion (id=$($sess2.id))"
 $final = Invoke-Api "PATCH" "/activities/$aid" @{ status = "FINISHED" } $ot
 Check ($final.status -eq "FINISHED") "Finalizar actividad"
-$att = Invoke-Api "POST" "/activities/$aid/sessions/$($sess.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $ot
-Check ($att.status -eq "PRESENT") "Registrar asistencia (id=$($att.id))"
-Check ((Get-StatusCode "POST" "/activities/$aid/sessions/$($sess.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $st) -eq 403) "Estudiante no puede registrar asistencia (403)"
-$attList = Invoke-Api "GET" "/activities/$aid/sessions/$($sess.id)/attendance" $null $ot
+$att1 = Invoke-Api "POST" "/activities/$aid/sessions/$($sess1.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $ot
+$att2 = Invoke-Api "POST" "/activities/$aid/sessions/$($sess2.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $ot
+Check ($att1.status -eq "PRESENT") "Registrar asistencia sesion 1 (id=$($att1.id))"
+Check ($att2.status -eq "PRESENT") "Registrar asistencia sesion 2 (id=$($att2.id))"
+Check ((Get-StatusCode "POST" "/activities/$aid/sessions/$($sess1.id)/attendance" @{ studentId = $stuId; status = "PRESENT" } $st) -eq 403) "Estudiante no puede registrar asistencia (403)"
+$attList = Invoke-Api "GET" "/activities/$aid/sessions/$($sess1.id)/attendance" $null $ot
 Check (@($attList.attendance).Count -ge 1) "Leer asistencia de la sesion ($(@($attList.attendance).Count) registro(s))"
-Check ((Get-StatusCode "GET" "/activities/$aid/sessions/$($sess.id)/attendance" $null $st) -eq 403) "Estudiante no puede leer asistencia (403)"
+Check ((Get-StatusCode "GET" "/activities/$aid/sessions/$($sess1.id)/attendance" $null $st) -eq 403) "Estudiante no puede leer asistencia (403)"
 $elig = Invoke-Api "GET" "/certificates/activities/$aid/eligibility" $null $st
 Check ($elig.eligible -eq $true) "Elegibilidad de certificado ($($elig.attendancePercentage)%)"
 $certs = @(Invoke-Api "GET" "/certificates" $null $st)

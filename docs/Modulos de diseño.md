@@ -138,7 +138,7 @@
     * *Selector de Sesiones (Si aplica):* Pestañas o controles deslizantes para alternar entre sesiones.
     * *Listado de Estudiantes:* Tabla o lista vertical con los nombres de los asistentes inscritos.
     * *Control Interactivo de Asistencia:* Cada estudiante cuenta con un interruptor (*switch*) o botón de presencia individual para marcar o desmarcar su asistencia de forma directa.
-    * *Nota de Simplificación de Flujo:* Se elimina cualquier botón redundante de "asistencia guardada"; la interacción actualiza los registros en tiempo real.
+    * *Nota de Simplificación de Flujo:* La asistencia se guarda automáticamente y muestra una confirmación breve. Solo se habilita para sesiones cuya hora de fin ya pasó en Colombia.
 
 * **Pantalla 4: Pantalla de Retroalimentación**
   * *Estructura de Layout:*
@@ -152,7 +152,7 @@
   * *Estructura de Layout:*
     * *Cabecera:* Título superior "Crea tu nueva actividad".
     * *Formulario Completo de Campos (Inputs con bordes redondeados):*
-      1. *Campo 1:* **Imagen de la actividad** (URL o botón para subir archivo gráfico).
+      1. *Campo 1:* **Imagen de la actividad** (URL directa; no se suben archivos).
       2. *Campo 2:* **Nombre** (Título de la actividad).
       3. *Campo 3:* **Descripción** (Área de texto explicativa).
       4. *Campo 4:* **Categoría** (Selector desplegable, ej. Deportiva, Cultural).
@@ -160,5 +160,6 @@
       6. *Campo 6:* **Fecha de inicio y Hora**.
       7. *Campo 7:* **Lugar / Ubicación**.
       8. *Campo 8:* **Configuración de Sesiones** (Selector entre *Sesión única* o *Varias sesiones*).
-      9. *Campo 9:* **Certificación** (Checkbox o switch: "Esta actividad certifica participación", el cual habilita un campo extra para adjuntar el formato o plantilla del certificado).
+      9. *Campo 9:* **Certificación** (se activa automáticamente para actividades de varias sesiones; el certificado personalizado se genera y descarga desde el sistema, sin subir una plantilla).
+    * *Sesiones recurrentes:* En modo de varias sesiones, el organizador define la cantidad, duración en semanas, fecha inicial, días de la semana y horario. El sistema genera las fechas correspondientes; en sesión única no se muestran estas opciones.
     * *Botones Inferiores:* Botón secundario "Cancelar" y botón primario de acción sólida con el texto **"Crear actividad"**.

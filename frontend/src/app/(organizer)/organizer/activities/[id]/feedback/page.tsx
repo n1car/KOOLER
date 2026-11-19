@@ -3,6 +3,8 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, ErrorState, LoadingState, Stars } from "@/components/ui";
+import { ActivityCategoryIcon } from "@/components/ActivityCategoryIcon";
+import { ChevronLeftIcon } from "@/components/icons";
 import { api, ApiError } from "@/lib/api";
 import { activityTypeColor } from "@/lib/category";
 import { formatDate } from "@/lib/format";
@@ -20,6 +22,7 @@ export default function OrganizerFeedbackPage({
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,6 +45,9 @@ export default function OrganizerFeedbackPage({
     void load();
   }, [load]);
 
+  const showImage = Boolean(
+    activity?.imageUrl && failedImageUrl !== activity.imageUrl,
+  );
   const color = activityTypeColor(activity?.activityType?.name);
   const items = summary?.items ?? [];
   const total = summary?.total ?? 0;
@@ -55,17 +61,42 @@ export default function OrganizerFeedbackPage({
     <div className="flex min-h-full flex-1 flex-col bg-background">
       <header
         className="relative flex min-h-[190px] shrink-0 flex-col justify-between overflow-hidden px-6 pb-6 pt-7 text-white"
-        style={{
-          backgroundColor: color,
-          backgroundImage: activity?.imageUrl
-            ? `linear-gradient(115deg, rgba(151, 62, 190, .88), rgba(120, 48, 163, .80)), url(${JSON.stringify(activity.imageUrl)})`
-            : `linear-gradient(115deg, ${color}, #7b3da0)`,
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-        }}
+        style={{ backgroundColor: color }}
       >
-        <Link href={`/organizer/activities/${id}`} className="relative z-10 inline-flex items-center gap-2 text-sm font-medium text-white/95">
-          <span aria-hidden="true">←</span> Volver
+        {!showImage && (
+          <span
+            aria-hidden="true"
+            className="absolute right-8 top-8 opacity-30"
+          >
+            <ActivityCategoryIcon
+              category={activity?.activityType?.name}
+              size={88}
+            />
+          </span>
+        )}
+        {showImage && activity?.imageUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={activity.imageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setFailedImageUrl(activity.imageUrl ?? null)}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(115deg, ${color}E6, ${color}B3)`,
+              }}
+            />
+          </>
+        )}
+        <Link
+          href={`/organizer/activities/${id}`}
+          className="relative z-10 inline-flex items-center gap-1.5 text-sm font-medium text-white/95"
+        >
+          <ChevronLeftIcon width={18} height={18} />
+          Volver
         </Link>
         <div className="flex flex-col gap-1">
           <p className="text-sm text-white/80">Retroalimentación</p>
@@ -74,15 +105,15 @@ export default function OrganizerFeedbackPage({
       </header>
 
       {loading ? (
-        <div className="flex flex-1 items-center justify-center px-5 py-8">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-8">
           <LoadingState label="Cargando retroalimentación..." />
         </div>
       ) : error ? (
-        <div className="flex flex-1 items-center justify-center px-5 py-8">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-8">
           <ErrorState message={error} onRetry={() => void load()} />
         </div>
       ) : total === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center lg:mx-auto lg:w-full lg:max-w-4xl lg:px-8">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-surface text-[#90A1B9]">
             <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-9.5A7.5 7.5 0 0 1 10.5 4h2A7.5 7.5 0 0 1 20 11.5Z" />
@@ -94,7 +125,7 @@ export default function OrganizerFeedbackPage({
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 flex-col gap-4 px-5 py-6">
+        <div className="flex flex-1 flex-col gap-4 px-5 py-6 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-8 lg:py-8">
           <Card className="flex items-center gap-5 rounded-3xl border-0 p-5 shadow-[0_4px_20px_rgba(15,23,42,0.03)]">
             <div className="flex flex-col items-center gap-2">
               <span className="text-5xl font-bold text-foreground">

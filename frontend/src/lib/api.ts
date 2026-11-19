@@ -236,6 +236,8 @@ export interface CreateActivityPayload {
   imageUrl?: string;
   activityTypeId?: number;
   locationId?: number;
+  locationName?: string;
+  sessions?: CreateSessionPayload[];
 }
 
 export type UpdateActivityPayload = Partial<CreateActivityPayload> & {

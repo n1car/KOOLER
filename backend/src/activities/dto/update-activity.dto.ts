@@ -66,4 +66,8 @@ export class UpdateActivityDto {
   @IsInt()
   @IsOptional()
   locationId?: number;
+
+  @IsString()
+  @IsOptional()
+  locationName?: string;
 }

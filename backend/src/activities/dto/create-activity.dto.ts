@@ -1,4 +1,7 @@
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -7,7 +10,10 @@ import {
   IsString,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateSessionDto } from './create-session.dto';
 
 export class CreateActivityDto {
   @IsString()
@@ -59,4 +65,16 @@ export class CreateActivityDto {
   @IsInt({ message: 'El id de ubicación debe ser un número entero' })
   @IsOptional()
   locationId?: number;
+
+  @IsString()
+  @IsOptional()
+  locationName?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => CreateSessionDto)
+  @IsOptional()
+  sessions?: CreateSessionDto[];
 }

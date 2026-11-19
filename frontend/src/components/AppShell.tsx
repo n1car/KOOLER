@@ -96,10 +96,12 @@ function ProfileMenu({
 function ShellHeader({
   user,
   overlay = false,
+  backHref,
   className,
 }: {
   user: AuthUser;
   overlay?: boolean;
+  backHref?: string;
   className?: string;
 }) {
   const pathname = usePathname();
@@ -107,32 +109,50 @@ function ShellHeader({
   return (
     <header
       className={cn(
-        "z-20 flex items-center px-5",
+        "flex items-center px-5",
         overlay
-          ? "absolute inset-0"
-          : "sticky top-0 border-b border-border bg-white/95 py-3 backdrop-blur",
+          ? "absolute inset-0 z-40"
+          : "sticky top-0 z-20 border-b border-border bg-white/95 py-3 backdrop-blur",
         className,
       )}
     >
-      <ProfileMenu
-        pathname={pathname}
-        className="flex items-center gap-3 rounded-input py-1 pr-3 text-left active:opacity-90"
-      >
-        <Avatar firstName={user.firstName} lastName={user.lastName} />
-        <div className="leading-tight">
-          <p
-            className={cn(
-              "font-semibold",
-              overlay ? "text-3xl text-white" : "text-[15px] text-foreground",
-            )}
-          >
-            {`${user.firstName} ${user.lastName}`}
-          </p>
-          <p className={cn(overlay ? "text-base text-white/45" : "text-xs text-muted")}>
-            {roleLabel(user)}
-          </p>
-        </div>
-      </ProfileMenu>
+      {overlay && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-14 top-1/2 flex h-44 w-44 -translate-y-1/2 items-center justify-center rounded-full border border-[#6D77F3]/45"
+        >
+          <span className="h-36 w-36 rounded-full border border-[#6D77F3]/40" />
+        </span>
+      )}
+      {backHref ? (
+        <Link
+          href={backHref}
+          className="absolute left-5 top-5 flex items-center gap-1 text-sm font-medium text-white"
+        >
+          <ChevronLeftIcon />
+          Volver
+        </Link>
+      ) : (
+        <ProfileMenu
+          pathname={pathname}
+          className="flex items-center gap-3 rounded-input py-1 pr-3 text-left active:opacity-90"
+        >
+          <Avatar firstName={user.firstName} lastName={user.lastName} />
+          <div className="leading-tight">
+            <p
+              className={cn(
+                "font-bold",
+                overlay ? "text-xl text-white" : "text-[15px] text-foreground",
+              )}
+            >
+              {`${user.firstName} ${user.lastName}`}
+            </p>
+            <p className={cn(overlay ? "text-xs text-white/65" : "text-xs text-muted")}>
+              {roleLabel(user)}
+            </p>
+          </div>
+        </ProfileMenu>
+      )}
     </header>
   );
 }
@@ -143,34 +163,39 @@ function DesktopNav({
   pathname,
   exact = false,
   overlay = false,
+  showProfile = true,
 }: {
   user: AuthUser;
   items: NavItem[];
   pathname: string;
   exact?: boolean;
   overlay?: boolean;
+  showProfile?: boolean;
 }) {
   return (
     <header
       className={cn(
-        "z-30 hidden items-center justify-between gap-6 lg:flex",
+        "z-30 hidden items-center gap-6 lg:flex",
+        showProfile ? "justify-between" : "justify-end",
         overlay
           ? "absolute inset-x-6 top-4 rounded-full border border-[#E2E8F0] bg-white/95 px-5 py-2 shadow-[0_10px_25px_rgba(15,23,42,0.18)] backdrop-blur xl:inset-x-10"
           : "sticky top-0 border-b border-[#E2E8F0] bg-white/95 px-8 py-2.5 backdrop-blur",
       )}
     >
-      <ProfileMenu
-        pathname={pathname}
-        className="flex items-center gap-3 rounded-input py-1 pr-3 text-left active:opacity-90"
-      >
-        <Avatar firstName={user.firstName} lastName={user.lastName} />
-        <div className="leading-tight">
-          <p className="text-[15px] font-semibold text-foreground">
-            {`${user.firstName} ${user.lastName}`}
-          </p>
-          <p className="text-xs text-muted">{roleLabel(user)}</p>
-        </div>
-      </ProfileMenu>
+      {showProfile && (
+        <ProfileMenu
+          pathname={pathname}
+          className="flex items-center gap-3 rounded-input py-1 pr-3 text-left active:opacity-90"
+        >
+          <Avatar firstName={user.firstName} lastName={user.lastName} />
+          <div className="leading-tight">
+            <p className="text-[15px] font-semibold text-foreground">
+              {`${user.firstName} ${user.lastName}`}
+            </p>
+            <p className="text-xs text-muted">{roleLabel(user)}</p>
+          </div>
+        </ProfileMenu>
+      )}
       <nav className="flex items-center gap-1">
         {items.map(({ href, label, Icon }) => {
           const active = exact
@@ -183,8 +208,8 @@ function DesktopNav({
               className={cn(
                 "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                 active
-                  ? "bg-black text-white"
-                  : "text-[#90A1B9] hover:bg-black/5 hover:text-foreground",
+                  ? "bg-primary text-white"
+                  : "text-[#90A1B9] hover:bg-primary/5 hover:text-foreground",
               )}
             >
               <Icon width={18} height={18} />
@@ -233,7 +258,7 @@ export function StudentShell({
   return (
     <AppContainer>
       {hideHeader ? null : bannerSrc ? (
-        <div className="relative h-40 w-full shrink-0 overflow-hidden lg:h-auto">
+        <div className="relative h-24 w-full shrink-0 overflow-hidden bg-[#242633] lg:h-auto">
           <Image
             src={bannerSrc}
             alt=""
@@ -250,6 +275,10 @@ export function StudentShell({
             priority
             unoptimized
             className="hidden h-auto w-full lg:block"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[#242633]/85 lg:hidden"
           />
           <ShellHeader user={user} overlay className="lg:hidden" />
           {hideNav ? null : (
@@ -298,8 +327,8 @@ export function StudentShell({
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
                   active
-                    ? "bg-black text-white"
-                    : "text-[#90A1B9] hover:bg-black hover:text-white",
+                    ? "bg-primary text-white"
+                    : "text-[#90A1B9] hover:bg-primary hover:text-white",
                 )}
               >
                 <Icon />
@@ -320,12 +349,20 @@ const organizerNav: NavItem[] = [
 export function OrganizerShell({
   children,
   bannerSrc,
+  bannerTitle,
+  bannerSubtitle,
+  bannerArtSrc,
+  bannerBackHref,
   hideHeader = false,
   hideNav = false,
   fullBleed = false,
 }: {
   children: ReactNode;
   bannerSrc?: string;
+  bannerTitle?: string;
+  bannerSubtitle?: string;
+  bannerArtSrc?: string;
+  bannerBackHref?: string;
   hideHeader?: boolean;
   hideNav?: boolean;
   fullBleed?: boolean;
@@ -338,25 +375,52 @@ export function OrganizerShell({
   return (
     <AppContainer>
       {hideHeader ? null : bannerSrc ? (
-        <div className="relative h-40 w-full shrink-0 overflow-hidden lg:h-auto">
-          <Image
-            src={bannerSrc}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-left-bottom lg:hidden"
+        <div
+          className={cn(
+            "relative h-[208px] w-full shrink-0 overflow-hidden",
+            bannerArtSrc ? "lg:h-[300px]" : "lg:h-auto",
+          )}
+        >
+          {bannerArtSrc ? (
+            <Image
+              src={bannerSrc}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-left-bottom"
+            />
+          ) : (
+            <>
+              <Image
+                src={bannerSrc}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-cover object-left-bottom lg:hidden"
+              />
+              <Image
+                src="/images/bannerPC.png"
+                alt=""
+                width={5757}
+                height={1185}
+                priority
+                unoptimized
+                className="hidden h-auto w-full lg:block"
+              />
+            </>
+          )}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[#242633]/20"
           />
-          <Image
-            src="/images/bannerPC.png"
-            alt=""
-            width={5757}
-            height={1185}
-            priority
-            unoptimized
-            className="hidden h-auto w-full lg:block"
+          <ShellHeader
+            user={user}
+            overlay
+            backHref={bannerBackHref}
+            className="lg:hidden"
           />
-          <ShellHeader user={user} overlay className="lg:hidden" />
           {hideNav ? null : (
             <DesktopNav
               user={user}
@@ -364,7 +428,36 @@ export function OrganizerShell({
               pathname={pathname}
               exact
               overlay
+              showProfile={!bannerBackHref}
             />
+          )}
+          {bannerTitle && (
+            <div
+              className={cn(
+                "absolute bottom-5 left-5 z-20 text-white lg:bottom-7 lg:left-10",
+                bannerArtSrc ? "max-w-[calc(100%-176px)] lg:max-w-xl" : "max-w-3xl",
+              )}
+            >
+              <h1 className="text-[26px] font-bold leading-tight tracking-tight lg:text-4xl">
+                {bannerTitle}
+              </h1>
+              {bannerSubtitle && (
+                <p className="mt-1 max-w-xl text-xs text-white/75 lg:text-sm">
+                  {bannerSubtitle}
+                </p>
+              )}
+            </div>
+          )}
+          {bannerArtSrc && (
+            <div className="absolute bottom-4 right-4 z-10 h-[132px] w-[132px] lg:bottom-8 lg:right-10 lg:h-40 lg:w-40">
+              <Image
+                src={bannerArtSrc}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 160px, 132px"
+                className="object-contain"
+              />
+            </div>
           )}
         </div>
       ) : (
@@ -405,8 +498,8 @@ export function OrganizerShell({
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
                   active
-                    ? "bg-black text-white"
-                    : "text-[#90A1B9] hover:bg-black hover:text-white",
+                    ? "bg-primary text-white"
+                    : "text-[#90A1B9] hover:bg-primary hover:text-white",
                 )}
               >
                 <Icon />

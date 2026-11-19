@@ -31,13 +31,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground active:bg-blue-600",
-  secondary: "bg-surface-2 text-foreground active:bg-border",
+  primary:
+    "bg-primary text-primary-foreground hover:bg-[#171923] active:bg-[#171923]",
+  secondary:
+    "bg-surface-2 text-foreground hover:bg-border active:bg-border",
   outline:
-    "border border-border bg-transparent text-foreground active:bg-surface-2",
-  ghost: "bg-transparent text-primary active:bg-surface-2",
-  danger: "bg-danger text-white active:bg-red-600",
-  success: "bg-success text-white active:bg-green-600",
+    "border border-border bg-white text-foreground hover:border-primary/25 hover:bg-surface-2 active:bg-surface-2",
+  ghost:
+    "bg-transparent text-primary hover:bg-primary/5 active:bg-primary/10",
+  danger:
+    "bg-danger text-white hover:bg-[#9c3c3c] active:bg-[#8f3636]",
+  success:
+    "bg-success text-white hover:bg-[#2dbe52] active:bg-[#28a94a]",
 };
 
 export function Button({
@@ -52,7 +57,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-input px-5 py-3 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-input px-5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         buttonVariants[variant],
         fullWidth && "w-full",
         className,

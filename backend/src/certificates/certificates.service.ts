@@ -125,7 +125,7 @@ export class CertificatesService {
 
   async findByStudentId(studentId: number): Promise<CertificateEntity[]> {
     return this.certificateRepository.find({
-      where: { user: { id: studentId } },
+      where: { user: { id: studentId }, activity: { isCertifiable: true } },
       relations: { activity: true, user: true },
       order: { issueDate: 'DESC' },
     });
@@ -140,6 +140,9 @@ export class CertificatesService {
       relations: { activity: { organizer: true }, user: true },
     });
     if (!certificate) {
+      throw new NotFoundException('Certificado no encontrado');
+    }
+    if (!certificate.activity.isCertifiable) {
       throw new NotFoundException('Certificado no encontrado');
     }
 

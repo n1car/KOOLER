@@ -16,9 +16,9 @@
 ## Funcionalidad 2: Gestión de actividades (organizador)
 * **Usuario beneficiado:** organizador/monitor/coordinador de Bienestar Universitario.
 * **Necesidad que resuelve:** publicar y administrar sus actividades de forma centralizada, sin depender de carteleras o redes sociales, y tener visibilidad de quién se ha inscrito.
-* **Flujo principal:** el organizador crea una actividad (nombre, descripción, horario, lugar, categoría, cupo máximo) → la publica → puede editarla mientras esté activa → puede cancelarla si es necesario → consulta en cualquier momento la lista de estudiantes inscritos.
+* **Flujo principal:** el organizador crea una actividad (nombre, descripción, horario, lugar, categoría, cupo máximo) → la publica → puede cancelarla si es necesario → consulta en cualquier momento la lista de estudiantes inscritos.
 * **Reglas de negocio:**
-  * Solo el organizador dueño de la actividad (o un administrador) puede editarla o cancelarla.
+  * Solo el organizador dueño de la actividad (o un administrador) puede cancelarla.
   * Si se cancela una actividad, deja de estar disponible para nuevas inscripciones y los estudiantes ya inscritos deben poder verlo reflejado como "cancelada".
   * No se puede reducir el cupo máximo por debajo del número de inscritos actuales.
 * **Información que utiliza o produce:** datos completos de la actividad, estado (activa/cancelada/finalizada), lista de estudiantes inscritos.

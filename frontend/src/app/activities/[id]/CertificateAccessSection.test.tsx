@@ -88,6 +88,18 @@ describe("CertificateAccessSection", () => {
     expect(onDownload).toHaveBeenCalledOnce();
   });
 
+  it("does not offer certificate actions when certification is disabled", () => {
+    renderSection(
+      createEligibility({ eligible: true }),
+      { certifiable: false, certificateAvailable: true },
+    );
+
+    expect(screen.getByText(/Esta actividad no emite certificados/i)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /Descargar certificado PDF/i }),
+    ).toBeNull();
+  });
+
   it("shows loading, errors, and missing enrollment without requesting private eligibility", () => {
     const { rerender } = renderSection(null, { enrolled: false });
     expect(

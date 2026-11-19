@@ -13,7 +13,7 @@ Desarrollar una aplicación web que centralice la publicación, inscripción, ge
 * **RF04:** El sistema debe permitir a un estudiante inscribirse a una actividad con cupo disponible[cite: 4].
 * **RF05:** El sistema debe impedir que un estudiante se inscriba dos veces a la misma actividad, o a una actividad sin cupo o cancelada[cite: 4].
 * **RF06:** El sistema debe permitir a un organizador crear una actividad con nombre, descripción, horario, lugar, categoría y cupo máximo[cite: 4].
-* **RF07:** El sistema debe permitir a un organizador editar o cancelar únicamente las actividades que él mismo creó[cite: 4].
+* **RF07:** El sistema debe permitir a un organizador cancelar únicamente las actividades que él mismo creó[cite: 4].
 * **RF08:** El sistema debe permitir a un organizador consultar la lista de estudiantes inscritos en cada una de sus actividades[cite: 4].
 * **RF09:** El sistema debe marcar automáticamente una actividad como "finalizada" una vez pasado su horario[cite: 4].
 * **RF10:** El sistema debe permitir registrar y consultar la asistencia de los estudiantes inscritos a una actividad[cite: 4].

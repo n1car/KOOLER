@@ -13,8 +13,14 @@ import {
   LoadingState,
   StatusBadge,
 } from "@/components/ui";
+import { ActivityHero } from "@/components/activities/ActivityHero";
 import { FinishActivityDialog } from "@/components/activities/FinishActivityDialog";
-import { CertificateIcon } from "@/components/icons";
+import {
+  CertificateIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/icons";
+import { activityTypeColor } from "@/lib/category";
 import { formatDate, formatDateLong, formatTimeRange } from "@/lib/format";
 import { api, ApiError } from "@/lib/api";
 import type { Activity, ActivityEnrollments, Session } from "@/lib/types";
@@ -79,7 +85,11 @@ export default function OrganizerActivityDetailPage() {
     await api.activities.update(id, { status: "FINISHED" });
     setFinishDialogOpen(false);
     await load();
-    setNotice("Actividad finalizada. Ya puedes registrar asistencia.");
+    setNotice(
+      sessions.length > 0
+        ? "Actividad finalizada. Ya puedes registrar asistencia."
+        : "Actividad finalizada.",
+    );
   }
 
   async function requestFinish() {
@@ -184,95 +194,112 @@ export default function OrganizerActivityDetailPage() {
   }
 
   const isActive = activity.status === "ACTIVE";
+  const isMultiSession = sessions.length > 1 || activity.isCertifiable;
+  const canIssueCertificate = activity.isCertifiable;
+  const categoryColor = activityTypeColor(activity.activityType?.name);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       {notice && <Alert tone="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
-      <div className="relative flex h-44 items-end overflow-hidden rounded-card bg-gradient-to-br from-primary to-blue-400 p-5 text-white">
-        {activity.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={activity.imageUrl}
-            alt={activity.name}
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
-          />
-        )}
-        <div className="relative z-10 flex w-full items-end justify-between gap-2">
-          <h1 className="text-xl font-bold drop-shadow">{activity.name}</h1>
+      <div className="overflow-hidden rounded-card">
+        <ActivityHero
+          activity={activity}
+          onBack={() => router.push("/organizer/activities")}
+        >
           <StatusBadge status={activity.status} />
-        </div>
+        </ActivityHero>
       </div>
 
-      <Card className="flex flex-col gap-2">
-        <p className="text-sm text-muted">
-          {formatDateLong(activity.date)} ·{" "}
-          {formatTimeRange(activity.startTime, activity.endTime)}
-        </p>
-        <p className="text-sm text-muted">
-          📍 {activity.location?.name ?? "Sin ubicación"}
-        </p>
-        <p className="text-sm text-muted">
-          👥 {activity.enrolledCount ?? 0} de {activity.capacity} inscritos
-        </p>
-        {activity.isCertifiable && (
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-            <CertificateIcon width={14} height={14} />
-            Esta actividad está certificada
-          </span>
-        )}
+      <Card className="flex flex-col gap-3">
         <p className="text-sm leading-relaxed text-foreground">
           {activity.description}
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={activity.status} />
+          {canIssueCertificate && (
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
+              <CertificateIcon width={14} height={14} />
+              Certificable
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            {formatDateLong(activity.date)} ·{" "}
+            {formatTimeRange(activity.startTime, activity.endTime)}
+          </p>
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <MapPinIcon width={16} height={16} className="shrink-0" />
+            {activity.location?.name ?? "Sin ubicación"}
+          </p>
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <UsersIcon width={16} height={16} className="shrink-0" />
+            {activity.enrolledCount ?? 0} de {activity.capacity} inscritos
+          </p>
+        </div>
       </Card>
 
-      <div className="flex flex-col gap-2">
-        {(isActive || activity.status === "FINISHED") && (
-          <Link
-            href={`/organizer/activities/${id}/attendance`}
-            className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
-          >
-            Control de asistencia
-          </Link>
-        )}
-        {isActive && (
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-sm font-bold text-foreground">Acciones</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {sessions.length > 0 &&
+            (isActive || activity.status === "FINISHED") && (
+              <Link
+                href={`/organizer/activities/${id}/attendance`}
+                className="flex w-full items-center justify-center rounded-input border px-5 py-3 text-sm font-semibold text-foreground transition-[filter] hover:brightness-95 sm:w-auto"
+                style={{
+                  borderColor: `${categoryColor}55`,
+                  backgroundColor: `${categoryColor}14`,
+                }}
+              >
+                Control de asistencia
+              </Link>
+            )}
+          {isActive && (
+            <Button
+              fullWidth
+              loading={busy}
+              onClick={requestFinish}
+              className="sm:w-auto"
+            >
+              Finalizar actividad
+            </Button>
+          )}
+          {!isActive && (
+            <Link
+              href={`/organizer/activities/${id}/feedback`}
+              className="flex w-full items-center justify-center rounded-input border px-5 py-3 text-sm font-semibold text-foreground transition-[filter] hover:brightness-95 sm:w-auto"
+              style={{
+                borderColor: `${categoryColor}55`,
+                backgroundColor: `${categoryColor}14`,
+              }}
+            >
+              Ver retroalimentación
+            </Link>
+          )}
           <Button
-            variant="outline"
+            variant="danger"
             fullWidth
-            loading={busy}
-            onClick={requestFinish}
+            disabled={busy}
+            onClick={() => {
+              setDeleteError("");
+              setDeleteDialogOpen(true);
+            }}
+            className="sm:w-auto"
           >
-            Finalizar actividad
+            Eliminar actividad
           </Button>
-        )}
-        {!isActive && (
-          <Link
-            href={`/organizer/activities/${id}/feedback`}
-            className="flex w-full items-center justify-center rounded-input bg-primary px-5 py-3 text-[15px] font-semibold text-white"
-          >
-            Ver retroalimentación
-          </Link>
-        )}
-        <Button
-          variant="danger"
-          fullWidth
-          disabled={busy}
-          onClick={() => {
-            setDeleteError("");
-            setDeleteDialogOpen(true);
-          }}
-        >
-          Eliminar actividad
-        </Button>
-      </div>
+        </div>
+      </Card>
 
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <Card className="flex flex-col gap-3">
         <h2 className="text-sm font-bold text-foreground">Sesiones</h2>
         {sessions.length === 0 ? (
           <p className="text-xs text-muted">
-            Agrega al menos una sesión para poder registrar asistencia y emitir
-            certificados.
+            Esta actividad no tiene sesiones registradas.
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -292,42 +319,62 @@ export default function OrganizerActivityDetailPage() {
           </ul>
         )}
 
-        <form
-          onSubmit={addSession}
-          className="flex flex-col gap-3 border-t border-border pt-3"
-        >
-          <p className="text-xs font-semibold text-muted">Nueva sesión</p>
-          <Input
-            label="Fecha"
-            type="date"
-            value={sessionForm.sessionDate}
-            onChange={(e) =>
-              setSessionForm((prev) => ({ ...prev, sessionDate: e.target.value }))
-            }
-            required
-          />
-          <div className="grid grid-cols-2 gap-3">
+        {isMultiSession ? (
+          <form
+            onSubmit={addSession}
+            className="flex flex-col gap-3 border-t border-border pt-3"
+          >
+            <p className="text-xs font-semibold text-muted">Nueva sesión</p>
             <Input
-              label="Hora inicio"
-              type="time"
-              value={sessionForm.startTime}
+              label="Fecha"
+              type="date"
+              value={sessionForm.sessionDate}
               onChange={(e) =>
-                setSessionForm((prev) => ({ ...prev, startTime: e.target.value }))
+                setSessionForm((prev) => ({
+                  ...prev,
+                  sessionDate: e.target.value,
+                }))
               }
+              required
             />
-            <Input
-              label="Hora fin"
-              type="time"
-              value={sessionForm.endTime}
-              onChange={(e) =>
-                setSessionForm((prev) => ({ ...prev, endTime: e.target.value }))
-              }
-            />
-          </div>
-          <Button type="submit" variant="secondary" fullWidth loading={busy}>
-            Agregar sesión
-          </Button>
-        </form>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Hora inicio"
+                type="time"
+                value={sessionForm.startTime}
+                onChange={(e) =>
+                  setSessionForm((prev) => ({
+                    ...prev,
+                    startTime: e.target.value,
+                  }))
+                }
+              />
+              <Input
+                label="Hora fin"
+                type="time"
+                value={sessionForm.endTime}
+                onChange={(e) =>
+                  setSessionForm((prev) => ({
+                    ...prev,
+                    endTime: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <Button
+              type="submit"
+              loading={busy}
+              className="w-full sm:w-auto sm:self-start"
+            >
+              Agregar sesión
+            </Button>
+          </form>
+        ) : (
+          <p className="border-t border-border pt-3 text-xs text-muted">
+            El control de asistencia estará disponible cuando finalice la
+            sesión.
+          </p>
+        )}
       </Card>
 
       <Card className="flex flex-col gap-3">
@@ -360,6 +407,7 @@ export default function OrganizerActivityDetailPage() {
           </ul>
         )}
       </Card>
+      </div>
 
       {finishDialogOpen && (
         <FinishActivityDialog

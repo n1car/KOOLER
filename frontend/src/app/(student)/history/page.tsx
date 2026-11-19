@@ -12,7 +12,15 @@ import {
   LoadingState,
   Stars,
 } from "@/components/ui";
-import { CertificateIcon, HistoryIcon } from "@/components/icons";
+import {
+  CalendarIcon,
+  CertificateIcon,
+  HistoryIcon,
+  MapPinIcon,
+} from "@/components/icons";
+import { CategoryStripe } from "@/components/CategoryStripe";
+import { ActivityCategoryIcon } from "@/components/ActivityCategoryIcon";
+import { activityTypeColor } from "@/lib/category";
 import { api, ApiError } from "@/lib/api";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { Certificate, HistoryItem } from "@/lib/types";
@@ -21,6 +29,17 @@ export default function HistoryPage() {
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState("");
+  const [activityMetadata, setActivityMetadata] = useState<
+    Map<
+      number,
+      {
+        category: string | null;
+        location: string | null;
+        isCertifiable: boolean;
+      }
+    >
+  >(new Map());
+  const [activityMetadataError, setActivityMetadataError] = useState("");
   const [toRate, setToRate] = useState<HistoryItem | null>(null);
   const [reviewMessage, setReviewMessage] = useState("");
 
@@ -38,8 +57,36 @@ export default function HistoryPage() {
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError("");
+    setActivityMetadataError("");
     try {
-      setItems(await api.history.list());
+      const [historyResult, enrollmentsResult] = await Promise.allSettled([
+        api.history.list(),
+        api.activities.myEnrollments(),
+      ]);
+      if (historyResult.status === "rejected") throw historyResult.reason;
+
+      setItems(historyResult.value);
+      if (enrollmentsResult.status === "fulfilled") {
+        setActivityMetadata(
+          new Map(
+            enrollmentsResult.value.map(({ activity }) => [
+              activity.id,
+              {
+                category: activity.category,
+                location: activity.location,
+                isCertifiable: activity.isCertifiable,
+              },
+            ]),
+          ),
+        );
+      } else {
+        setActivityMetadata(new Map());
+        setActivityMetadataError(
+          enrollmentsResult.reason instanceof ApiError
+            ? enrollmentsResult.reason.message
+            : "No se pudieron cargar las categorías y ubicaciones.",
+        );
+      }
     } catch (err) {
       setHistoryError(
         err instanceof ApiError ? err.message : "No se pudo cargar tu historial.",
@@ -119,11 +166,31 @@ export default function HistoryPage() {
     setReviewMessage("¡Gracias! Tu calificación quedó registrada.");
   }
 
+  const visibleCertificates = certificates.filter(
+    (certificate) =>
+      activityMetadata.get(certificate.activityId)?.isCertifiable === true,
+  );
+  const certificatesByActivityId = new Map(
+    visibleCertificates.map((certificate) => [
+      certificate.activityId,
+      certificate,
+    ]),
+  );
+  const historyActivityIds = new Set(items.map((item) => item.activityId));
+  const unlinkedCertificates = visibleCertificates.filter(
+    (certificate) => !historyActivityIds.has(certificate.activityId),
+  );
+  const showCertificateSection =
+    certificatesLoading ||
+    certificatesError !== "" ||
+    unlinkedCertificates.length > 0 ||
+    items.length === 0;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-[#242633]">Mi historial</h2>
+          <h2 className="text-xl font-bold text-[#242633]">Mi historial</h2>
           <p className="text-xs text-muted">Actividades en las que participaste</p>
         </div>
         <span className="shrink-0 text-xs font-semibold text-primary">
@@ -131,59 +198,14 @@ export default function HistoryPage() {
         </span>
       </div>
 
-      <section className="order-2 flex flex-col gap-3">
-        <h3 className="text-base font-bold text-foreground">Mis certificados</h3>
-        {certificatesLoading ? (
-          <LoadingState label="Cargando certificados..." />
-        ) : certificatesError ? (
-          <ErrorState message={certificatesError} onRetry={() => void loadCertificates()} />
-        ) : certificates.length === 0 ? (
-          <EmptyState
-            icon={<CertificateIcon width={32} height={32} />}
-            title="Aún no tienes certificados"
-            description="Cuando se emita un certificado para ti, podrás descargarlo aquí."
-          />
-        ) : (
-          certificates.map((certificate) => (
-            <Card key={certificate.id} className="flex flex-col gap-3">
-              <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex min-w-0 items-start gap-3 md:flex-1">
-                  <CertificateIcon width={22} height={22} className="shrink-0 text-primary" />
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-foreground">
-                      Certificado de actividad #{certificate.activityId}
-                    </h4>
-                    <p className="text-xs text-muted">
-                      Emitido el {formatDateTime(certificate.issueDate)}
-                    </p>
-                    <p className="break-all text-xs text-muted">
-                      Código: {certificate.certificateCode}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  fullWidth
-                  className="w-full md:w-auto md:shrink-0"
-                  loading={downloadingCertificateId === certificate.id}
-                  disabled={downloadingCertificateId !== null}
-                  onClick={() => void downloadCertificate(certificate.id)}
-                >
-                  <CertificateIcon width={18} height={18} />
-                  Ver certificado
-                </Button>
-              </div>
-              {downloadMessage?.certificateId === certificate.id && (
-                <Alert tone={downloadMessage.tone === "success" ? "success" : "danger"}>
-                  {downloadMessage.text}
-                </Alert>
-              )}
-            </Card>
-          ))
-        )}
-      </section>
+      {activityMetadataError && (
+        <Alert tone="info">
+          No se pudieron cargar algunos datos de categoría y ubicación.{" "}
+          {activityMetadataError}
+        </Alert>
+      )}
 
-      <section className="order-1 flex flex-col gap-3">
+      <section className="flex flex-col gap-3">
         <h3 className="text-base font-bold text-foreground">Mis actividades finalizadas</h3>
 
         {reviewMessage && <Alert tone="success">{reviewMessage}</Alert>}
@@ -199,38 +221,211 @@ export default function HistoryPage() {
             description="Aquí verás las actividades que ya completaste."
           />
         ) : (
-          items.map((item) => (
-            <Card key={item.activityId} className="flex flex-col gap-3 rounded-3xl border-0 border-t-4 border-t-primary shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h4 className="text-base font-bold text-foreground">{item.name}</h4>
-                  <p className="text-xs text-muted">{formatDate(item.date)}</p>
-                </div>
-                {item.attendance === "PRESENT" ? (
-                  <Badge tone="success">Asististe</Badge>
-                ) : (
-                  <Badge tone="danger">No asististe</Badge>
-                )}
-              </div>
+          items.map((item) => {
+            const metadata = activityMetadata.get(item.activityId);
+            const accent = metadata?.category
+              ? activityTypeColor(metadata.category)
+              : "#CBD5E1";
+            const certificate = certificatesByActivityId.get(item.activityId);
 
-              {item.reviewed ? (
-                <div className="flex flex-col gap-1">
-                  <Stars value={item.myRating ?? 0} readOnly size={20} />
-                  <p className="text-xs text-muted">Ya calificaste esta actividad.</p>
+            return (
+              <article
+                key={item.activityId}
+                className="overflow-hidden rounded-2xl bg-white"
+              >
+                <CategoryStripe color={accent} />
+                <div className="flex flex-col gap-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {metadata?.category && (
+                        <>
+                          <span
+                            aria-hidden="true"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                            style={{
+                              backgroundColor: `${accent}1A`,
+                              color: accent,
+                            }}
+                          >
+                            <ActivityCategoryIcon
+                              category={metadata.category}
+                              size={18}
+                            />
+                          </span>
+                          <span
+                            className="truncate rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: `${accent}1A`,
+                              color: accent,
+                            }}
+                          >
+                            {metadata.category}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <Badge tone="muted">Finalizada</Badge>
+                      <span
+                        className={`text-[11px] font-medium ${
+                          item.attendance === "PRESENT"
+                            ? "text-success"
+                            : "text-danger"
+                        }`}
+                      >
+                        {item.attendance === "PRESENT"
+                          ? "Asististe"
+                          : "No asististe"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-[15px] font-bold leading-snug text-foreground">
+                      {item.name}
+                    </h4>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarIcon width={14} height={14} />
+                        {formatDate(item.date)}
+                      </span>
+                      {metadata?.location && (
+                        <span className="inline-flex min-w-0 items-center gap-1 break-words">
+                          <MapPinIcon
+                            width={14}
+                            height={14}
+                            className="shrink-0"
+                          />
+                          {metadata.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Stars
+                      value={item.reviewed ? (item.myRating ?? 0) : 0}
+                      readOnly
+                      size={17}
+                    />
+                    <span className="text-xs text-muted">
+                      {item.reviewed
+                        ? item.myRating === null
+                          ? "Enviado"
+                          : `${item.myRating}/5 · Enviado`
+                        : item.attendance === "PRESENT"
+                          ? "Pendiente de calificar"
+                          : "No puedes calificar esta actividad"}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {!item.reviewed && item.attendance === "PRESENT" && (
+                      <Button
+                        variant="outline"
+                        fullWidth
+                        onClick={() => setToRate(item)}
+                      >
+                        Calificar actividad
+                      </Button>
+                    )}
+                    {certificate && (
+                      <Button
+                        variant="outline"
+                        fullWidth
+                        loading={downloadingCertificateId === certificate.id}
+                        disabled={downloadingCertificateId !== null}
+                        onClick={() => void downloadCertificate(certificate.id)}
+                      >
+                        <CertificateIcon width={18} height={18} />
+                        Ver certificado
+                      </Button>
+                    )}
+                  </div>
+
+                  {certificate &&
+                    downloadMessage?.certificateId === certificate.id && (
+                      <Alert
+                        tone={
+                          downloadMessage.tone === "success"
+                            ? "success"
+                            : "danger"
+                        }
+                      >
+                        {downloadMessage.text}
+                      </Alert>
+                    )}
                 </div>
-              ) : item.attendance === "PRESENT" ? (
-                <Button variant="outline" fullWidth onClick={() => setToRate(item)}>
-                  Calificar actividad
-                </Button>
-              ) : (
-                <p className="text-xs text-muted">
-                  Solo puedes calificar actividades en las que asististe.
-                </p>
-              )}
-            </Card>
-          ))
+              </article>
+            );
+          })
         )}
       </section>
+
+      {showCertificateSection && (
+        <section className="flex flex-col gap-3">
+          <h3 className="text-base font-bold text-foreground">Mis certificados</h3>
+          {certificatesLoading ? (
+            <LoadingState label="Cargando certificados..." />
+          ) : certificatesError ? (
+            <ErrorState
+              message={certificatesError}
+              onRetry={() => void loadCertificates()}
+            />
+          ) : unlinkedCertificates.length === 0 ? (
+            <EmptyState
+              icon={<CertificateIcon width={32} height={32} />}
+              title="Aún no tienes certificados"
+              description="Cuando se emita un certificado para ti, podrás descargarlo aquí."
+            />
+          ) : (
+            unlinkedCertificates.map((certificate) => (
+              <Card key={certificate.id} className="flex flex-col gap-3">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3 sm:flex-1">
+                    <CertificateIcon
+                      width={22}
+                      height={22}
+                      className="shrink-0 text-primary"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-bold text-foreground">
+                        Certificado de actividad #{certificate.activityId}
+                      </h4>
+                      <p className="text-xs text-muted">
+                        Emitido el {formatDateTime(certificate.issueDate)}
+                      </p>
+                      <p className="break-all text-xs text-muted">
+                        Código: {certificate.certificateCode}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="w-full sm:w-auto sm:shrink-0"
+                    loading={downloadingCertificateId === certificate.id}
+                    disabled={downloadingCertificateId !== null}
+                    onClick={() => void downloadCertificate(certificate.id)}
+                  >
+                    <CertificateIcon width={18} height={18} />
+                    Ver certificado
+                  </Button>
+                </div>
+                {downloadMessage?.certificateId === certificate.id && (
+                  <Alert
+                    tone={
+                      downloadMessage.tone === "success" ? "success" : "danger"
+                    }
+                  >
+                    {downloadMessage.text}
+                  </Alert>
+                )}
+              </Card>
+            ))
+          )}
+        </section>
+      )}
 
       <RateActivityModal
         open={toRate !== null}

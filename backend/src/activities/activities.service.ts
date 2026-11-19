@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, ILike, Repository } from 'typeorm';
+import { DataSource, ILike, In, Repository } from 'typeorm';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { SessionEntity } from './entities/session.entity';
@@ -141,12 +141,50 @@ export class ActivitiesService {
   private statusForSchedule(
     activity: Pick<ActivityEntity, 'date' | 'endTime'>,
     currentStatus: ActivityEntity['status'],
+    sessions: Pick<SessionEntity, 'sessionDate' | 'endTime'>[] = [],
   ): ActivityEntity['status'] {
     if (currentStatus === 'CANCELLED' || currentStatus === 'FINISHED') {
       return currentStatus;
     }
-    if (!this.getLocalEnd(activity)) return currentStatus;
-    return this.isPastEnd(activity) ? 'FINISHED' : 'ACTIVE';
+
+    const lastSession = sessions.reduce<
+      Pick<SessionEntity, 'sessionDate' | 'endTime'> | undefined
+    >((latest, session) => {
+      if (!session.endTime) return latest;
+      if (
+        !latest ||
+        `${session.sessionDate}T${session.endTime}` >
+          `${latest.sessionDate}T${latest.endTime}`
+      ) {
+        return session;
+      }
+      return latest;
+    }, undefined);
+    const schedule =
+      sessions.length > 1 && lastSession
+        ? { date: lastSession.sessionDate, endTime: lastSession.endTime ?? '' }
+        : activity;
+
+    if (!this.getLocalEnd(schedule)) return currentStatus;
+    return this.isPastEnd(schedule) ? 'FINISHED' : 'ACTIVE';
+  }
+
+  private async getSessionsByActivity(
+    activityIds: number[],
+  ): Promise<Map<number, SessionEntity[]>> {
+    const grouped = new Map<number, SessionEntity[]>();
+    if (activityIds.length === 0) return grouped;
+
+    const sessions = await this.sessionRepo.find({
+      where: { activity: { id: In(activityIds) } },
+    });
+    for (const session of sessions) {
+      const activityId = session.activity.id;
+      const group = grouped.get(activityId) ?? [];
+      group.push(session);
+      grouped.set(activityId, group);
+    }
+    return grouped;
   }
 
   // Evita exponer el hash de contraseña del organizador en respuestas públicas.
@@ -175,7 +213,13 @@ export class ActivitiesService {
 
   // 1. Crear actividad (Solo Organizador)
   async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
-    const { activityTypeId, locationId, ...rest } = createDto;
+    const {
+      activityTypeId,
+      locationId,
+      locationName,
+      sessions,
+      ...rest
+    } = createDto;
 
     const activity = this.activityRepo.create({
       ...rest,
@@ -184,14 +228,52 @@ export class ActivitiesService {
       registrationDeadline: new Date(createDto.registrationDeadline),
     });
 
-    if (activityTypeId !== undefined) {
+    if (activityTypeId !== undefined && activityTypeId !== null) {
       activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
     }
-    if (locationId !== undefined) {
+    if (locationId !== undefined && locationId !== null) {
       activity.location = await this.catalogService.findLocationById(locationId);
+    } else if (locationName?.trim()) {
+      activity.location =
+        await this.catalogService.findOrCreateLocationByName(locationName);
     }
 
-    const saved = await this.activityRepo.save(activity);
+    if (sessions?.length) {
+      if (
+        sessions.some(
+          (session) =>
+            !session.startTime ||
+            !session.endTime ||
+            session.endTime <= session.startTime,
+        )
+      ) {
+        throw new BadRequestException(
+          'Cada sesión debe tener horas válidas y una hora de fin posterior a la de inicio',
+        );
+      }
+    }
+
+    const saved = await this.dataSource.transaction(async (manager) => {
+      const savedActivity = await manager
+        .getRepository(ActivityEntity)
+        .save(activity);
+
+      if (sessions?.length) {
+        const sessionRepository = manager.getRepository(SessionEntity);
+        await sessionRepository.save(
+          sessions.map((session) =>
+            sessionRepository.create({
+              activity: savedActivity,
+              sessionDate: session.sessionDate,
+              startTime: session.startTime,
+              endTime: session.endTime,
+            }),
+          ),
+        );
+      }
+
+      return savedActivity;
+    });
     this.traceStatus('ActivitiesService.create', saved, null, saved.status, 'persisted');
     return saved;
   }
@@ -217,12 +299,19 @@ export class ActivitiesService {
       relations: { organizer: true, enrollments: true },
       order: { date: 'ASC', startTime: 'ASC' },
     });
+    const sessionsByActivity = await this.getSessionsByActivity(
+      activities.map((activity) => activity.id),
+    );
 
     return activities.map((act) => {
       const enrolledCount = act.enrollments ? act.enrollments.length : 0;
       const availableSpots = Math.max(0, act.capacity - enrolledCount);
       // RF09: reflejar FINISHED aunque el cron aún no haya persistido el cambio.
-      const status = this.statusForSchedule(act, act.status);
+      const status = this.statusForSchedule(
+        act,
+        act.status,
+        sessionsByActivity.get(act.id),
+      );
       if (status !== act.status) {
         this.traceStatus(
           'ActivitiesService.findAll',
@@ -255,10 +344,15 @@ export class ActivitiesService {
       throw new NotFoundException(`Actividad con ID ${id} no encontrada`);
     }
 
+    const sessionsByActivity = await this.getSessionsByActivity([activity.id]);
     const enrolledCount = activity.enrollments ? activity.enrollments.length : 0;
     const availableSpots = Math.max(0, activity.capacity - enrolledCount);
     // Reconcile legacy statuses against Colombia-local end time.
-    const status = this.statusForSchedule(activity, activity.status);
+    const status = this.statusForSchedule(
+      activity,
+      activity.status,
+      sessionsByActivity.get(activity.id),
+    );
     if (activity.status !== status) {
       this.traceStatus(
         'ActivitiesService.findOne',
@@ -297,7 +391,13 @@ export class ActivitiesService {
       throw new ForbiddenException('Solo el organizador responsable puede modificar esta actividad');
     }
 
-    const { activityTypeId, locationId, registrationDeadline, ...rest } = updateDto;
+    const {
+      activityTypeId,
+      locationId,
+      locationName,
+      registrationDeadline,
+      ...rest
+    } = updateDto;
 
     if (rest.status === 'FINISHED') {
       if (activity.status !== 'ACTIVE') {
@@ -330,12 +430,15 @@ export class ActivitiesService {
       activity.registrationDeadline = new Date(registrationDeadline);
     }
 
-    if (activityTypeId !== undefined) {
+    if (activityTypeId !== undefined && activityTypeId !== null) {
       activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
     }
 
-    if (locationId !== undefined) {
+    if (locationId !== undefined && locationId !== null) {
       activity.location = await this.catalogService.findLocationById(locationId);
+    } else if (locationName?.trim()) {
+      activity.location =
+        await this.catalogService.findOrCreateLocationByName(locationName);
     }
 
     const previousStatus = activity.status;
@@ -471,6 +574,7 @@ export class ActivitiesService {
     return this.dataSource.transaction(async (manager) => {
       const activityRepo = manager.getRepository(ActivityEntity);
       const enrollmentRepo = manager.getRepository(EnrollmentEntity);
+      const sessionRepository = manager.getRepository(SessionEntity);
 
       // Postgres no permite FOR UPDATE con LEFT JOIN: se bloquea solo la
       // fila de la actividad (sin relations ni eager) y el conteo va por query aparte.
@@ -485,7 +589,14 @@ export class ActivitiesService {
       }
 
       // Reconcile legacy statuses before applying the enrollment rules.
-      const status = this.statusForSchedule(activity, activity.status);
+      const sessions = await sessionRepository.find({
+        where: { activity: { id: activityId } },
+      });
+      const status = this.statusForSchedule(
+        activity,
+        activity.status,
+        sessions,
+      );
       if (activity.status !== status) {
         this.traceStatus(
           'ActivitiesService.enroll',
@@ -595,6 +706,9 @@ export class ActivitiesService {
       relations: { activity: true },
       order: { enrollmentDate: 'DESC' },
     });
+    const sessionsByActivity = await this.getSessionsByActivity(
+      [...new Set(enrollments.map((enrollment) => enrollment.activity.id))],
+    );
 
     return enrollments.map((e) => ({
       enrollmentId: e.id,
@@ -605,7 +719,11 @@ export class ActivitiesService {
         date: e.activity.date,
         startTime: e.activity.startTime,
         endTime: e.activity.endTime,
-        status: e.activity.status,
+        status: this.statusForSchedule(
+          e.activity,
+          e.activity.status,
+          sessionsByActivity.get(e.activity.id),
+        ),
         imageUrl: e.activity.imageUrl,
         isCertifiable: e.activity.isCertifiable,
         category: e.activity.activityType?.name ?? null,

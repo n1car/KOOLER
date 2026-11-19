@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Input, Select, cn } from "@/components/ui";
-import { AuthHero } from "@/components/AuthHero";
+import { Alert, Button, Input, Select } from "@/components/ui";
+import { AuthLayout } from "@/components/AuthLayout";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { RoleName } from "@/lib/types";
@@ -51,75 +51,72 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[#F0F1F5]">
-      <AuthHero />
-      <div className="flex flex-1 flex-col gap-7 px-6 pb-10 pt-9">
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">Crear cuenta</h1>
-          <p className="text-sm text-muted">
-            Regístrate con tu correo institucional.
-          </p>
-        </header>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {error && <Alert>{error}</Alert>}
-
-          <Input
-            label="Nombres"
-            placeholder="Nombres completos"
-            autoComplete="given-name"
-            value={form.firstName}
-            onChange={(e) => update("firstName", e.target.value)}
-            required
-          />
-          <Input
-            label="Apellidos"
-            placeholder="Apellidos completos"
-            autoComplete="family-name"
-            value={form.lastName}
-            onChange={(e) => update("lastName", e.target.value)}
-            required
-          />
-          <Input
-            label="Correo institucional"
-            type="email"
-            placeholder="usuario@icesi.edu.co"
-            autoComplete="email"
-            value={form.email}
-            onChange={(e) => update("email", e.target.value)}
-            required
-          />
-          <Input
-            label="Contraseña"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            minLength={6}
-            value={form.password}
-            onChange={(e) => update("password", e.target.value)}
-            required
-          />
-          <Select
-            label="Rol"
-            value={form.roleName}
-            onChange={(e) => update("roleName", e.target.value as RoleName)}
-          >
-            <option value="ESTUDIANTE">Estudiante</option>
-            <option value="ORGANIZADOR">Organizador</option>
-          </Select>
-
-          <Button type="submit" fullWidth loading={submitting} className="mt-1 rounded-full py-4">
-            Registrarse
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted">
-          ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className={cn("font-semibold text-primary")}>
-            Inicia sesión
-          </Link>
+    <AuthLayout variant="register">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-foreground">Crear cuenta</h1>
+        <p className="text-sm text-muted">
+          Regístrate con tu correo institucional.
         </p>
-      </div>
-    </div>
+      </header>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {error && <Alert>{error}</Alert>}
+
+        <Input
+          label="Nombres"
+          placeholder="Nombres completos"
+          autoComplete="given-name"
+          value={form.firstName}
+          onChange={(e) => update("firstName", e.target.value)}
+          required
+        />
+        <Input
+          label="Apellidos"
+          placeholder="Apellidos completos"
+          autoComplete="family-name"
+          value={form.lastName}
+          onChange={(e) => update("lastName", e.target.value)}
+          required
+        />
+        <Input
+          label="Correo institucional"
+          type="email"
+          placeholder="usuario@icesi.edu.co"
+          autoComplete="email"
+          value={form.email}
+          onChange={(e) => update("email", e.target.value)}
+          required
+        />
+        <Input
+          label="Contraseña"
+          type="password"
+          placeholder="••••••••"
+          autoComplete="new-password"
+          minLength={6}
+          value={form.password}
+          onChange={(e) => update("password", e.target.value)}
+          required
+        />
+        <Select
+          label="Rol"
+          value={form.roleName}
+          onChange={(e) => update("roleName", e.target.value as RoleName)}
+        >
+          <option value="ESTUDIANTE">Estudiante</option>
+          <option value="ORGANIZADOR">Organizador</option>
+        </Select>
+
+        <Button type="submit" fullWidth loading={submitting} className="mt-1">
+          Registrarse
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-muted">
+        ¿Ya tienes cuenta?{" "}
+        <Link href="/login" className="font-semibold text-primary">
+          Inicia sesión
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

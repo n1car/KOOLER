@@ -99,8 +99,32 @@ Este documento registra de forma general el apoyo recibido de herramientas de In
 - **Uso:** apoyo puntual en la sección de elegibilidad y descarga del detalle estudiantil.
 - **Verificación:** frontend `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit`; backend pruebas de certificados (en verde).
 
+## Asistencia y certificación por sesión (Samuel)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual para habilitar asistencia y certificación opcional en actividades de una sesión.
+- **Verificación:** backend `npm test` (120) y e2e F3 (23), frontend `npm test` (28) y lint; build frontend condicionado por aviso de seguridad de Next.js.
+
 ## Pantallas de Jhon para D3 (Jhon)
 
 - **Herramienta:** Codex.
 - **Uso:** apoyo puntual en el pulido visual de autenticación, historial y retroalimentación.
 - **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (en verde).
+
+## Ajustes de creación de actividades y detalle admin (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en ubicación por texto, sesiones única/múltiple, certificación automática, imágenes y estilo del detalle admin.
+- **Verificación:** frontend `npm run lint`, `npm run build` y `npm test` (14/14); backend `npm test` (110/110), `npm run build` y `npm run lint` en verde.
+
+## Ajustes contra prototipos y sesiones (Samuel)
+
+- **Herramienta:** GitHub Copilot.
+- **Uso:** apoyo puntual en sesiones recurrentes, control de asistencia y organización de actividades.
+- **Verificación:** pruebas, lint, TypeScript y build de backend/frontend, más `git diff --check` (en verde).
+
+## Rediseño visual y autenticación responsive (Nico)
+
+- **Herramienta:** OpenCode.
+- **Uso:** apoyo puntual en tokens de color, botones, layout de autenticación e iconos por categoría.
+- **Verificación:** frontend `npm run lint`, `npm test` (26/26) y `npm run build` en verde.

@@ -36,4 +36,15 @@ export class CatalogService {
     }
     return location;
   }
+
+  async findOrCreateLocationByName(name: string): Promise<LocationEntity> {
+    const trimmed = name.trim();
+    const existing = await this.locationRepo
+      .createQueryBuilder('location')
+      .where('LOWER(location.name) = LOWER(:name)', { name: trimmed })
+      .getOne();
+    if (existing) return existing;
+
+    return this.locationRepo.save(this.locationRepo.create({ name: trimmed }));
+  }
 }

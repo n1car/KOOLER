@@ -79,9 +79,9 @@ export class AttendanceService {
         'El estudiante no está inscrito en esta actividad',
       );
     }
-    if (activity.status !== 'FINISHED') {
+    if (activity.status !== 'ACTIVE' && activity.status !== 'FINISHED') {
       throw new BadRequestException(
-        'Solo se puede registrar asistencia en actividades finalizadas',
+        'Solo se puede registrar asistencia en actividades activas o finalizadas',
       );
     }
     if (!hasSessionEndElapsed(session.sessionDate, session.endTime)) {

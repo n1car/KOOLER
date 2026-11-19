@@ -4,14 +4,14 @@ KOOLER es una aplicación web para organizar y gestionar las actividades de bien
 
 ## Funcionalidades principales
 
-- **Gestión de actividades:** creación, edición y cancelación de actividades, con información sobre sus fechas, categorías y cupos.
+- **Gestión de actividades:** creación y cancelación de actividades, con información sobre sus fechas, categorías y cupos.
 - **Inscripciones:** los estudiantes pueden inscribirse en las actividades disponibles, teniendo en cuenta los cupos y las condiciones de inscripción.
 - **Control de asistencia:** registro de asistencia de los participantes por sesión.
 - **Historial y valoraciones:** consulta de actividades y publicación de comentarios y valoraciones cuando la actividad ha finalizado.
 - **Certificados:** gestión de certificados asociados a la participación y asistencia de los estudiantes.
 - **Usuarios y permisos:** registro e inicio de sesión, con acceso a las funciones según el rol del usuario.
 
-La disponibilidad de algunas funciones puede variar entre el frontend y el backend, ya que la integración completa de todos los flujos forma parte del desarrollo del proyecto.
+El frontend consume el backend real en los flujos de autenticación, actividades e inscripciones (F1), historial y valoraciones (F2), y asistencia y certificados (F3).
 
 ## Tecnologías utilizadas
 
@@ -129,16 +129,18 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 
 | Integrante | Funcionalidad | Backend | Frontend | Estado D3 |
 | :--- | :--- | :--- | :--- | :--- |
-| **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear/editar actividad. | **F1 completo de punta a punta**; Fase 0, cliente API de F2/F3 y despliegue completos. |
-| **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador (endpoints listos y probados). | Login, Registro y Cuenta creada integrados; detalle, Historial, creación de valoraciones y Retroalimentación conectados a la API. | **Auth y F2 conectados**; falta ejecutar pruebas manuales del flujo. |
-| **S (Samuel)** | F3 | Asistencia por sesión, cálculo de porcentaje y certificados PDF (endpoints listos y probados). | Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado aún usan `mock.ts`. | **F3 backend completo**; F3 frontend parcial (panel listo, asistencia/progreso/certificado pendientes). |
+| **N (Nico)** | Base + F1 | Auth/JWT/roles, setup, Docker, actividades, inscripciones, catálogos y despliegue Neon/Render. | Bienvenida, Home, Detalle, Mis Inscripciones, Detalle admin y Crear actividad. | **F1 completo de punta a punta**; sin edición de actividades por alcance. |
+| **J (Jhon)** | F2 | Reseñas, historial y retroalimentación del organizador. | Login, Registro y Cuenta creada integrados; detalle, Historial, valoraciones y Retroalimentación conectados a la API. | **Auth y F2 conectados**; login/logout verificado manualmente y flujos de escritura cubiertos por smoke API. |
+| **S (Samuel)** | F3 | Asistencia por sesión, cálculo de porcentaje y certificados PDF. | Panel Mis Actividades, Control de Asistencia y Mi Progreso/Certificado conectados a la API. | **F3 completo de punta a punta**; `mock.ts` eliminado. |
 
 **Bloqueante para D3 (mínimo 2 de 3 funcionalidades de punta a punta):**
 
-* [x] **J:** conectar F2 en el frontend: `GET /api/history`, `POST /api/reviews`, `GET /api/reviews/organizer/activity/:activityId` (la lectura pública del detalle ya está integrada).
-* [ ] **S:** conectar F3 en el frontend: asistencia (`GET/POST /api/activities/:id/sessions/:sessionId/attendance`), elegibilidad (`GET /api/certificates/activities/:activityId/eligibility`), certificados (`GET /api/certificates`) y descarga del PDF.
-* [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados agregados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
-* [x] F1 y F2 conectadas de punta a punta en el frontend; F3 sigue pendiente para DF.
+* [x] **J:** F2 conectado en el frontend: `GET /api/history`, `POST /api/reviews`, `GET /api/reviews/organizer/activity/:activityId` y lectura pública del detalle.
+* [x] **S:** F3 conectado en el frontend: asistencia, elegibilidad, certificados y descarga del PDF.
+* [x] **N:** métodos y tipos de historial, reseñas, asistencia y certificados en `frontend/src/lib/api.ts` y `frontend/src/lib/types.ts`.
+* [x] F1, F2 y F3 conectadas de punta a punta en el frontend.
+* [x] **N:** crear actividad con ubicación por texto (`locationName`), sesiones única/múltiple y certificación opcional elegida por el organizador.
+* [x] **N:** eliminar `frontend/src/lib/mock.ts`; todas las pantallas usan la API real.
 
 **Checklist de rúbrica D3:**
 
@@ -146,11 +148,10 @@ Las cuentas de demostración no deben utilizarse en producción. Si necesitas la
 * [x] Inicio y cierre de sesión integrados; token enviado en las peticiones.
 * [x] Rutas protegidas por rol (`RequireRole`) y manejo de 401/403.
 * [x] Hook personalizado (`useAuth`) en uso.
-* [x] Dos funcionalidades principales conectadas de punta a punta (F1 y F2).
-* [ ] Estados de carga, error, vacío y éxito auditados en F2/F3.
-* [ ] Casos de prueba manuales documentados y ejecutados.
-* [ ] Planning y Figma actualizados si el diseño cambió.
-* [ ] Registro de problemas y decisiones de D3.
+* [x] Tres funcionalidades principales conectadas de punta a punta (F1, F2 y F3).
+* [x] Estados de carga, error, vacío y éxito auditados en F2/F3; ajustes aplicados en Mis Inscripciones, Historial y Progreso.
+* [x] Casos de prueba manuales documentados; login/logout verificado manualmente y flujos de escritura con smoke API.
+* [x] Registro de problemas y decisiones de D3.
 * [x] Backend desplegado y estable (`kooler-api-neon` + Neon).
 * [x] Frontend desplegado (`kooler-web-neon`).
 
@@ -168,7 +169,7 @@ Responsable: **N**, con revisión de J y S.
 
 ### Persona N (Nico) — Infraestructura + Funcionalidad 1
 
-**Estado:** completado en `dev` (Fase 0 + F1 + cliente API de F2/F3 + despliegue Neon/Render).
+**Estado:** completado en `dev` (Fase 0 + F1 + cliente API de F2/F3 + despliegue Neon/Render). La edición de actividades no forma parte del alcance.
 
 **Pantallas a cargo:** Bienvenida, Home del estudiante, Detalle de actividad, Mis Inscripciones, Detalle admin y Crear actividad.
 
@@ -180,24 +181,26 @@ Responsable: **N**, con revisión de J y S.
 * Inscripción: `POST /api/activities/:id/enroll`; manejar 400 por duplicado, cupo agotado, plazo vencido o actividad no activa.
 * Mis Inscripciones: `GET /api/activities/my-enrollments`.
 * Panel del organizador: filtrar sus actividades, métricas reales de activas/finalizadas/inscritos.
-* Crear actividad: formulario conectado, catálogos reales y validación de errores del backend.
-* Detalle admin: sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+* Crear actividad: formulario conectado, ubicación por texto (`locationName`), cantidad de sesiones con fecha/hora y opción del organizador para activar certificados.
+* Detalle admin: mismo lenguaje visual del detalle estudiantil, sesiones reales (`GET/POST /api/activities/:id/sessions`), inscritos reales (`GET /api/activities/:id/enrollments`) y finalización (`PATCH /api/activities/:id` con `status: FINISHED`).
+* Reglas de sesión: tanto las actividades de una sesión como las de varias permiten asistencia por sesión; el certificado es opcional y requiere cumplir la elegibilidad vigente.
 * Despliegue: backend `kooler-api-neon` y frontend `kooler-web-neon` en Render, con Neon y verificación de health/CORS.
 
-**Endpoints que consume:** `/api/auth`, `/api/activities`, `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
+**Endpoints que consume:** `/api/auth`, `/api/activities` (`POST` acepta `locationName` opcional y resuelve/crea la ubicación), `/api/activities/:id`, `/api/activities/:id/enroll`, `/api/activities/my-enrollments`, `/api/activities/:id/enrollments`, `/api/activities/:id/sessions`, `/api/activity-types`, `/api/locations`.
 
 **Archivos clave:** `frontend/src/lib/api.ts`, `frontend/src/lib/auth.tsx`, `frontend/src/components/RequireRole.tsx`, `frontend/src/components/AppShell.tsx`, `frontend/src/app/(student)/home/page.tsx`, `frontend/src/app/(student)/my-enrollments/page.tsx`, `frontend/src/app/activities/[id]/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/new/page.tsx`, `frontend/src/app/(organizer)/organizer/activities/[id]/page.tsx`.
 
 **Criterios de aceptación:**
 
 * Un estudiante se inscribe y ve la actividad en Mis Inscripciones sin recargar datos falsos.
-* El organizador crea una actividad y la ve en su panel.
+* El organizador crea una actividad y la ve en su panel; puede abrir control de asistencia para cada sesión y decide si la actividad emite certificados.
+* Las actividades finalizadas no aparecen en Home ni en Mis Inscripciones.
 * Los errores del backend se muestran en pantalla (cupo, duplicado, plazo).
 * `npm run lint` y `npm run build` en verde.
 
 ### Persona J (Jhon) — Autenticación + Funcionalidad 2
 
-**Estado:** autenticación completa; F2 backend y frontend conectados a la API; pruebas manuales pendientes.
+**Estado:** autenticación completa; F2 backend y frontend conectados a la API. Login/logout verificado manualmente y escritura de reseñas cubierta por smoke API.
 
 **Pantallas a cargo:** Login, Registro, Cuenta creada, Historial, Valoraciones y Retroalimentación.
 
@@ -225,7 +228,7 @@ Responsable: **N**, con revisión de J y S.
 
 ### Persona S (Samuel) — Funcionalidad 3 + smoke de despliegue
 
-**Estado:** F3 backend completo; Panel Mis Actividades integrado; Control de Asistencia y Mi Progreso/Certificado pendientes (usan `mock.ts`).
+**Estado:** F3 completo; Panel Mis Actividades, Control de Asistencia y Mi Progreso/Certificado conectados a la API. `mock.ts` eliminado.
 
 **Pantallas a cargo:** Panel Mis Actividades, Control de Asistencia y Mi Progreso / Mi Certificado.
 
@@ -272,47 +275,52 @@ Responsable: **N**, con revisión de J y S.
 | :--- | :--- |
 | Autenticación y autorización | Obligatorio de punta a punta (J) — **completo** |
 | F1 — Actividades e inscripciones | Obligatorio de punta a punta (N) — **completo** |
-| F3 — Asistencia y certificados | Obligatorio de punta a punta (S) — **pendiente de integrar frontend** |
-| F2 — Reseñas e historial | Historial, valoraciones y retroalimentación conectados (J) — **integrado; pruebas manuales pendientes** |
+| F3 — Asistencia y certificados | Obligatorio de punta a punta (S) — **completo** |
+| F2 — Reseñas e historial | Historial, valoraciones y retroalimentación conectados (J) — **completo** |
 
 ### Orden de trabajo y dependencias
 
 1. N entrega la Fase 0 (API client, auth context, guards y estados). **Hecho.**
 2. J integra login/registro y deja el token funcionando. **Hecho.**
-3. En paralelo: N integra F1, S integra F3 y J integra F2. **F1 y F2 integradas; F3 pendiente en frontend.**
+3. En paralelo: N integra F1, S integra F3 y J integra F2. **F1, F2 y F3 integradas.**
 4. N publica backend, frontend y BD en Render/Neon; todos apuntan a la URL pública. **Hecho.**
-5. Pruebas manuales por flujo, README de integración y ensayo de sustentación. **Pendiente.**
+5. Pruebas manuales por flujo, README de integración y ensayo de sustentación. **Checklist documentado; smoke API ejecutado y login verificado manualmente.**
 
 ### Pruebas y evidencias de D3
 
 **Casos de prueba manuales:**
 
-| Flujo | Pasos | Resultado esperado | Responsable |
+Un caso de prueba manual es una lista de pasos que una persona ejecuta en la interfaz y un resultado esperado que se registra como evidencia. Los flujos que escriben datos se validan también con el smoke API para no depender solo de clics durante la sustentación.
+
+| Flujo | Pasos | Resultado esperado | Evidencia |
 | :--- | :--- | :--- | :--- |
-| Login/logout | Entrar como estudiante, cerrar sesión y volver a entrar. | Token real, redirección por rol y sesión limpiada. | J |
-| Ruta protegida | Abrir `/organizer/activities` como estudiante. | Redirección o 403 visible; el backend también rechaza. | N/J |
-| F1 — Inscripción | Buscar actividad, abrir detalle e inscribirse. | Inscripción creada y visible en Mis Inscripciones. | N |
-| F1 — Organizador | Crear actividad, verla en el panel y finalizarla. | Actividad persistida y estado actualizado. | N |
-| F2 — Historial y reseña | Abrir Historial, calificar con estrellas y comentario. | Reseña creada, promedio actualizado y comentario público. | J |
-| F2 — Retroalimentación | Abrir feedback como organizador. | Solo lectura, sin opciones de editar/eliminar. | J |
-| F3 — Asistencia | Crear sesión, marcar PRESENT/ABSENT y consultar. | Asistencia persistida por sesión. | S |
-| F3 — Certificado | Ver progreso, elegibilidad y descargar PDF. | Porcentaje correcto y PDF descargable. | S |
+| Login/logout | Entrar como estudiante, cerrar sesión y volver a entrar. | Token real, redirección por rol y sesión limpiada. | Verificación manual |
+| Ruta protegida | Abrir `/organizer/activities` como estudiante. | Redirección o 403 visible; el backend también rechaza. | Pruebas de backend |
+| F1 — Inscripción | Buscar actividad, abrir detalle e inscribirse. | Inscripción creada y visible en Mis Inscripciones. | Smoke API |
+| F1 — Organizador | Crear actividad, verla en el panel y finalizarla. | Actividad persistida y estado actualizado. | Smoke API |
+| F2 — Historial y reseña | Abrir Historial, calificar con estrellas y comentario. | Reseña creada, promedio actualizado y comentario público. | Smoke API |
+| F2 — Retroalimentación | Abrir feedback como organizador. | Solo lectura; el organizador no modifica ni elimina reseñas. | Smoke API |
+| F3 — Asistencia | Crear sesión, marcar PRESENT/ABSENT y consultar. | Asistencia persistida por sesión. | Smoke API |
+| F3 — Certificado | Ver progreso, elegibilidad y descargar PDF. | Porcentaje correcto; una sesión también puede certificar si se configura y cumple el requisito. | Pruebas de backend y frontend |
 
 **Evidencias:**
 
-* Colección Postman actualizada.
-* `npm run lint`, `npm run build`, `npm test` y `npm run test:e2e` en verde.
-* README con instrucciones de integración y registro de decisiones.
+* Verificación actual: backend `npm test` **120/120**, e2e F3 **23/23**, lint y build; frontend `npm test` **28/28** y lint.
+* Login/logout de estudiante y organizador verificado manualmente contra la URL desplegada.
+* Smoke de producción: **27/27 OK** contra `https://kooler-api-neon.onrender.com/api` (F1, F2 y F3).
+* El build frontend compila y pasa TypeScript, pero Next.js detiene el comando por una vulnerabilidad conocida de la versión instalada; requiere evaluar la actualización recomendada.
 * URLs: backend `https://kooler-api-neon.onrender.com`, frontend `https://kooler-web-neon.onrender.com`.
-* Smoke E2E de producción: **27/27 OK** contra `https://kooler-api-neon.onrender.com/api` (F1, F2 y F3); rutas del frontend en 200 y bundle con `NEXT_PUBLIC_API_URL` correcta.
-* Planning actualizado y Figma si el diseño cambió.
+* `npm run test:e2e` del backend requiere Docker/PostgreSQL local en `localhost:5433`; no se ejecutó en esta máquina porque Docker estaba apagado.
 
 **Problemas y decisiones de D3:**
 
 * **Neon + `synchronize`:** se usa `DATABASE_URL_UNPOOLED` (conexión directa) para evitar problemas de PgBouncer al crear el esquema.
 * **Render free:** el primer request tras inactividad tarda ~50 s; el frontend usa `npm install --include=dev` para que el build tenga TypeScript/Tailwind.
 * **Dos cuentas de Render:** el servicio del equipo sigue en la cuenta de Samuel (`kooler-api`); la demo de Nico usa `kooler-api-neon` y `kooler-web-neon`.
-* **Datos mock:** Asistencia y Progreso todavía leen `frontend/src/lib/mock.ts`; F2 ya consume la API real. La integración frontend pendiente principal es F3, a cargo de S.
+* **Sin edición de actividades:** el frontend no expone edición de actividades creadas; `PATCH /api/activities/:id` se usa solo para cambios de estado como finalizar.
+* **Sesiones y certificación:** todas las sesiones admiten asistencia. `isCertifiable` decide si una actividad de una o varias sesiones puede emitir certificados.
+* **Datos mock:** `frontend/src/lib/mock.ts` fue eliminado; F1, F2 y F3 consumen la API real.
+* **Auto-deploy:** `render.yaml` declara `autoDeployTrigger: commit`, pero el último push requirió despliegue manual; revisar el auto-deploy en el panel de Render.
 
 ### Límite de commits para D3
 
@@ -336,8 +344,8 @@ La API utiliza el prefijo `/api`.
 |---|---|---|---|
 | `GET` | `/api/activities` | Público o autenticado | Consulta las actividades y sus filtros disponibles. |
 | `GET` | `/api/activities/:id` | Público o autenticado | Consulta el detalle de una actividad. |
-| `POST` | `/api/activities` | Organizador | Crea una actividad. |
-| `PATCH` | `/api/activities/:id` | Organizador propietario | Modifica una actividad propia y permite finalizarla manualmente antes de su horario si está `ACTIVE`. |
+| `POST` | `/api/activities` | Organizador | Crea una actividad; acepta `sessions` para crear el calendario completo y `isCertifiable` para configurar la emisión opcional dentro de la misma transacción. |
+| `PATCH` | `/api/activities/:id` | Organizador propietario | Actualiza el estado y permite cambiar `isCertifiable`. No expone un formulario de edición de datos desde el frontend. |
 | `DELETE` | `/api/activities/:id` | Organizador autorizado | Cancela una actividad sin eliminarla. |
 | `DELETE` | `/api/activities/:id/permanent` | Organizador propietario | Elimina sesiones y actividad si no hay inscripciones, asistencias, reseñas ni certificados; responde `409 Conflict` si hay registros protegidos. |
 | `POST` | `/api/activities/:id/enroll` | Estudiante | Solicita la inscripción a una actividad. |
@@ -345,6 +353,50 @@ La API utiliza el prefijo `/api`.
 | `GET` | `/api/activities/my-enrollments` | Estudiante | Consulta las inscripciones del estudiante autenticado. |
 | `GET` | `/api/activities/:id/sessions` | Público | Lista las sesiones de una actividad. |
 | `POST` | `/api/activities/:id/sessions` | Organizador autorizado | Crea una sesión de la actividad. |
+| `GET` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Consulta la asistencia de una sesión. |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Registra asistencia para actividades de una o varias sesiones cuando la sesión indicada terminó en `America/Bogota` y la actividad está `ACTIVE` o `FINISHED`. |
+
+### Catálogos — `/api/activity-types` y `/api/locations`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/activity-types` | Público | Lista las categorías de actividad. |
+| `GET` | `/api/locations` | Público | Lista las ubicaciones disponibles. |
+
+### Historial — `/api/history`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/history` | Estudiante | Lista las actividades finalizadas del estudiante, su asistencia y si ya las calificó. |
+
+### Reseñas — `/api/reviews`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/reviews/activity/:activityId` | Público | Consulta el promedio y los comentarios públicos de una actividad. |
+| `POST` | `/api/reviews` | Estudiante | Crea una reseña (1–5 estrellas y comentario opcional) para una actividad finalizada a la que asistió. |
+| `GET` | `/api/reviews/organizer/activity/:activityId` | Organizador propietario | Consulta la retroalimentación de su actividad en solo lectura. |
+
+### Asistencia — `/api/activities/:activityId/sessions/:sessionId/attendance`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Consulta la asistencia registrada en una sesión. |
+| `POST` | `/api/activities/:activityId/sessions/:sessionId/attendance` | Organizador propietario | Registra `PRESENT` o `ABSENT` para un estudiante en una sesión. |
+
+### Certificados — `/api/certificates`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/certificates` | Estudiante | Lista los certificados emitidos para actividades que actualmente tienen `isCertifiable` activado. |
+| `GET` | `/api/certificates/activities/:activityId/eligibility` | Estudiante | Consulta el porcentaje de asistencia y la elegibilidad para certificar en actividades de una o varias sesiones. |
+| `GET` | `/api/certificates/:certificateId/download` | Estudiante propietario | Descarga el PDF si la actividad continúa configurada como certificable. |
+
+### Salud — `/api/health`
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/health` | Público | Verifica el estado del backend y de la conexión con PostgreSQL. |
 
 Los permisos, validaciones y condiciones específicas se aplican desde el backend.
 
@@ -352,13 +404,25 @@ Para consultar la implementación de asistencia, certificados y valoraciones, re
 
 ## Pruebas
 
-Desde la carpeta `backend`, ejecuta:
+Backend:
 
 ```bash
+cd backend
+npm run lint
+npm run build
 npm test
 ```
 
-El proyecto también contiene pruebas de integración y de extremo a extremo. Revisa los scripts definidos en `backend/package.json` para conocer los comandos disponibles y los requisitos de cada tipo de prueba.
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+npm test
+```
+
+El E2E del backend (`npm run test:e2e` en `backend/`) requiere Docker con PostgreSQL local en `localhost:5433` y la base `kooler_db`.
 
 ## Despliegue
 
@@ -395,7 +459,6 @@ En la carpeta [`docs/`](./docs/) se encuentran los documentos de apoyo del proye
 - [Taller y rúbrica del proyecto](./docs/Taller%20y%20rubrica%20del%20proyecto.md)
 
 También puedes consultar [`AGENTS.md`](./AGENTS.md) para las instrucciones de trabajo del repositorio y [`AI_USAGE.md`](./AI_USAGE.md) para el registro del uso de herramientas de inteligencia artificial.
-```
 
 ## 📝 Registro de Uso de IA
 Ver detalles en el archivo obligatorio [`AI_USAGE.md`](./AI_USAGE.md).
