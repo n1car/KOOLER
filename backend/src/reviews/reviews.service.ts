@@ -47,7 +47,7 @@ export class ReviewsService {
       throw new ForbiddenException('Solo puedes calificar actividades a las que asististe');
     }
 
-    try {
+    try { // esat funcion crea una nueva reseña en la base de datos, asociándola con el estudiante y la actividad correspondiente. Si el estudiante ya ha calificado la actividad, se lanza una excepción de conflicto.
       return await this.reviewRepo.save(
         this.reviewRepo.create({
           idUser: student.id,
@@ -88,7 +88,7 @@ export class ReviewsService {
       })),
     };
   }
-    async findForOrganizer(organizerId: number, activityId: number) {
+    async findForOrganizer(organizerId: number, activityId: number) { // esta funcion permite a un organizador ver la retroalimentación de su actividad, verificando que el organizador sea el dueño de la actividad antes de devolver los comentarios y calificaciones asociados a esa actividad.
     const activity = await this.activityRepo.findOne({
       where: { id: activityId },
       relations: { organizer: true },

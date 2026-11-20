@@ -15,7 +15,7 @@ import { AttendanceController } from '../src/attendance/attendance.controller';
 import { AttendanceService } from '../src/attendance/attendance.service';
 import { AttendanceEntity } from '../src/attendance/entities/attendance.entity';
 import { CertificatesService } from '../src/certificates/certificates.service';
-import { UsersService } from '../src/users/users.service';
+import { UsersService } from '../src/roles/entities/users/users.service';
 
 const JWT_SECRET = 'attendance-http-test-secret';
 
@@ -49,7 +49,10 @@ const createActivity = (
   createdAt: new Date(),
 });
 
-const createSession = (id: number, activity: ReturnType<typeof createActivity>) => ({
+const createSession = (
+  id: number,
+  activity: ReturnType<typeof createActivity>,
+) => ({
   id,
   activity,
   sessionDate: '2026-10-01',
@@ -112,17 +115,23 @@ describe('Attendance endpoint (e2e)', () => {
     };
 
     sessionRepository = {
-      findOne: vi.fn(async ({ where: { id } }: { where: { id: number } }) =>
-        sessionsById.get(id) ?? null,
+      findOne: vi.fn(
+        async ({ where: { id } }: { where: { id: number } }) =>
+          sessionsById.get(id) ?? null,
       ),
     };
 
     attendanceRepository = {
       create: vi.fn((data) => data),
-      find: vi.fn(async ({ where: { session } }: { where: { session: { id: number } } }) =>
-        [...attendanceRecords.values()].filter(
-          (record) => record.session.id === session.id,
-        ),
+      find: vi.fn(
+        async ({
+          where: { session },
+        }: {
+          where: { session: { id: number } };
+        }) =>
+          [...attendanceRecords.values()].filter(
+            (record) => record.session.id === session.id,
+          ),
       ),
       save: vi.fn(
         async (attendance: {
@@ -175,7 +184,10 @@ describe('Attendance endpoint (e2e)', () => {
             }),
           },
         },
-        { provide: getRepositoryToken(SessionEntity), useValue: sessionRepository },
+        {
+          provide: getRepositoryToken(SessionEntity),
+          useValue: sessionRepository,
+        },
         {
           provide: getRepositoryToken(AttendanceEntity),
           useValue: attendanceRepository,
@@ -225,7 +237,9 @@ describe('Attendance endpoint (e2e)', () => {
     const httpRequest = request(app.getHttpServer())
       .post(`/api/activities/${activityId}/sessions/${sessionId}/attendance`)
       .send({ studentId, status });
-    return token ? httpRequest.set('Authorization', `Bearer ${token}`) : httpRequest;
+    return token
+      ? httpRequest.set('Authorization', `Bearer ${token}`)
+      : httpRequest;
   };
 
   // El endpoint debe rechazar tanto la falta de identidad como el rol equivocado.

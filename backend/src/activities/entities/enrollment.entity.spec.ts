@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { getMetadataArgsStorage } from 'typeorm';
 import { ActivityEntity } from './activity.entity';
 import { EnrollmentEntity } from './enrollment.entity';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 import { describe, expect, it } from 'vitest';
 
 const metadata = getMetadataArgsStorage();

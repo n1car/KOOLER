@@ -8,7 +8,7 @@ import {
   Unique,
 } from 'typeorm';
 import { SessionEntity } from '../../activities/entities/session.entity';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 
 @Entity('attendances')
 // Una sola marcación por estudiante y sesión, incluso ante peticiones simultáneas.

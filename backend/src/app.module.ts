@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './roles/entities/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { CatalogModule } from './catalog/catalog.module';
@@ -27,10 +27,7 @@ import { validateEnv } from './config/env.validation';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const dbSsl = configService
-          .get<string>('DB_SSL')
-          ?.trim()
-          .toLowerCase();
+        const dbSsl = configService.get<string>('DB_SSL')?.trim().toLowerCase();
         const databaseUrl =
           configService.get<string>('DATABASE_URL_UNPOOLED') ??
           configService.get<string>('DATABASE_URL');

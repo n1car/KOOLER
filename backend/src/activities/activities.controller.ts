@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity } from '../roles/entities/users/entities/user.entity';
 
 @Controller('activities')
 export class ActivitiesController {
@@ -62,7 +62,11 @@ export class ActivitiesController {
     @Body() createSessionDto: CreateSessionDto,
     @CurrentUser() organizer: UserEntity,
   ) {
-    return this.activitiesService.createSession(id, createSessionDto, organizer);
+    return this.activitiesService.createSession(
+      id,
+      createSessionDto,
+      organizer,
+    );
   }
 
   // 4. Crear actividad (Solo Organizador)

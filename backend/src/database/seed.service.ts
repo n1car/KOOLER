@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { RoleEntity } from '../roles/entities/role.entity';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity } from '../roles/entities/users/entities/user.entity';
 import { ActivityTypeEntity } from '../catalog/entities/activity-type.entity';
 import { LocationEntity } from '../catalog/entities/location.entity';
 
@@ -47,13 +47,17 @@ export class SeedService implements OnApplicationBootstrap {
 
   private async seedDemoUsers() {
     const studentRole = await this.roleRepo.findOneBy({ name: 'ESTUDIANTE' });
-    const organizerRole = await this.roleRepo.findOneBy({ name: 'ORGANIZADOR' });
+    const organizerRole = await this.roleRepo.findOneBy({
+      name: 'ORGANIZADOR',
+    });
 
     if (!studentRole || !organizerRole) return;
 
     // 1. Estudiante Demo
     const studentEmail = 'estudiante@icesi.edu.co';
-    const studentExists = await this.userRepo.findOneBy({ email: studentEmail });
+    const studentExists = await this.userRepo.findOneBy({
+      email: studentEmail,
+    });
     if (!studentExists) {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       await this.userRepo.save(
@@ -71,7 +75,9 @@ export class SeedService implements OnApplicationBootstrap {
 
     // 2. Organizador Demo
     const organizerEmail = 'organizador@icesi.edu.co';
-    const organizerExists = await this.userRepo.findOneBy({ email: organizerEmail });
+    const organizerExists = await this.userRepo.findOneBy({
+      email: organizerEmail,
+    });
     if (!organizerExists) {
       const passwordHash = await bcrypt.hash('Password123!', 10);
       await this.userRepo.save(

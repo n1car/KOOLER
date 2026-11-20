@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ActivitiesModule } from '../activities/activities.module';
 import { SessionEntity } from '../activities/entities/session.entity';
 import { CertificatesModule } from '../certificates/certificates.module';
-import { UsersModule } from '../users/users.module';
+import { UsersModule } from '../roles/entities/users/users.module';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceService } from './attendance.service';

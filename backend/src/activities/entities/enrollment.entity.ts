@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 import { ActivityEntity } from './activity.entity';
 
 @Entity('enrollments')
@@ -16,7 +16,11 @@ export class EnrollmentEntity {
   @PrimaryGeneratedColumn({ name: 'id_enrollment' })
   id!: number;
 
-  @ManyToOne(() => UserEntity, { eager: true, nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, {
+    eager: true,
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'id_user' })
   user!: UserEntity;
 

@@ -7,7 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 import { ActivityTypeEntity } from '../../catalog/entities/activity-type.entity';
 import { LocationEntity } from '../../catalog/entities/location.entity';
 import { EnrollmentEntity } from './enrollment.entity';
@@ -44,7 +44,12 @@ export class ActivityEntity {
   @Column({ name: 'is_certifiable', default: false })
   isCertifiable!: boolean;
 
-  @Column({ name: 'min_attendance_percentage', type: 'int', default: 80, nullable: true })
+  @Column({
+    name: 'min_attendance_percentage',
+    type: 'int',
+    default: 80,
+    nullable: true,
+  })
   minAttendancePercentage!: number;
 
   @Column({ name: 'image_url', nullable: true, length: 255 })

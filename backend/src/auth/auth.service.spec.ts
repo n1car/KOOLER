@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../roles/entities/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { BadRequestException } from '@nestjs/common';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
@@ -36,7 +36,10 @@ describe('AuthService', () => {
 
   // Evita que un registro repetido llegue a crear otra cuenta o emitir un token.
   it('debe lanzar BadRequestException si el correo ya existe al registrarse', async () => {
-    (usersService.findByEmail as any).mockResolvedValue({ id: 1, email: 'test@icesi.edu.co' });
+    (usersService.findByEmail as any).mockResolvedValue({
+      id: 1,
+      email: 'test@icesi.edu.co',
+    });
 
     await expect(
       service.register({

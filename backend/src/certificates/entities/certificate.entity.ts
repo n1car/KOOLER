@@ -8,7 +8,7 @@ import {
   Unique,
 } from 'typeorm';
 import { ActivityEntity } from '../../activities/entities/activity.entity';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 
 @Entity('certificates')
 // La clave compuesta mantiene la emisión idempotente por estudiante y actividad.

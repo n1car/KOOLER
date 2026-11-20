@@ -11,7 +11,7 @@ import { ActivitiesService } from './activities.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { SessionEntity } from './entities/session.entity';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity } from '../roles/entities/users/entities/user.entity';
 import { CatalogService } from '../catalog/catalog.service';
 import { DataSource } from 'typeorm';
 
@@ -28,7 +28,10 @@ describe('ActivitiesService (Persona N)', () => {
     findOrCreateLocationByName: vi.fn(),
   };
 
-  const mockOrganizer = { id: 1, email: 'organizador@icesi.edu.co' } as UserEntity;
+  const mockOrganizer = {
+    id: 1,
+    email: 'organizador@icesi.edu.co',
+  } as UserEntity;
   const mockOtherUser = { id: 99, email: 'otro@icesi.edu.co' } as UserEntity;
   const mockStudent = { id: 2, email: 'estudiante@icesi.edu.co' } as UserEntity;
 
@@ -49,14 +52,20 @@ describe('ActivitiesService (Persona N)', () => {
   beforeEach(async () => {
     activityRepo = {
       create: vi.fn().mockImplementation((dto) => dto),
-      save: vi.fn().mockImplementation((act) => Promise.resolve({ id: 10, ...act })),
+      save: vi
+        .fn()
+        .mockImplementation((act) => Promise.resolve({ id: 10, ...act })),
       find: vi.fn(),
       findOne: vi.fn(),
     };
 
     enrollmentRepo = {
       create: vi.fn().mockImplementation((dto) => dto),
-      save: vi.fn().mockImplementation((enr) => Promise.resolve({ id: 100, ...enr, enrollmentDate: new Date() })),
+      save: vi
+        .fn()
+        .mockImplementation((enr) =>
+          Promise.resolve({ id: 100, ...enr, enrollmentDate: new Date() }),
+        ),
       find: vi.fn(),
       findOne: vi.fn(),
       count: vi.fn(),
@@ -64,13 +73,18 @@ describe('ActivitiesService (Persona N)', () => {
 
     sessionRepo = {
       create: vi.fn().mockImplementation((dto) => dto),
-      save: vi.fn().mockImplementation((sessions) =>
-        Promise.resolve(
-          Array.isArray(sessions)
-            ? sessions.map((session, index) => ({ id: index + 7, ...session }))
-            : { id: 7, ...sessions },
+      save: vi
+        .fn()
+        .mockImplementation((sessions) =>
+          Promise.resolve(
+            Array.isArray(sessions)
+              ? sessions.map((session, index) => ({
+                  id: index + 7,
+                  ...session,
+                }))
+              : { id: 7, ...sessions },
+          ),
         ),
-      ),
       find: vi.fn().mockResolvedValue([]),
     };
     transactionQuery = vi.fn();
@@ -95,7 +109,10 @@ describe('ActivitiesService (Persona N)', () => {
       providers: [
         ActivitiesService,
         { provide: getRepositoryToken(ActivityEntity), useValue: activityRepo },
-        { provide: getRepositoryToken(EnrollmentEntity), useValue: enrollmentRepo },
+        {
+          provide: getRepositoryToken(EnrollmentEntity),
+          useValue: enrollmentRepo,
+        },
         { provide: getRepositoryToken(SessionEntity), useValue: sessionRepo },
         { provide: CatalogService, useValue: catalogService },
         { provide: DataSource, useValue: dataSource },
@@ -303,7 +320,9 @@ describe('ActivitiesService (Persona N)', () => {
   it('debe lanzar ForbiddenException si un usuario no dueño intenta cancelar la actividad', async () => {
     activityRepo.findOne.mockResolvedValue(mockActivity);
 
-    await expect(service.cancel(10, mockOtherUser)).rejects.toThrow(ForbiddenException);
+    await expect(service.cancel(10, mockOtherUser)).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
   it('elimina una actividad propia sin registros relacionados', async () => {
@@ -320,12 +339,12 @@ describe('ActivitiesService (Persona N)', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
-    await expect(
-      service.deletePermanently(10, mockOrganizer),
-    ).resolves.toEqual({
-      id: 10,
-      message: 'Actividad eliminada permanentemente.',
-    });
+    await expect(service.deletePermanently(10, mockOrganizer)).resolves.toEqual(
+      {
+        id: 10,
+        message: 'Actividad eliminada permanentemente.',
+      },
+    );
     expect(transactionQuery).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('FOR UPDATE'),
@@ -376,18 +395,18 @@ describe('ActivitiesService (Persona N)', () => {
   it('rechaza eliminar una actividad que pertenece a otro organizador', async () => {
     transactionQuery.mockResolvedValueOnce([{ id_organizer: 99 }]);
 
-    await expect(
-      service.deletePermanently(10, mockOrganizer),
-    ).rejects.toThrow(ForbiddenException);
+    await expect(service.deletePermanently(10, mockOrganizer)).rejects.toThrow(
+      ForbiddenException,
+    );
     expect(transactionQuery).toHaveBeenCalledTimes(1);
   });
 
   it('rechaza eliminar una actividad inexistente', async () => {
     transactionQuery.mockResolvedValueOnce([]);
 
-    await expect(
-      service.deletePermanently(404, mockOrganizer),
-    ).rejects.toThrow(NotFoundException);
+    await expect(service.deletePermanently(404, mockOrganizer)).rejects.toThrow(
+      NotFoundException,
+    );
     expect(transactionQuery).toHaveBeenCalledTimes(1);
   });
 
@@ -458,9 +477,9 @@ describe('ActivitiesService (Persona N)', () => {
       .mockResolvedValueOnce([])
       .mockRejectedValueOnce({ driverError: { code: '23503' } });
 
-    await expect(
-      service.deletePermanently(10, mockOrganizer),
-    ).rejects.toThrow(ConflictException);
+    await expect(service.deletePermanently(10, mockOrganizer)).rejects.toThrow(
+      ConflictException,
+    );
   });
 
   // Estos casos protegen los límites de cupo y la inscripción única.
@@ -479,23 +498,27 @@ describe('ActivitiesService (Persona N)', () => {
     enrollmentRepo.findOne.mockResolvedValue(null);
     enrollmentRepo.count.mockResolvedValue(2); // 2 de 2 ocupados
 
-    await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('debe rechazar la inscripción si el estudiante ya está inscrito (duplicado)', async () => {
     activityRepo.findOne.mockResolvedValue(mockActivity);
     enrollmentRepo.findOne.mockResolvedValue({ id: 50 }); // Ya existe
 
-    await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('debe impedir reducir el cupo por debajo de los inscritos actuales', async () => {
     activityRepo.findOne.mockResolvedValue(mockActivity);
     enrollmentRepo.count.mockResolvedValue(5);
 
-    await expect(service.update(10, { capacity: 3 }, mockOrganizer)).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      service.update(10, { capacity: 3 }, mockOrganizer),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it.each([0, 3])(
@@ -602,7 +625,9 @@ describe('ActivitiesService (Persona N)', () => {
     } as unknown as ActivityEntity;
     activityRepo.findOne.mockResolvedValue(pastActivity);
 
-    await expect(service.enroll(10, mockStudent)).rejects.toThrow(BadRequestException);
+    await expect(service.enroll(10, mockStudent)).rejects.toThrow(
+      BadRequestException,
+    );
     expect(pastActivity.status).toBe('FINISHED');
   });
 
@@ -766,7 +791,9 @@ describe('ActivitiesService (Persona N)', () => {
       const repositoryError = new Error('Database unavailable');
       enrollmentRepo.findOne.mockRejectedValue(repositoryError);
 
-      await expect(service.isStudentEnrolled(10, 2)).rejects.toBe(repositoryError);
+      await expect(service.isStudentEnrolled(10, 2)).rejects.toBe(
+        repositoryError,
+      );
     });
   });
 });

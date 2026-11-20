@@ -18,7 +18,7 @@ import {
   CertificatesService,
 } from '../src/certificates/certificates.service';
 import { CertificateEntity } from '../src/certificates/entities/certificate.entity';
-import { UsersService } from '../src/users/users.service';
+import { UsersService } from '../src/roles/entities/users/users.service';
 
 const JWT_SECRET = 'certificates-e2e-secret';
 
@@ -32,7 +32,11 @@ const createUser = (id: number, roleName: string) => ({
   role: { id, name: roleName },
 });
 
-const createCertificate = (id: number, studentId: number, activityId: number) => ({
+const createCertificate = (
+  id: number,
+  studentId: number,
+  activityId: number,
+) => ({
   id,
   user: {
     id: studentId,
@@ -116,11 +120,36 @@ describe('Certificates endpoint (e2e)', () => {
     };
     sessionRepository = {
       find: vi.fn(async () => [
-        { id: 1, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
-        { id: 2, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
-        { id: 3, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
-        { id: 4, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
-        { id: 5, activity: { id: 30 }, sessionDate: '2020-01-01', endTime: '11:00' },
+        {
+          id: 1,
+          activity: { id: 30 },
+          sessionDate: '2020-01-01',
+          endTime: '11:00',
+        },
+        {
+          id: 2,
+          activity: { id: 30 },
+          sessionDate: '2020-01-01',
+          endTime: '11:00',
+        },
+        {
+          id: 3,
+          activity: { id: 30 },
+          sessionDate: '2020-01-01',
+          endTime: '11:00',
+        },
+        {
+          id: 4,
+          activity: { id: 30 },
+          sessionDate: '2020-01-01',
+          endTime: '11:00',
+        },
+        {
+          id: 5,
+          activity: { id: 30 },
+          sessionDate: '2020-01-01',
+          endTime: '11:00',
+        },
       ]),
     };
     attendanceRepository = {
@@ -177,7 +206,8 @@ describe('Certificates endpoint (e2e)', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: (key: string) => (key === 'JWT_SECRET' ? JWT_SECRET : undefined),
+            get: (key: string) =>
+              key === 'JWT_SECRET' ? JWT_SECRET : undefined,
             getOrThrow: (key: string) => {
               const value = key === 'JWT_SECRET' ? JWT_SECRET : undefined;
               if (value === undefined) throw new Error(`Missing ${key}`);

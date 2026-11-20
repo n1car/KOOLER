@@ -1,8 +1,14 @@
 import {
-  Check, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne,
-  PrimaryGeneratedColumn, Unique,
+  Check,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
-import { UserEntity } from '../../users/entities/user.entity';
+import { UserEntity } from '../../roles/entities/users/entities/user.entity';
 import { ActivityEntity } from '../../activities/entities/activity.entity';
 
 @Entity('review')

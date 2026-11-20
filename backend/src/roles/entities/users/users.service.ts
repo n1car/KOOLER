@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
-import { RoleEntity } from '../roles/entities/role.entity';
+import { RoleEntity } from '../role.entity';
 
 @Injectable()
 export class UsersService {
@@ -31,7 +31,7 @@ export class UsersService {
     return user;
   }
 
-  async create(data: {
+  async create(data: { //  esta función crea un nuevo usuario en la base de datos, asignándole un rol específico. Si no se proporciona un rol, se asigna el rol por defecto "ESTUDIANTE". y sirve para registrar nuevos usuarios en el sistema, asegurando que cada usuario tenga un rol válido y que la información del usuario se almacene correctamente en la base de datos.
     firstName: string;
     lastName: string;
     email: string;
@@ -45,7 +45,7 @@ export class UsersService {
       throw new NotFoundException(`Rol ${roleNameToFind} no encontrado`);
     }
 
-    const user = this.usersRepository.create({
+    const user = this.usersRepository.create({ // esta funcion crea una nueva instancia de la entidad UserEntity con los datos proporcionados, incluyendo el nombre, apellido, correo electrónico, hash de la contraseña y el rol asociado. Luego, guarda esta instancia en la base de datos utilizando el repositorio de usuarios.
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,

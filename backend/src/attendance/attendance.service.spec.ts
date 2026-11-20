@@ -11,7 +11,7 @@ import { ActivitiesService } from '../activities/activities.service';
 import { ActivityEntity } from '../activities/entities/activity.entity';
 import { SessionEntity } from '../activities/entities/session.entity';
 import { CertificatesService } from '../certificates/certificates.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../roles/entities/users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 import { AttendanceService } from './attendance.service';
 
@@ -45,7 +45,10 @@ const createActivity = (
   createdAt: new Date(),
 });
 
-const createSession = (activity: ReturnType<typeof createActivity>, id = 1) => ({
+const createSession = (
+  activity: ReturnType<typeof createActivity>,
+  id = 1,
+) => ({
   id,
   activity,
   sessionDate: '2026-10-01',
@@ -214,7 +217,9 @@ describe('AttendanceService', () => {
   });
 
   it('rechaza un organizador que no es propietario de la actividad', async () => {
-    sessionRepository.findOne.mockResolvedValue(createSession(createActivity('FINISHED', 99), 5));
+    sessionRepository.findOne.mockResolvedValue(
+      createSession(createActivity('FINISHED', 99), 5),
+    );
 
     await expect(
       service.recordAttendance(20, 1, 10, 5, 'PRESENT'),
@@ -226,7 +231,9 @@ describe('AttendanceService', () => {
 
   it('rechaza asistencia cuando el estudiante no está inscrito', async () => {
     usersService.findById.mockResolvedValue(createUser());
-    sessionRepository.findOne.mockResolvedValue(createSession(createActivity(), 5));
+    sessionRepository.findOne.mockResolvedValue(
+      createSession(createActivity(), 5),
+    );
     activitiesService.isStudentEnrolled.mockResolvedValue(false);
 
     await expect(
@@ -239,7 +246,9 @@ describe('AttendanceService', () => {
   it('propaga errores al consultar la inscripción', async () => {
     const enrollmentError = new Error('Database unavailable');
     usersService.findById.mockResolvedValue(createUser());
-    sessionRepository.findOne.mockResolvedValue(createSession(createActivity(), 5));
+    sessionRepository.findOne.mockResolvedValue(
+      createSession(createActivity(), 5),
+    );
     activitiesService.isStudentEnrolled.mockRejectedValue(enrollmentError);
 
     await expect(
@@ -258,7 +267,9 @@ describe('AttendanceService', () => {
 
   it('rechaza un usuario que no sea estudiante', async () => {
     usersService.findById.mockResolvedValue(createUser('ORGANIZADOR'));
-    sessionRepository.findOne.mockResolvedValue(createSession(createActivity(), 5));
+    sessionRepository.findOne.mockResolvedValue(
+      createSession(createActivity(), 5),
+    );
 
     await expect(
       service.recordAttendance(20, 1, 10, 5, 'PRESENT'),

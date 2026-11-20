@@ -28,7 +28,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard) // esta funcion es un endpoint protegido que requiere un token JWT válido para acceder. Utiliza el decorador @CurrentUser para obtener la información del usuario autenticado a partir del token y devuelve un objeto con un mensaje de éxito y los detalles del usuario.
   @Get('profile')
   getProfile(@CurrentUser() user: any) {
     return {

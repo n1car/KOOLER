@@ -16,7 +16,7 @@ import { RolesGuard } from '../src/common/guards/roles.guard';
 import { AuthController } from '../src/auth/auth.controller';
 import { AuthService } from '../src/auth/auth.service';
 import { JwtStrategy } from '../src/auth/strategies/jwt.strategy';
-import { UsersService } from '../src/users/users.service';
+import { UsersService } from '../src/roles/entities/users/users.service';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import * as bcrypt from 'bcrypt';

@@ -12,7 +12,7 @@ import { ActivitiesService } from '../activities/activities.service';
 import { SessionEntity } from '../activities/entities/session.entity';
 import { hasSessionEndElapsed } from '../activities/session-time';
 import { CertificatesService } from '../certificates/certificates.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '../roles/entities/users/users.service';
 import { AttendanceEntity } from './entities/attendance.entity';
 
 type AttendanceStatus = AttendanceEntity['status'];

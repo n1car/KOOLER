@@ -11,7 +11,7 @@ import { DataSource, ILike, In, Repository } from 'typeorm';
 import { ActivityEntity } from './entities/activity.entity';
 import { EnrollmentEntity } from './entities/enrollment.entity';
 import { SessionEntity } from './entities/session.entity';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity } from '../roles/entities/users/entities/user.entity';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { FilterActivitiesDto } from './dto/filter-activities.dto';
@@ -94,10 +94,13 @@ export class ActivitiesService {
 
   // RF09: una actividad pasa a FINISHED cuando ya pasó su horario.
   // Se evalúa por fecha+hora de fin para no depender de un cron en D2.
-  private getLocalEnd(activity: Pick<ActivityEntity, 'date' | 'endTime'>): string | null {
+  private getLocalEnd(
+    activity: Pick<ActivityEntity, 'date' | 'endTime'>,
+  ): string | null {
     const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(activity.date);
-    const timeMatch =
-      /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(activity.endTime);
+    const timeMatch = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(
+      activity.endTime,
+    );
     if (!dateMatch || !timeMatch) return null;
 
     const [, yearValue, monthValue, dayValue] = dateMatch;
@@ -125,10 +128,9 @@ export class ActivitiesService {
     if (!localEnd) return false;
 
     const localNowParts = Object.fromEntries(
-      ACTIVITY_LOCAL_TIME_FORMATTER.formatToParts(now).map(({ type, value }) => [
-        type,
-        value,
-      ]),
+      ACTIVITY_LOCAL_TIME_FORMATTER.formatToParts(now).map(
+        ({ type, value }) => [type, value],
+      ),
     );
     const localNow =
       `${localNowParts.year}-${localNowParts.month}-${localNowParts.day}` +
@@ -212,14 +214,12 @@ export class ActivitiesService {
   }
 
   // 1. Crear actividad (Solo Organizador)
-  async create(createDto: CreateActivityDto, organizer: UserEntity): Promise<ActivityEntity> {
-    const {
-      activityTypeId,
-      locationId,
-      locationName,
-      sessions,
-      ...rest
-    } = createDto;
+  async create(
+    createDto: CreateActivityDto,
+    organizer: UserEntity,
+  ): Promise<ActivityEntity> {
+    const { activityTypeId, locationId, locationName, sessions, ...rest } =
+      createDto;
 
     const activity = this.activityRepo.create({
       ...rest,
@@ -229,10 +229,12 @@ export class ActivitiesService {
     });
 
     if (activityTypeId !== undefined && activityTypeId !== null) {
-      activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
+      activity.activityType =
+        await this.catalogService.findActivityTypeById(activityTypeId);
     }
     if (locationId !== undefined && locationId !== null) {
-      activity.location = await this.catalogService.findLocationById(locationId);
+      activity.location =
+        await this.catalogService.findLocationById(locationId);
     } else if (locationName?.trim()) {
       activity.location =
         await this.catalogService.findOrCreateLocationByName(locationName);
@@ -274,7 +276,13 @@ export class ActivitiesService {
 
       return savedActivity;
     });
-    this.traceStatus('ActivitiesService.create', saved, null, saved.status, 'persisted');
+    this.traceStatus(
+      'ActivitiesService.create',
+      saved,
+      null,
+      saved.status,
+      'persisted',
+    );
     return saved;
   }
 
@@ -345,7 +353,9 @@ export class ActivitiesService {
     }
 
     const sessionsByActivity = await this.getSessionsByActivity([activity.id]);
-    const enrolledCount = activity.enrollments ? activity.enrollments.length : 0;
+    const enrolledCount = activity.enrollments
+      ? activity.enrollments.length
+      : 0;
     const availableSpots = Math.max(0, activity.capacity - enrolledCount);
     // Reconcile legacy statuses against Colombia-local end time.
     const status = this.statusForSchedule(
@@ -388,7 +398,9 @@ export class ActivitiesService {
 
     // Regla de negocio: Solo el organizador dueño puede modificar
     if (activity.organizer.id !== user.id) {
-      throw new ForbiddenException('Solo el organizador responsable puede modificar esta actividad');
+      throw new ForbiddenException(
+        'Solo el organizador responsable puede modificar esta actividad',
+      );
     }
 
     const {
@@ -431,11 +443,13 @@ export class ActivitiesService {
     }
 
     if (activityTypeId !== undefined && activityTypeId !== null) {
-      activity.activityType = await this.catalogService.findActivityTypeById(activityTypeId);
+      activity.activityType =
+        await this.catalogService.findActivityTypeById(activityTypeId);
     }
 
     if (locationId !== undefined && locationId !== null) {
-      activity.location = await this.catalogService.findLocationById(locationId);
+      activity.location =
+        await this.catalogService.findLocationById(locationId);
     } else if (locationName?.trim()) {
       activity.location =
         await this.catalogService.findOrCreateLocationByName(locationName);
@@ -468,7 +482,9 @@ export class ActivitiesService {
 
     // Regla de negocio: Solo el organizador dueño puede cancelar
     if (activity.organizer.id !== user.id) {
-      throw new ForbiddenException('Solo el organizador responsable puede cancelar esta actividad');
+      throw new ForbiddenException(
+        'Solo el organizador responsable puede cancelar esta actividad',
+      );
     }
 
     const previousStatus = activity.status;
@@ -543,14 +559,12 @@ export class ActivitiesService {
       }
 
       try {
-        await manager.query(
-          'DELETE FROM sessions WHERE id_activity = $1',
-          [id],
-        );
-        await manager.query(
-          'DELETE FROM activities WHERE id_activity = $1',
-          [id],
-        );
+        await manager.query('DELETE FROM sessions WHERE id_activity = $1', [
+          id,
+        ]);
+        await manager.query('DELETE FROM activities WHERE id_activity = $1', [
+          id,
+        ]);
       } catch (error) {
         if (isForeignKeyViolation(error)) {
           throw new ConflictException(
@@ -585,7 +599,9 @@ export class ActivitiesService {
       });
 
       if (!activity) {
-        throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+        throw new NotFoundException(
+          `Actividad con ID ${activityId} no encontrada`,
+        );
       }
 
       // Reconcile legacy statuses before applying the enrollment rules.
@@ -611,13 +627,17 @@ export class ActivitiesService {
 
       // Regla 1: Solo actividades en estado ACTIVE permiten inscripción
       if (activity.status !== 'ACTIVE') {
-        throw new BadRequestException('No es posible inscribirse: la actividad no está activa');
+        throw new BadRequestException(
+          'No es posible inscribirse: la actividad no está activa',
+        );
       }
 
       // Regla 2: No se permite inscripción después de registration_deadline
       const now = new Date();
       if (now > new Date(activity.registrationDeadline)) {
-        throw new BadRequestException('El plazo de inscripción para esta actividad ya finalizó');
+        throw new BadRequestException(
+          'El plazo de inscripción para esta actividad ya finalizó',
+        );
       }
 
       // Regla 3: Un estudiante no puede inscribirse dos veces en la misma actividad
@@ -629,7 +649,9 @@ export class ActivitiesService {
       });
 
       if (alreadyEnrolled) {
-        throw new BadRequestException('Ya te encuentras inscrito en esta actividad');
+        throw new BadRequestException(
+          'Ya te encuentras inscrito en esta actividad',
+        );
       }
 
       // Regla 4: Inscritos no pueden superar capacity
@@ -638,7 +660,9 @@ export class ActivitiesService {
       });
 
       if (currentEnrolledCount >= activity.capacity) {
-        throw new BadRequestException('No hay cupos disponibles para esta actividad');
+        throw new BadRequestException(
+          'No hay cupos disponibles para esta actividad',
+        );
       }
 
       // Crear y guardar la inscripción
@@ -667,12 +691,16 @@ export class ActivitiesService {
     });
 
     if (!activity) {
-      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+      throw new NotFoundException(
+        `Actividad con ID ${activityId} no encontrada`,
+      );
     }
 
     // Regla de negocio: Solo el organizador dueño puede ver los inscritos
     if (activity.organizer.id !== user.id) {
-      throw new ForbiddenException('Solo el organizador responsable puede ver los inscritos');
+      throw new ForbiddenException(
+        'Solo el organizador responsable puede ver los inscritos',
+      );
     }
 
     const enrollments = await this.enrollmentRepo.find({
@@ -706,9 +734,9 @@ export class ActivitiesService {
       relations: { activity: true },
       order: { enrollmentDate: 'DESC' },
     });
-    const sessionsByActivity = await this.getSessionsByActivity(
-      [...new Set(enrollments.map((enrollment) => enrollment.activity.id))],
-    );
+    const sessionsByActivity = await this.getSessionsByActivity([
+      ...new Set(enrollments.map((enrollment) => enrollment.activity.id)),
+    ]);
 
     return enrollments.map((e) => ({
       enrollmentId: e.id,
@@ -745,11 +773,15 @@ export class ActivitiesService {
     });
 
     if (!activity) {
-      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+      throw new NotFoundException(
+        `Actividad con ID ${activityId} no encontrada`,
+      );
     }
 
     if (activity.organizer.id !== user.id) {
-      throw new ForbiddenException('Solo el organizador responsable puede crear sesiones');
+      throw new ForbiddenException(
+        'Solo el organizador responsable puede crear sesiones',
+      );
     }
 
     const session = this.sessionRepo.create({
@@ -765,10 +797,14 @@ export class ActivitiesService {
 
   // 10. Listar las sesiones de una actividad (público).
   async getSessions(activityId: number) {
-    const activity = await this.activityRepo.findOne({ where: { id: activityId } });
+    const activity = await this.activityRepo.findOne({
+      where: { id: activityId },
+    });
 
     if (!activity) {
-      throw new NotFoundException(`Actividad con ID ${activityId} no encontrada`);
+      throw new NotFoundException(
+        `Actividad con ID ${activityId} no encontrada`,
+      );
     }
 
     const sessions = await this.sessionRepo.find({

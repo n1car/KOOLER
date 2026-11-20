@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActivityTypeEntity } from '../catalog/entities/activity-type.entity';
 import { LocationEntity } from '../catalog/entities/location.entity';
 import { RoleEntity } from '../roles/entities/role.entity';
-import { UserEntity } from '../users/entities/user.entity';
+import { UserEntity } from '../roles/entities/users/entities/user.entity';
 import { SeedService } from './seed.service';
 
 describe('SeedService', () => {
