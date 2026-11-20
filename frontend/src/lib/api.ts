@@ -270,7 +270,7 @@ export interface EnrollResponse {
 }
 
 export const api = {
-  auth: {
+  auth: { // esta funcion maneja todas las solicitudes relacionadas con la autenticación de usuarios, incluyendo el inicio de sesión, el registro y la obtención del perfil del usuario autenticado.
     login: (email: string, password: string) =>
       request<AuthResponse>("/auth/login", {
         method: "POST",
@@ -327,15 +327,15 @@ export const api = {
   history: {
     list: () => request<HistoryItem[]>("/history"),
   },
-  reviews: {
+  reviews: { // esta funcion maneja todas las solicitudes relacionadas con las reseñas de actividades, incluyendo obtener el resumen de reseñas de una actividad, crear una nueva reseña y obtener el resumen de reseñas para un organizador específico.
     byActivity: (activityId: number) =>
-      request<ReviewSummary>(`/reviews/activity/${activityId}`),
-    create: (payload: CreateReviewPayload) =>
+      request<ReviewSummary>(`/reviews/activity/${activityId}`), // esta funcion obtiene el resumen de reseñas de una actividad específica, incluyendo el promedio de calificaciones, el total de reseñas y una lista de los elementos de reseña individuales.
+    create: (payload: CreateReviewPayload) => // esta funcion crea una nueva reseña en la base de datos, asociándola con el estudiante y la actividad correspondiente. Si el estudiante ya ha calificado la actividad, se lanza una excepción de conflicto.
       request<CreatedReview>("/reviews", {
         method: "POST",
         body: payload,
       }),
-    organizer: (activityId: number) =>
+    organizer: (activityId: number) => // esta funcion permite a un organizador ver la retroalimentación de su actividad, verificando que el organizador sea el dueño de la actividad antes de devolver los comentarios y calificaciones asociados a esa actividad.
       request<ReviewSummary>(`/reviews/organizer/activity/${activityId}`),
   },
   attendance: {

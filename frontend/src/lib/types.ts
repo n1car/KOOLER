@@ -98,7 +98,7 @@ export interface ActivityEnrollments {
   }[];
 }
 
-export interface ReviewItem {
+export interface ReviewItem { // esta interfaz representa un elemento individual de reseña, que incluye el id de la reseña, la calificación, el comentario (si lo hay), la fecha de creación y el autor de la reseña.
   id: number;
   rating: number;
   comment: string | null;
@@ -106,13 +106,13 @@ export interface ReviewItem {
   author: string;
 }
 
-export interface ReviewSummary {
+export interface ReviewSummary { // esta interfaz representa un resumen de las reseñas de una actividad, incluyendo el promedio de calificaciones, el total de reseñas y una lista de los elementos de reseña individuales.
   average: number;
   total: number;
   items: ReviewItem[];
 }
-
-export interface CreatedReview {
+// la diferencia entre reviewsSummary y CreatedReview es que ReviewSummary se utiliza para mostrar un resumen de las reseñas existentes de una actividad, mientras que CreatedReview se utiliza para representar una nueva reseña creada por un usuario.
+export interface CreatedReview { // la diferencia entre esta interfaz y ReviewItem es que CreatedReview incluye el id del usuario y de la actividad, mientras que ReviewItem no. Esto es útil para cuando se crea una nueva reseña, ya que necesitamos asociarla con un usuario y una actividad específicos.
   id: number;
   idUser: number;
   idActivity: number;
