@@ -130,11 +130,11 @@ describe('Activities flow (integración sin BD)', () => {
       .send({
         name: 'Torneo relámpago',
         description: 'Fútbol 5',
-        date: '2026-11-20',
+        date: '2099-06-20',
         startTime: '10:00',
         endTime: '12:00',
         capacity: 2,
-        registrationDeadline: '2026-11-19T23:59:59.000Z',
+        registrationDeadline: '2099-06-19T23:59:59.000Z',
       })
       .expect(201);
     const activityId = created.body.id;
